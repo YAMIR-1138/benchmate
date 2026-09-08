@@ -248,3 +248,13 @@ Unit Converter menu, Mass/Mol calculator, Dilutions calculator.
 | Look | Teal / orange, TggR Lab logo, simple, neat, retro. | Direction: 1970s bench-instrument. Cream or deep-teal ground, orange indicator accents, Didone serif for the wordmark (as in the logo), monospaced readouts for numbers, thin hairline borders. |
 | Mockups first | Yes. | Screen mockups drafted before code. |
 | Logo | Sent as an image in chat. | Not received as a file. Add the PNG to `assets/brand/` in the repo. |
+
+## 10. Status (2026-09-08, later)
+
+- Name: **TGGR Bench Mate**.
+- Ground: **both**, dark and light, with a toggle on the home screen and system default.
+  Legibility over branding: system fonts, 17 px base type, high contrast.
+- Phase 1 PWA built in `app/`: dilution, molar, convert, timer, counter, plus ladders,
+  plates and the protocol reader since the data was already in place. Test vectors run
+  in CI. Deploys to GitHub Pages from `main`.
+- ΣpinZero is linked from the home screen for now; embedding it as a module is next.
