@@ -31,7 +31,7 @@ export const TOOLS: Tool[] = [
   { id: 'spinzero', idx: '09', name: 'ΣpinZero', sub: 'balance the rotor', icon: 'rotor', render: renderSpinZero },
   { id: 'nanodrop', idx: '10', name: 'NanoDrop', sub: 'what the numbers mean', icon: 'drop2', render: renderNanodrop },
   { id: 'luciferase', idx: '11', name: 'Luciferase', sub: 'firefly / Renilla, fold', icon: 'flame', render: renderLuciferase },
-  { id: 'platemap', idx: '12', name: 'Plate Map', sub: '96 · 384 · tick as you go', icon: 'grid', render: renderPlateMap },
+  { id: 'platemap', idx: '12', name: 'Plate Map', sub: 'samples × genes, tick as you go', icon: 'grid', render: renderPlateMap },
 ];
 
 // ---- theme ----
