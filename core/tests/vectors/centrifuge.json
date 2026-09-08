@@ -1,0 +1,8 @@
+{
+  "description": "RCF (×g) = 1.118e-5 * r_cm * rpm^2. Every edition must reproduce these to within 0.5 %.",
+  "cases": [
+    { "r_cm": 10, "rpm": 3000, "expect": { "rcf": 1006 } },
+    { "r_cm": 8.5, "rcf": 8000, "expect": { "rpm": 9174 } },
+    { "r_cm": 8.5, "rcf": 13000, "expect": { "rpm": 11694 } }
+  ]
+}

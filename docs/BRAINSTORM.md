@@ -25,7 +25,7 @@ usable with gloved, one-handed, half-wet hands. No login, no cloud, no waiting.
 | **Ladders** | DNA / RNA / protein ladders as a rendered gel lane | Band sizes + ng per band. Side-by-side comparison. Data-driven: one JSON per ladder. |
 | **Plates & vessels** | surface area, working volume, seeding calculator | 6/12/24/48/96/384-well; 35/60/100/150 mm dishes; T25/T75/T175 flasks. "Seed N cells/cm² → cells per well and volume of suspension." Plate-map layout tool later. |
 | **Protocols** | easy-to-read, step-by-step protocol reader | One step per screen, big text, "next" button. Steps can carry an embedded timer ("incubate 5 min" → tap to start). Checklist ticks. Protocols are data files, not code. |
-| **SpinZero** | *our own device* — needs definition | See open question 1. |
+| **ΣpinZero** | centrifuge rotor balancer (existing web app, github.com/YAMIR-1138/SpinZero) | Single `index.html`, already teal/orange with dark mode. Embed as a module with a rotor-slot picker; add "RCF ↔ RPM for this rotor" next to it. |
 
 ### Later / maybe
 Master-mix calculator (n + 10 %), PCR setup, primer Tm, gel % guide, buffer recipes
@@ -230,3 +230,21 @@ Unit Converter menu, Mass/Mol calculator, Dilutions calculator.
   Small, but it signals whether the app was made by people who do the work.
 - Nothing hardware-aware: no timer alarm, no counter, no protocol reader, no bench device.
   That is our unique ground.
+
+---
+
+## 9. Decisions (2026-09-08)
+
+| Question | Answer | Consequence |
+|---|---|---|
+| SpinZero | Existing single-file web app: balances centrifuge rotors with roots of unity. | Drops straight into the PWA as a module. Reuse its `--tube-fill` teal and `--empty-slot` orange as the app palette seed. |
+| ESP32 hardware | Has boards and small LCDs, wants to buy for this project. | Recommendation: **Waveshare ESP32-S3-Touch-LCD-4.3** (800×480 capacitive IPS, 8 MB PSRAM, runs LVGL comfortably) plus a rotary encoder, a passive buzzer and one big arcade button. Buy one **Cheap Yellow Display** (ESP32-2432S028R) as well for a 12 € first try; its resistive touch works with gloves. |
+| Users | Own lab first, public later if good. | No store, no accounts. Install-from-link PWA. Keep code clean enough to publish later. |
+| Ladders | GeneRuler 1 kb Plus (SM1332), PageRuler Plus Prestained (26619). RiboRuler low/high as RNA examples. | In `core/data/ladders/`. |
+| Protocols | Lipofectamine 3000, Promofectin + luciferase, Dual-Glo, Roche High Pure RNA. | Converted to the step format in `core/protocols/`. The transfection sheets have fill-in blanks and per-well volumes, so the format gained `input:` and `per_well:` (master-mix multiplier). |
+| Priority | Phone first. | Phase 1 = PWA. ESP32 after the phone app is in daily use. |
+| Editing by the lab | No. | Data files stay simple anyway, but no in-app editor is needed for v1. |
+| Locale | English, µL. | Decimal point. |
+| Look | Teal / orange, TggR Lab logo, simple, neat, retro. | Direction: 1970s bench-instrument. Cream or deep-teal ground, orange indicator accents, Didone serif for the wordmark (as in the logo), monospaced readouts for numbers, thin hairline borders. |
+| Mockups first | Yes. | Screen mockups drafted before code. |
+| Logo | Sent as an image in chat. | Not received as a file. Add the PNG to `assets/brand/` in the repo. |

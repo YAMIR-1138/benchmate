@@ -1,0 +1,22 @@
+{
+  "id": "pageruler-plus-prestained",
+  "name": "PageRuler Plus Prestained Protein Ladder",
+  "type": "protein",
+  "vendor": "Thermo Scientific",
+  "catalog": "26619",
+  "unit": "kDa",
+  "approximate": true,
+  "bands": [
+    { "size": 250, "color": "blue" },
+    { "size": 130, "color": "blue" },
+    { "size": 100, "color": "blue" },
+    { "size": 70,  "color": "orange", "reference": true },
+    { "size": 55,  "color": "blue" },
+    { "size": 35,  "color": "blue" },
+    { "size": 25,  "color": "orange", "reference": true },
+    { "size": 15,  "color": "blue" },
+    { "size": 10,  "color": "green", "reference": true }
+  ],
+  "views": ["gel", "blot"],
+  "source": "Lab printout photographed 2026-09-08; matches vendor band table."
+}

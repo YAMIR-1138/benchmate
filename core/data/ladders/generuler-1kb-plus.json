@@ -1,0 +1,27 @@
+{
+  "id": "generuler-1kb-plus",
+  "name": "GeneRuler 1 kb Plus DNA Ladder",
+  "type": "dna",
+  "vendor": "Thermo Scientific",
+  "catalog": "SM1331 / SM1332 (ready-to-use)",
+  "unit": "bp",
+  "load": { "amount_ng": 500, "gel": "1% agarose, 1X TAE, 7 V/cm, 45 min, 8 cm gel" },
+  "bands": [
+    { "size": 20000, "ng": 20, "percent": 4 },
+    { "size": 10000, "ng": 20, "percent": 4 },
+    { "size": 7000,  "ng": 20, "percent": 4 },
+    { "size": 5000,  "ng": 75, "percent": 15, "reference": true },
+    { "size": 4000,  "ng": 20, "percent": 4 },
+    { "size": 3000,  "ng": 20, "percent": 4 },
+    { "size": 2000,  "ng": 20, "percent": 4 },
+    { "size": 1500,  "ng": 80, "percent": 16, "reference": true },
+    { "size": 1000,  "ng": 25, "percent": 5 },
+    { "size": 700,   "ng": 25, "percent": 5 },
+    { "size": 500,   "ng": 75, "percent": 15, "reference": true },
+    { "size": 400,   "ng": 25, "percent": 5 },
+    { "size": 300,   "ng": 25, "percent": 5 },
+    { "size": 200,   "ng": 25, "percent": 5 },
+    { "size": 75,    "ng": 25, "percent": 5 }
+  ],
+  "source": "Lab printout photographed 2026-09-08; matches vendor band table."
+}

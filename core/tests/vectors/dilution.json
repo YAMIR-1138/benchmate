@@ -1,0 +1,10 @@
+{
+  "description": "C1 * V1 = C2 * V2. Concentrations in the same unit, volumes in µL. Every edition must reproduce these.",
+  "cases": [
+    { "c1": 10, "c2": 1, "v2": 1000, "expect": { "v1": 100, "diluent": 900 } },
+    { "c1": 1000, "c2": 12.5, "v2": 1000, "expect": { "v1": 12.5, "diluent": 987.5 } },
+    { "c1": 5, "v1": 20, "v2": 200, "expect": { "c2": 0.5 } },
+    { "c2": 2, "v1": 50, "v2": 500, "expect": { "c1": 20 } },
+    { "c1": 10, "c2": 1, "v1": 100, "expect": { "v2": 1000, "diluent": 900 } }
+  ]
+}

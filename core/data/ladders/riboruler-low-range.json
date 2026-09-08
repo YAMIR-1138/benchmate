@@ -1,0 +1,13 @@
+{
+  "id": "riboruler-low-range",
+  "name": "RiboRuler Low Range RNA Ladder",
+  "type": "rna",
+  "vendor": "Thermo Scientific",
+  "catalog": "SM1831",
+  "unit": "nt",
+  "bands": [
+    { "size": 1000 }, { "size": 800 }, { "size": 600 }, { "size": 400 },
+    { "size": 300 }, { "size": 200 }, { "size": 100 }
+  ],
+  "source": "Vendor band table. Add ng per band before relying on it for quantification."
+}

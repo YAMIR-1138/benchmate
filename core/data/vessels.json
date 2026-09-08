@@ -1,0 +1,18 @@
+{
+  "note": "Typical values for standard tissue-culture plastic. Growth area varies slightly by vendor; check the datasheet for exact numbers.",
+  "vessels": [
+    { "id": "6-well",   "name": "6-well plate",   "wells": 6,   "area_cm2": 9.5,   "working_volume_ml": [2, 3] },
+    { "id": "12-well",  "name": "12-well plate",  "wells": 12,  "area_cm2": 3.8,   "working_volume_ml": [1, 2] },
+    { "id": "24-well",  "name": "24-well plate",  "wells": 24,  "area_cm2": 1.9,   "working_volume_ml": [0.5, 1] },
+    { "id": "48-well",  "name": "48-well plate",  "wells": 48,  "area_cm2": 0.95,  "working_volume_ml": [0.2, 0.4] },
+    { "id": "96-well",  "name": "96-well plate",  "wells": 96,  "area_cm2": 0.32,  "working_volume_ml": [0.1, 0.2] },
+    { "id": "384-well", "name": "384-well plate", "wells": 384, "area_cm2": 0.056, "working_volume_ml": [0.03, 0.05] },
+    { "id": "dish-35",  "name": "35 mm dish",     "wells": 1,   "area_cm2": 9,     "working_volume_ml": [2, 3] },
+    { "id": "dish-60",  "name": "60 mm dish",     "wells": 1,   "area_cm2": 21,    "working_volume_ml": [4, 5] },
+    { "id": "dish-100", "name": "100 mm dish",    "wells": 1,   "area_cm2": 55,    "working_volume_ml": [10, 12] },
+    { "id": "dish-150", "name": "150 mm dish",    "wells": 1,   "area_cm2": 145,   "working_volume_ml": [20, 25] },
+    { "id": "t25",      "name": "T25 flask",      "wells": 1,   "area_cm2": 25,    "working_volume_ml": [4, 7] },
+    { "id": "t75",      "name": "T75 flask",      "wells": 1,   "area_cm2": 75,    "working_volume_ml": [12, 20] },
+    { "id": "t175",     "name": "T175 flask",     "wells": 1,   "area_cm2": 175,   "working_volume_ml": [35, 50] }
+  ]
+}

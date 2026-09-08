@@ -1,0 +1,8 @@
+{
+  "description": "mass_g = molarity_M * volume_L * MW. Every edition must reproduce these.",
+  "cases": [
+    { "mw": 58.44, "molarity_M": 1, "volume_L": 1, "expect": { "mass_g": 58.44 } },
+    { "mw": 121.14, "molarity_M": 0.1, "volume_L": 0.5, "expect": { "mass_g": 6.057 } },
+    { "mw": 58.44, "mass_g": 5.844, "volume_L": 0.1, "expect": { "molarity_M": 1 } }
+  ]
+}
