@@ -11,7 +11,7 @@ const BAND_COLOR: Record<string, string> = { blue: '#3b7dd8', orange: '#e8912b',
 export function renderLadders(main: HTMLElement) {
   const st = load<{ type: string; id: string }>('ladders', { type: 'dna', id: '' });
   main.append(html`
-    <div class="seg" id="types">${TYPES.map(([k, l]) => `<button data-t="${k}" class="${st.type === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="seg-ctl" id="types">${TYPES.map(([k, l]) => `<button data-t="${k}" class="${st.type === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div class="chips" id="picks"></div>
     <div id="lane"></div>
   `);
@@ -29,7 +29,7 @@ export function renderLadders(main: HTMLElement) {
     const hasNg = L.bands.some((b) => b.ng !== undefined);
     const bands = L.bands.map((b) => {
       const yy = y(b.size), th = b.reference ? 7 : 4;
-      const fill = b.color ? BAND_COLOR[b.color] ?? '#ccc' : b.reference ? 'var(--text)' : 'var(--muted)';
+      const fill = b.color ? BAND_COLOR[b.color] ?? '#ccc' : b.reference ? '#f6efdc' : '#b9b09c';
       return `<rect x="14" y="${(yy - th / 2).toFixed(1)}" width="62" height="${th}" rx="2" fill="${fill}" ${b.color ? '' : 'opacity="0.95"'}/>
         <text x="94" y="${(yy + 4).toFixed(1)}" font-size="13" font-family="var(--mono)" font-weight="${b.reference ? '700' : '400'}" fill="${b.reference ? 'var(--text)' : 'var(--muted)'}">${L.approximate ? '~' : ''}${b.size.toLocaleString('en-US')}</text>
         ${b.ng !== undefined ? `<text x="180" y="${(yy + 4).toFixed(1)}" font-size="13" font-family="var(--mono)" fill="${b.reference ? 'var(--orange)' : 'var(--muted)'}">${b.ng}</text>` : ''}`;

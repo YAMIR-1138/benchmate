@@ -1,5 +1,6 @@
 import { load, save } from '../lib/store';
 import { $, esc, html, vibrate } from '../lib/dom';
+import { sevenSeg } from '../lib/sevenseg';
 
 interface Counter { id: string; name: string; n: number }
 type State = { counters: Counter[]; active: string };
@@ -7,7 +8,7 @@ type State = { counters: Counter[]; active: string };
 export function renderCounter(main: HTMLElement) {
   const st = load<State>('counter', { counters: [{ id: 'a', name: 'Plate 1', n: 0 }], active: 'a' });
   main.append(html`
-    <div class="count-head"><input id="name" type="text" style="text-align:center;font-size:14px;letter-spacing:0.15em;text-transform:uppercase;color:var(--teal);background:transparent;border:0;min-height:36px;width:100%" /><div class="n" id="n">0</div><div class="mono muted" id="others" style="font-size:13px"></div></div>
+    <div class="count-head"><input id="name" type="text" style="text-align:center;font-size:14px;letter-spacing:0.15em;text-transform:uppercase;color:var(--teal);background:transparent;border:0;min-height:36px;width:100%" /><div class="n" id="n"></div><div class="mono muted" id="others" style="font-size:13px"></div></div>
     <div class="tapzone" id="tap"><div class="big">tap anywhere</div><div class="cap">+1</div></div>
     <div class="actions"><button class="btn tall" id="minus">−1</button><button class="btn tall quiet" id="reset">Reset</button><button class="btn tall orange" id="next" style="flex:1.4">Next</button></div>
     <div class="chips" id="chips" style="padding-top:14px"></div>
@@ -16,7 +17,7 @@ export function renderCounter(main: HTMLElement) {
   const nEl = $(main, '#n'), name = $<HTMLInputElement>(main, '#name'), chips = $(main, '#chips'), others = $(main, '#others');
   function paint() {
     const c = cur(); st.active = c.id; save('counter', st);
-    nEl.textContent = String(c.n); name.value = c.name;
+    nEl.innerHTML = sevenSeg(String(c.n).padStart(3, ' '), { height: 88 }); name.value = c.name;
     others.textContent = st.counters.filter((x) => x !== c).map((x) => `${x.name}: ${x.n}`).join(' · ');
     chips.innerHTML = st.counters.map((x) => `<button class="chip ${x === c ? 'on' : ''}" data-id="${x.id}">${esc(x.name)} <span class="mono">${x.n}</span></button>`).join('') + (st.counters.length > 1 ? `<button class="chip" id="del" style="color:var(--danger)">remove</button>` : '');
   }

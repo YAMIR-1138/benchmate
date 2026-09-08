@@ -73,7 +73,7 @@ export function renderConvert(main: HTMLElement) {
     }
     if (c === 'dna') {
       body.append(html`
-        <div class="seg" id="kind">${(['dsDNA', 'ssDNA', 'RNA'] as NAKind[]).map((k) => `<button data-k="${k}" class="${(g('kind') ?? 'dsDNA') === k ? 'on' : ''}">${k}</button>`).join('')}</div>
+        <div class="seg-ctl" id="kind">${(['dsDNA', 'ssDNA', 'RNA'] as NAKind[]).map((k) => `<button data-k="${k}" class="${(g('kind') ?? 'dsDNA') === k ? 'on' : ''}">${k}</button>`).join('')}</div>
         <div class="fields">
           <div class="field"><label for="c-len">Length</label><input id="c-len" name="len" type="text" inputmode="decimal" value="${esc(v(c + '.len', ''))}" /><span class="unit" style="border:0;background:transparent" id="lenu">bp</span></div>
           <div class="field"><label for="c-ng">Amount</label><input id="c-ng" name="ng" type="text" inputmode="decimal" value="${esc(v(c + '.ng', ''))}" /><span class="unit" style="border:0;background:transparent">ng</span></div>
@@ -104,7 +104,7 @@ export function renderConvert(main: HTMLElement) {
     }
     if (c === 'a260') {
       body.append(html`
-        <div class="seg" id="kind">${(['dsDNA', 'ssDNA', 'RNA'] as const).map((k) => `<button data-k="${k}" class="${(g('kind') ?? 'dsDNA') === k ? 'on' : ''}">${k}</button>`).join('')}</div>
+        <div class="seg-ctl" id="kind">${(['dsDNA', 'ssDNA', 'RNA'] as const).map((k) => `<button data-k="${k}" class="${(g('kind') ?? 'dsDNA') === k ? 'on' : ''}">${k}</button>`).join('')}</div>
         <div class="fields">
           <div class="field"><label for="c-a">A260</label><input id="c-a" name="a" type="text" inputmode="decimal" value="${esc(v(c + '.a', ''))}" /></div>
           <div class="field"><label for="c-d">Dilution factor</label><input id="c-d" name="d" type="text" inputmode="decimal" value="${esc(v(c + '.d', '1'))}" /><span class="unit" style="border:0;background:transparent">×</span></div>

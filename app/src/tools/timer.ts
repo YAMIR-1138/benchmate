@@ -1,17 +1,18 @@
 import { timerEngine, type Timer } from './timerEngine';
 import { mmss, parseDuration } from '../lib/fmt';
 import { $, $$, esc, html, toast } from '../lib/dom';
+import { sevenSeg } from '../lib/sevenseg';
 
 const PRESETS: [string, number][] = [['30 s', 30e3], ['1 min', 60e3], ['2 min', 120e3], ['5 min', 300e3], ['10 min', 600e3], ['15 min', 900e3], ['30 min', 1800e3], ['1 h', 3600e3]];
 const R = 112, C = 2 * Math.PI * R;
-const TICKS = Array.from({ length: 60 }, (_, i) => { const a = (i * 6 - 90) * Math.PI / 180, big = i % 5 === 0, r1 = big ? 122 : 126, r2 = 132; return `<line x1="${(134 + r1 * Math.cos(a)).toFixed(1)}" y1="${(134 + r1 * Math.sin(a)).toFixed(1)}" x2="${(134 + r2 * Math.cos(a)).toFixed(1)}" y2="${(134 + r2 * Math.sin(a)).toFixed(1)}" stroke="${big ? 'var(--text)' : 'var(--line)'}" stroke-width="${big ? 2 : 1}"/>`; }).join('');
+const TICKS = Array.from({ length: 60 }, (_, i) => { const a = (i * 6 - 90) * Math.PI / 180, big = i % 5 === 0, r1 = big ? 122 : 126, r2 = 132; return `<line x1="${(134 + r1 * Math.cos(a)).toFixed(1)}" y1="${(134 + r1 * Math.sin(a)).toFixed(1)}" x2="${(134 + r2 * Math.cos(a)).toFixed(1)}" y2="${(134 + r2 * Math.sin(a)).toFixed(1)}" stroke="${big ? 'var(--text)' : 'var(--line-soft)'}" stroke-width="${big ? 2 : 1}"/>`; }).join('');
 
 export function renderTimer(main: HTMLElement) {
   let focus: Timer | undefined = timerEngine.timers[0];
   main.append(html`
     <div class="ring">
-      <svg viewBox="0 0 268 268">${TICKS}<g transform="rotate(-90 134 134)"><circle cx="134" cy="134" r="${R}" fill="none" stroke="var(--line)" stroke-width="5"/><circle id="arc" cx="134" cy="134" r="${R}" fill="none" stroke="var(--orange)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></g></svg>
-      <div class="in"><div class="t" id="big">00:00</div><div class="l" id="lab">no timer</div><div class="s" id="sub"></div></div>
+      <svg class="dial" viewBox="0 0 268 268">${TICKS}<g transform="rotate(-90 134 134)"><circle cx="134" cy="134" r="${R}" fill="none" stroke="var(--line)" stroke-width="5"/><circle id="arc" cx="134" cy="134" r="${R}" fill="none" stroke="var(--orange)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></g></svg>
+      <div class="in"><div class="t" id="big">${sevenSeg("00:00", { height: 50 })}</div><div class="l" id="lab">no timer</div><div class="s" id="sub"></div></div>
     </div>
     <div class="actions" id="ctl" style="padding:0 8px"></div>
     <div class="section"><div class="cap">Presets</div><div class="chips" id="presets"></div>
@@ -32,10 +33,10 @@ export function renderTimer(main: HTMLElement) {
     const ts = timerEngine.timers;
     if (focus && !ts.includes(focus)) focus = ts[0];
     if (!focus) focus = ts[0];
-    if (!focus) { big.textContent = '00:00'; big.classList.remove('done'); lab.textContent = 'no timer'; sub.textContent = ''; arc.setAttribute('stroke-dashoffset', String(C)); ctl.innerHTML = ''; }
+    if (!focus) { big.innerHTML = sevenSeg('00:00', { height: 50 }); big.classList.remove('done'); lab.textContent = 'no timer'; sub.textContent = ''; arc.setAttribute('stroke-dashoffset', String(C)); ctl.innerHTML = ''; }
     else {
       const rem = timerEngine.remaining(focus);
-      big.textContent = mmss(rem); big.classList.toggle('done', focus.done);
+      big.innerHTML = sevenSeg(mmss(rem), { height: rem >= 3600000 ? 40 : 50 }); big.classList.toggle('done', focus.done);
       lab.textContent = focus.done ? `${focus.label} · done` : focus.label; sub.textContent = focus.endAt ? `of ${mmss(focus.durationMs)}` : focus.done ? '' : 'paused';
       arc.setAttribute('stroke-dashoffset', String(C * (rem / focus.durationMs)));
       ctl.innerHTML = focus.done ? `<button class="btn orange tall" data-a="dismiss">Dismiss</button><button class="btn tall" data-a="again">Again</button>`
