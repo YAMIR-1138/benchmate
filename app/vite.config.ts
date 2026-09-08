@@ -8,7 +8,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 export default defineConfig({
   base: process.env.BASE_PATH ?? '/benchmate/',
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
-  build: { assetsInlineLimit: 65536 },
+  build: { assetsInlineLimit: 4096 },
   resolve: {
     alias: { '@core': fileURLToPath(new URL('../core', import.meta.url)) },
   },
@@ -31,7 +31,7 @@ export default defineConfig({
           { src: 'icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: { globPatterns: ['**/*.{js,css,html,png,svg,json,md}'] },
+      workbox: { globPatterns: ['**/*.{js,css,html,png,svg,json,md,woff2}'] },
     }),
   ],
   test: { include: ['tests/**/*.test.ts'] },

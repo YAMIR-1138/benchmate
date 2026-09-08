@@ -15,7 +15,7 @@ export function renderHome(app: HTMLElement, main: HTMLElement) {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
   tb.innerHTML = dark ? icons.sun : icons.moon;
   tb.onclick = toggleTheme;
-  app.append(brand, el('div', { class: 'hair' }));
+  app.append(brand, el('div', { class: 'stripe' }));
 
   const grid = el('div', { class: 'grid' });
   for (const t of TOOLS) {
@@ -31,6 +31,6 @@ export function renderHome(app: HTMLElement, main: HTMLElement) {
   main.append(grid);
   app.append(main);
   const foot = el('div', { class: 'foot' });
-  foot.innerHTML = `<span>v${__APP_VERSION__} · offline</span><span>no ads · no accounts</span>`;
+  foot.innerHTML = `<span>model BM-1 · v${__APP_VERSION__}</span><span>no ads · no accounts</span>`;
   app.append(foot);
 }

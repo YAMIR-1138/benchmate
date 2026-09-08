@@ -3,13 +3,14 @@ import { mmss, parseDuration } from '../lib/fmt';
 import { $, $$, esc, html, toast } from '../lib/dom';
 
 const PRESETS: [string, number][] = [['30 s', 30e3], ['1 min', 60e3], ['2 min', 120e3], ['5 min', 300e3], ['10 min', 600e3], ['15 min', 900e3], ['30 min', 1800e3], ['1 h', 3600e3]];
-const R = 110, C = 2 * Math.PI * R;
+const R = 112, C = 2 * Math.PI * R;
+const TICKS = Array.from({ length: 60 }, (_, i) => { const a = (i * 6 - 90) * Math.PI / 180, big = i % 5 === 0, r1 = big ? 122 : 126, r2 = 132; return `<line x1="${(134 + r1 * Math.cos(a)).toFixed(1)}" y1="${(134 + r1 * Math.sin(a)).toFixed(1)}" x2="${(134 + r2 * Math.cos(a)).toFixed(1)}" y2="${(134 + r2 * Math.sin(a)).toFixed(1)}" stroke="${big ? 'var(--text)' : 'var(--line)'}" stroke-width="${big ? 2 : 1}"/>`; }).join('');
 
 export function renderTimer(main: HTMLElement) {
   let focus: Timer | undefined = timerEngine.timers[0];
   main.append(html`
     <div class="ring">
-      <svg viewBox="0 0 260 260"><circle cx="130" cy="130" r="${R}" fill="none" stroke="var(--line)" stroke-width="6"/><circle id="arc" cx="130" cy="130" r="${R}" fill="none" stroke="var(--orange)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg>
+      <svg viewBox="0 0 268 268">${TICKS}<g transform="rotate(-90 134 134)"><circle cx="134" cy="134" r="${R}" fill="none" stroke="var(--line)" stroke-width="5"/><circle id="arc" cx="134" cy="134" r="${R}" fill="none" stroke="var(--orange)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></g></svg>
       <div class="in"><div class="t" id="big">00:00</div><div class="l" id="lab">no timer</div><div class="s" id="sub"></div></div>
     </div>
     <div class="actions" id="ctl" style="padding:0 8px"></div>

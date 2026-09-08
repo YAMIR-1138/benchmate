@@ -68,7 +68,7 @@ function route() {
     renderHome(app, main);
   } else {
     app.append(header(tool.name, tool.idx));
-    app.append(el('div', { class: 'hair' }));
+    app.append(el('div', { class: 'stripe' }));
     (main as any).dataset.sub = rest.join('/');
     tool.render(main);
     cleanup = (main as any).__cleanup;
