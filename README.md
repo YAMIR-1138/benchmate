@@ -5,8 +5,8 @@ accounts. Runs as an installable web app on Android, iPhone and iPad; an ESP32 b
 edition is planned.
 
 Tools: dilution, molar, unit converter (incl. ×g ↔ rpm, DNA amount, A260), timers,
-counter, DNA/RNA/protein ladders, plates and seeding, step-by-step protocols, and a link to
-[ΣpinZero](https://github.com/YAMIR-1138/SpinZero) for rotor balancing.
+counter, DNA/RNA/protein ladders, plates and seeding, step-by-step protocols, and a built-in
+edition of [ΣpinZero](https://github.com/YAMIR-1138/SpinZero) for rotor balancing.
 
 ## Layout
 

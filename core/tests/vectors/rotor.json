@@ -1,0 +1,19 @@
+{
+  "description": "Centrifuge balancing (ΣpinZero rule): k tubes balance in n slots iff k and n−k are both sums of primes dividing n. Every edition must agree.",
+  "cases": [
+    { "n": 12, "k": 1, "expect": { "possible": false } },
+    { "n": 12, "k": 2, "expect": { "possible": true } },
+    { "n": 12, "k": 5, "expect": { "possible": true } },
+    { "n": 12, "k": 7, "expect": { "possible": true } },
+    { "n": 12, "k": 11, "expect": { "possible": false } },
+    { "n": 24, "k": 5, "expect": { "possible": true } },
+    { "n": 24, "k": 23, "expect": { "possible": false } },
+    { "n": 30, "k": 7, "expect": { "possible": true } },
+    { "n": 30, "k": 1, "expect": { "possible": false } },
+    { "n": 7, "k": 3, "expect": { "possible": false } },
+    { "n": 7, "k": 7, "expect": { "possible": true } },
+    { "n": 18, "k": 4, "expect": { "possible": true } },
+    { "n": 18, "k": 5, "expect": { "possible": true } },
+    { "n": 18, "k": 17, "expect": { "possible": false } }
+  ]
+}

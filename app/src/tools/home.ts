@@ -20,14 +20,12 @@ export function renderHome(app: HTMLElement, main: HTMLElement) {
   const grid = el('div', { class: 'grid' });
   TOOLS.forEach((t, i) => {
     const running = t.id === 'timer' ? timerEngine.timers.filter((x) => x.endAt).length : 0;
-    const a = el('a', { class: `tile k${(i % 4) + 1}` + (t.soon ? ' soon' : ''), href: `#/${t.id}` });
-    a.innerHTML = `<div class="row">${icons[t.icon]}<span class="idx">${t.idx}</span></div>
+    const last = i === TOOLS.length - 1 && TOOLS.length % 2 === 1;
+    const a = el('a', { class: `tile k${(i % 4) + 1}` + (last ? ' wide' : '') + (t.soon ? ' soon' : ''), href: `#/${t.id}` });
+    a.innerHTML = last ? `${icons[t.icon]}<div style="flex:1 1 auto"><div class="name">${t.name}</div><div class="sub">${t.sub}</div></div><span class="idx">${t.idx}</span>` : `<div class="row">${icons[t.icon]}<span class="idx">${t.idx}</span></div>
       <div><div class="name">${t.name}</div><div class="sub">${running ? `${running} running · ${mmss(Math.max(...timerEngine.timers.filter((x) => x.endAt).map((x) => x.endAt! - Date.now())))}` : t.sub}</div></div>`;
     grid.append(a);
   });
-  const sz = el('a', { class: 'tile wide', style: 'border-color:var(--orange)', href: 'https://yamir-1138.github.io/SpinZero/', target: '_blank', rel: 'noopener' });
-  sz.innerHTML = `${icons.rotor}<div style="flex:1 1 auto"><div class="name"><span style="color:var(--orange)">Σ</span>pinZero</div><div class="sub">balance the rotor</div></div><span class="idx">09</span>`;
-  grid.append(sz);
   main.append(grid);
   app.append(main);
   const foot = el('div', { class: 'foot' });
