@@ -12,6 +12,7 @@ import { renderLadders } from './tools/ladders';
 import { renderPlates } from './tools/plates';
 import { renderProtocols } from './tools/protocols';
 import { renderSpinZero } from './tools/spinzero';
+import { renderNanodrop } from './tools/nanodrop';
 import { timerEngine } from './tools/timerEngine';
 
 export interface Tool { id: string; idx: string; name: string; sub: string; icon: keyof typeof icons; render: (main: HTMLElement) => void; soon?: boolean }
@@ -23,9 +24,10 @@ export const TOOLS: Tool[] = [
   { id: 'timer', idx: '04', name: 'Timer', sub: 'alarms, presets', icon: 'clock', render: renderTimer },
   { id: 'counter', idx: '05', name: 'Counter', sub: 'colonies, cells', icon: 'tally', render: renderCounter },
   { id: 'ladders', idx: '06', name: 'Ladders', sub: 'DNA · RNA · protein', icon: 'lanes', render: renderLadders },
-  { id: 'plates', idx: '07', name: 'Plates', sub: 'area, seeding', icon: 'plate', render: renderPlates },
+  { id: 'plates', idx: '07', name: 'Seeding', sub: 'count → plate', icon: 'plate', render: renderPlates },
   { id: 'protocols', idx: '08', name: 'Protocols', sub: 'step by step', icon: 'list', render: renderProtocols },
   { id: 'spinzero', idx: '09', name: 'ΣpinZero', sub: 'balance the rotor', icon: 'rotor', render: renderSpinZero },
+  { id: 'nanodrop', idx: '10', name: 'NanoDrop', sub: 'purity, take, normalise', icon: 'drop2', render: renderNanodrop },
 ];
 
 // ---- theme ----

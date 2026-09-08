@@ -64,3 +64,49 @@ export function seeding(densityPerCm2: number, areaCm2: number, suspensionCellsP
 
 /** Master mix: per-well amount × wells × (1 + extra). */
 export function masterMix(perWell: number, wells: number, extra = 0.1): number { return perWell * wells * (1 + extra); }
+
+// ---- cell counting & seeding ----
+/** Hemocytometer: cells/mL = (cells counted / large squares counted) × dilution factor × 10⁴. */
+export function hemocytometer(cellsCounted: number, squares: number, dilution = 1): number { return (cellsCounted / squares) * dilution * 1e4; }
+
+export interface SeedPlan { cellsPerWell: number; suspPerWell_mL: number; mediumPerWell_mL: number; wells: number; totalCells: number; totalSusp_mL: number; totalMedium_mL: number; extra: number; enough: boolean; available?: number }
+/** From a suspension concentration to a dispensing plan. Volumes include `extra` (default 10 %). */
+export function seedPlan(o: { cellsPerMl: number; cellsPerWell: number; wells: number; wellVolume_mL: number; available_mL?: number; extra?: number }): SeedPlan {
+  const extra = o.extra ?? 0.1, f = 1 + extra;
+  const suspPerWell = o.cellsPerWell / o.cellsPerMl;
+  const mediumPerWell = Math.max(0, o.wellVolume_mL - suspPerWell);
+  const available = o.available_mL !== undefined ? o.available_mL * o.cellsPerMl : undefined;
+  return {
+    cellsPerWell: o.cellsPerWell, suspPerWell_mL: suspPerWell, mediumPerWell_mL: mediumPerWell, wells: o.wells,
+    totalCells: o.cellsPerWell * o.wells, totalSusp_mL: suspPerWell * o.wells * f, totalMedium_mL: mediumPerWell * o.wells * f, extra,
+    enough: available === undefined ? true : available >= o.cellsPerWell * o.wells, available,
+  };
+}
+
+// ---- nucleic acid QC (NanoDrop) ----
+export type NAType = 'dsDNA' | 'RNA' | 'ssDNA';
+export interface Verdict { status: 'good' | 'warn' | 'bad'; note: string }
+export function verdict260280(r: number, kind: NAType): Verdict {
+  const [lo, hi, ideal] = kind === 'RNA' ? [1.9, 2.15, 2.0] : [1.75, 2.0, 1.8];
+  if (r >= lo && r <= hi) return { status: 'good', note: `Clean. ~${ideal} expected for ${kind}.` };
+  if (r < lo) return { status: r < lo - 0.2 ? 'bad' : 'warn', note: 'Low: protein or phenol carry-over. Re-purify or accept for gels only.' };
+  return { status: kind === 'RNA' ? 'warn' : 'warn', note: kind === 'RNA' ? 'High: usually fine for RNA. Check blank if > 2.2.' : 'High: RNA present in the DNA prep. Add RNase A if it matters.' };
+}
+export function verdict260230(r: number): Verdict {
+  if (r >= 1.8 && r <= 2.3) return { status: 'good', note: '2.0–2.2 expected.' };
+  if (r < 1.8) return { status: r < 1.5 ? 'bad' : 'warn', note: 'Low: guanidine salt, phenol, EDTA or carbohydrate. Extra wash or re-precipitate. qPCR and sequencing may suffer.' };
+  return { status: 'warn', note: 'High: check the blank and the pedestal.' };
+}
+export function verdictConc(c: number): Verdict {
+  if (c < 5) return { status: 'bad', note: 'Too low: ratios are meaningless below ~5 ng/µL.' };
+  if (c < 20) return { status: 'warn', note: 'Low: ratios are noisy under ~20 ng/µL.' };
+  if (c > 3000) return { status: 'warn', note: 'Very high: outside most pedestal ranges. Dilute and re-read.' };
+  return { status: 'good', note: '' };
+}
+/** Volume (µL) that holds `amount_ng` at `conc` ng/µL. */
+export function volumeForAmount(amount_ng: number, conc: number): number { return amount_ng / conc; }
+/** Normalise a sample to `target` ng/µL in `finalVol` µL. */
+export function normalize(conc: number, target: number, finalVol: number): { sample: number; water: number; ok: boolean } {
+  const sample = (target * finalVol) / conc;
+  return { sample, water: finalVol - sample, ok: sample <= finalVol };
+}

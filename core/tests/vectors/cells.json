@@ -1,0 +1,15 @@
+{
+  "description": "Hemocytometer and seeding. cells/mL = counted / squares × dilution × 1e4.",
+  "hemocytometer": [
+    { "counted": 120, "squares": 4, "dilution": 2, "expect": { "cellsPerMl": 600000 } },
+    { "counted": 85, "squares": 4, "dilution": 1, "expect": { "cellsPerMl": 212500 } }
+  ],
+  "seed": [
+    { "cellsPerMl": 1000000, "cellsPerWell": 50000, "wells": 24, "wellVolume_mL": 0.5, "extra": 0.1,
+      "expect": { "suspPerWell_mL": 0.05, "mediumPerWell_mL": 0.45, "totalCells": 1200000, "totalSusp_mL": 1.32, "totalMedium_mL": 11.88 } }
+  ],
+  "normalize": [
+    { "conc": 250, "target": 50, "finalVol": 20, "expect": { "sample": 4, "water": 16, "ok": true } },
+    { "conc": 30, "target": 50, "finalVol": 20, "expect": { "ok": false } }
+  ]
+}
