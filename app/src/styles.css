@@ -156,16 +156,16 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 .seg-ctl button.on { background: var(--orange); color: var(--key-ink); }
 
 /* timer dial */
-.ring { position: relative; width: 272px; height: 272px; margin: 16px auto 0; }
-.ring svg.dial { position: absolute; inset: 0; width: 272px; height: 272px; }
-.ring .in { position: absolute; inset: 30px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.ring { position: relative; width: 320px; height: 320px; max-width: 100%; margin: 12px auto 0; }
+.ring svg.dial { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ring .in { position: absolute; inset: 11%; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
 .ring .t { display: flex; justify-content: center; }
-.ring .l { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--lcd-ink); max-width: 170px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.85; }
-.ring .s { font-family: var(--mono); font-size: 12px; color: var(--lcd-ink); opacity: 0.7; }
+.ring .l { font-family: var(--mono); font-size: 14px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--lcd-ink); max-width: 200px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.85; }
+.ring .s { font-family: var(--mono); font-size: 14px; color: var(--lcd-ink); opacity: 0.75; }
 .timer-row .dot { width: 12px; height: 12px; border-radius: 6px; background: var(--teal); border: 1.5px solid var(--line); flex: 0 0 auto; }
 .timer-row.done .dot { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
 .timer-row.paused .dot { background: var(--muted); }
-.timer-row .t { font-family: var(--mono); font-weight: 700; font-size: 20px; min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
+.timer-row .t { font-family: var(--mono); font-weight: 700; font-size: 24px; min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
 .timer-row .x { width: 40px; height: 40px; border: 0; background: transparent; color: var(--muted); font-size: 22px; cursor: pointer; }
 .custom { display: flex; gap: 10px; padding-top: 10px; }
 .custom input { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 12px; font-size: 17px; }

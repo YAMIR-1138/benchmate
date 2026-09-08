@@ -9,14 +9,14 @@ const SEG: Record<string, string> = {
 };
 // segment polygons for a 10×18 cell (slightly slanted for the classic look)
 const P: Record<string, string> = {
-  a: '1.4,0 8.6,0 7.4,1.4 2.6,1.4', b: '9,0.6 9,8.4 7.6,7.4 7.6,2', c: '9,9.6 9,17.4 7.6,16 7.6,10.6', d: '1.4,18 8.6,18 7.4,16.6 2.6,16.6',
-  e: '1,9.6 1,17.4 2.4,16 2.4,10.6', f: '1,0.6 1,8.4 2.4,7.4 2.4,2', g: '1.6,9 2.8,8.3 7.2,8.3 8.4,9 7.2,9.7 2.8,9.7',
+  a: '1.2,0 8.8,0 7,1.9 3,1.9', b: '9.4,0.5 9.4,8.5 7.5,7.3 7.5,2.2', c: '9.4,9.5 9.4,17.5 7.5,15.8 7.5,10.7', d: '1.2,18 8.8,18 7,16.1 3,16.1',
+  e: '0.6,9.5 0.6,17.5 2.5,15.8 2.5,10.7', f: '0.6,0.5 0.6,8.5 2.5,7.3 2.5,2.2', g: '1.4,9 2.8,8.1 7.2,8.1 8.6,9 7.2,9.9 2.8,9.9',
 };
 export function sevenSeg(text: string, opts: { height?: number; ghost?: number } = {}): string {
-  const h = opts.height ?? 64, ghost = opts.ghost ?? 0.09;
+  const h = opts.height ?? 64, ghost = opts.ghost ?? 0.06;
   const cells: string[] = []; let x = 0;
   for (const ch of text) {
-    if (ch === ':') { cells.push(`<g transform="translate(${x},0)"><circle cx="2" cy="5" r="1.3" fill="currentColor"/><circle cx="2" cy="13" r="1.3" fill="currentColor"/></g>`); x += 4.5; continue; }
+    if (ch === ':') { cells.push(`<g transform="translate(${x},0)"><circle cx="2.2" cy="5" r="1.5" fill="currentColor"/><circle cx="2.2" cy="13" r="1.5" fill="currentColor"/></g>`); x += 5; continue; }
     if (ch === '.') { cells.push(`<g transform="translate(${x},0)"><circle cx="1.6" cy="17" r="1.3" fill="currentColor"/></g>`); x += 4; continue; }
     const on = SEG[ch] ?? '';
     const segs = Object.keys(P).map((k) => `<polygon points="${P[k]}" fill="currentColor" opacity="${on.includes(k) ? 1 : ghost}"/>`).join('');
