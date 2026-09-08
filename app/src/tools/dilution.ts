@@ -65,8 +65,8 @@ export function renderDilution(main: HTMLElement) {
       const solvedBase = (r as any)[r.solved] as number;
       const solvedVal = solvedBase / (UNITS[familyOf(solvedUnit) as Family][solvedUnit]);
       $(f, 'input').setAttribute('placeholder', fmt(solvedVal));
-      const a = autoUnit(r.v1, 'volume', ['mL', 'µL', 'nL']);
-      const b = autoUnit(r.diluent, 'volume', ['mL', 'µL', 'nL']);
+      const a = autoUnit(r.v1, 'volume', ['mL', 'µL']);
+      const b = autoUnit(r.diluent, 'volume', ['mL', 'µL']);
       $(main, '#r-v1').textContent = fmt(a.value, 5); $(main, '#r-v1u').textContent = `${a.unit} stock`;
       $(main, '#r-dil').textContent = fmt(b.value, 5); $(main, '#r-dilu').textContent = `${b.unit} diluent`;
       const c2disp = fmt(r.c2 / UNITS[fc2][st.uc2]);

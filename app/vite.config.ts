@@ -8,6 +8,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 export default defineConfig({
   base: process.env.BASE_PATH ?? '/benchmate/',
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  build: { assetsInlineLimit: 65536 },
   resolve: {
     alias: { '@core': fileURLToPath(new URL('../core', import.meta.url)) },
   },

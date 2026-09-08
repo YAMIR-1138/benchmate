@@ -3,11 +3,12 @@ import { icons } from '../lib/icons';
 import { el } from '../lib/dom';
 import { timerEngine } from './timerEngine';
 import { mmss } from '../lib/fmt';
+import logo from '../assets/logo.png';
 
 export function renderHome(app: HTMLElement, main: HTMLElement) {
   const brand = el('div', { class: 'brand' });
   brand.innerHTML = `
-    <img src="${import.meta.env.BASE_URL}icons/logo-256.png" alt="TggR Lab" />
+    <img src="${logo}" alt="TGGR Lab" />
     <div style="flex:1 1 auto"><div class="lab">TGGR</div><div class="word">Bench <b>Mate</b></div></div>
     <button class="iconbtn themebtn" aria-label="Toggle light/dark"></button>`;
   const tb = brand.querySelector<HTMLButtonElement>('.themebtn')!;
