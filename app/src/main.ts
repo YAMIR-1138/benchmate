@@ -13,6 +13,8 @@ import { renderPlates } from './tools/plates';
 import { renderProtocols } from './tools/protocols';
 import { renderSpinZero } from './tools/spinzero';
 import { renderNanodrop } from './tools/nanodrop';
+import { renderLuciferase } from './tools/luciferase';
+import { renderPlateMap } from './tools/platemap';
 import { timerEngine } from './tools/timerEngine';
 
 export interface Tool { id: string; idx: string; name: string; sub: string; icon: keyof typeof icons; render: (main: HTMLElement) => void; soon?: boolean }
@@ -27,7 +29,9 @@ export const TOOLS: Tool[] = [
   { id: 'plates', idx: '07', name: 'Seeding', sub: 'count → plate', icon: 'plate', render: renderPlates },
   { id: 'protocols', idx: '08', name: 'Protocols', sub: 'step by step', icon: 'list', render: renderProtocols },
   { id: 'spinzero', idx: '09', name: 'ΣpinZero', sub: 'balance the rotor', icon: 'rotor', render: renderSpinZero },
-  { id: 'nanodrop', idx: '10', name: 'NanoDrop', sub: 'purity, take, normalise', icon: 'drop2', render: renderNanodrop },
+  { id: 'nanodrop', idx: '10', name: 'NanoDrop', sub: 'what the numbers mean', icon: 'drop2', render: renderNanodrop },
+  { id: 'luciferase', idx: '11', name: 'Luciferase', sub: 'firefly / Renilla, fold', icon: 'flame', render: renderLuciferase },
+  { id: 'platemap', idx: '12', name: 'Plate Map', sub: '96 · 384 · tick as you go', icon: 'grid', render: renderPlateMap },
 ];
 
 // ---- theme ----

@@ -10,6 +10,8 @@ export const icons = {
   list: w('<path d="M9 6 h11"/><path d="M9 12 h11"/><path d="M9 18 h11"/><path d="M4 6 l1 1 2-2"/><path d="M4 12 l1 1 2-2"/><circle cx="5" cy="18" r="1"/>'),
   rotor: w('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="6" r="1.6"/><circle cx="17.2" cy="15" r="1.6"/><circle cx="6.8" cy="15" r="1.6"/>'),
   drop2: w('<path d="M12 3 C12 3 6 10 6 14 a6 6 0 0 0 12 0 C18 10 12 3 12 3 Z"/><path d="M3 21 h18"/><path d="M8 21 v-2 M12 21 v-3 M16 21 v-2"/>'),
+  flame: w('<path d="M12 3 c1 4 5 5 5 10 a5 5 0 0 1 -10 0 c0 -2 1 -3 2 -4 c0 2 1 3 2 3 c1 -3 0 -6 1 -9 Z"/>'),
+  grid: w('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="7.5" cy="8.5" r="1.5"/><circle cx="12" cy="8.5" r="1.5"/><circle cx="16.5" cy="8.5" r="1.5"/><circle cx="7.5" cy="15.5" r="1.5"/><path d="M10.5 15.5 l1 1 2-2"/><path d="M15 15.5 l1 1 2-2"/>'),
   back: w('<path d="M15 5 l-7 7 7 7"/>'),
   sun: w('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
   moon: w('<path d="M20 14.5 A8 8 0 1 1 9.5 4 a6.5 6.5 0 0 0 10.5 10.5 Z"/>'),
