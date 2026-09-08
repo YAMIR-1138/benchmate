@@ -13,7 +13,7 @@ const P: Record<string, string> = {
   e: '0.6,9.5 0.6,17.5 2.5,15.8 2.5,10.7', f: '0.6,0.5 0.6,8.5 2.5,7.3 2.5,2.2', g: '1.4,9 2.8,8.1 7.2,8.1 8.6,9 7.2,9.9 2.8,9.9',
 };
 export function sevenSeg(text: string, opts: { height?: number; ghost?: number } = {}): string {
-  const h = opts.height ?? 64, ghost = opts.ghost ?? 0.06;
+  const h = opts.height ?? 64, ghost = opts.ghost ?? 0.045;
   const cells: string[] = []; let x = 0;
   for (const ch of text) {
     if (ch === ':') { cells.push(`<g transform="translate(${x},0)"><circle cx="2.2" cy="5" r="1.5" fill="currentColor"/><circle cx="2.2" cy="13" r="1.5" fill="currentColor"/></g>`); x += 5; continue; }

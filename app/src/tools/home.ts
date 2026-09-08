@@ -31,4 +31,7 @@ export function renderHome(app: HTMLElement, main: HTMLElement) {
   const foot = el('div', { class: 'foot' });
   foot.innerHTML = `<span>model BM-1 · v${__APP_VERSION__}</span><span>no ads · no accounts</span>`;
   app.append(foot);
+  const credit = el('div', { class: 'credit' });
+  credit.innerHTML = `made by <a href="https://github.com/YAMIR-1138" target="_blank" rel="noopener">Yamir</a> at TGGR Lab · built with <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> · <a href="https://github.com/YAMIR-1138/benchmate" target="_blank" rel="noopener">source</a>`;
+  app.append(credit);
 }
