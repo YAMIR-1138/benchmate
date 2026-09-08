@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; background:#0e1c1d; color:#f1e9d8; font-family:'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+    a { color:#2fa7ab; } a:hover { color:#e8912b; }
+    .screen { width:390px; height:844px; overflow:hidden; background:#0e1c1d; display:flex; flex-direction:column; position:relative; }
+    .serif { font-family:'DM Serif Display', Georgia, 'Times New Roman', serif; font-weight:400; }
+    .mono { font-family:'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace; }
+    .cap { font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:#93aaa8; }
+    .hair { height:1px; background:#2a4a4b; }
+    .btn { display:flex; align-items:center; justify-content:center; min-height:48px; border-radius:10px; border:1px solid #2a4a4b; background:#152a2b; color:#f1e9d8; font-size:16px; font-weight:700; }
+    .btn-primary { background:#2fa7ab; border-color:#2fa7ab; color:#08191a; }
+    .btn-orange { background:#e8912b; border-color:#e8912b; color:#1a1206; }
+    .field { display:flex; align-items:center; gap:10px; min-height:56px; padding:0 14px; border:1px solid #2a4a4b; border-radius:10px; background:#152a2b; }
+    .field .lab { flex:1 1 auto; font-size:15px; color:#93aaa8; }
+    .field .val { font-size:22px; color:#f1e9d8; min-width:88px; text-align:right; }
+    .unit { display:flex; align-items:center; gap:6px; min-height:36px; padding:0 10px; border-radius:8px; border:1px solid #2a4a4b; background:#1b3435; font-size:14px; font-weight:700; color:#f1e9d8; }
+    .tile { display:flex; flex-direction:column; justify-content:space-between; min-height:124px; padding:14px; border:1px solid #2a4a4b; border-radius:12px; background:#152a2b; }
+    .tile .name { font-size:19px; font-weight:700; color:#f1e9d8; }
+    .tile .sub { font-size:12px; color:#93aaa8; margin-top:2px; }
+    .tile .idx { font-size:11px; color:#e8912b; }
+    .chip { display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 12px; border-radius:20px; border:1px solid #2a4a4b; background:#1b3435; font-size:14px; font-weight:700; color:#f1e9d8; }
+    .ico { width:22px; height:22px; stroke:#2fa7ab; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    </style>
+</helmet>
+
+<div class="screen">
+  
+<div style="display:flex; align-items:center; gap:12px; padding:58px 20px 12px 16px;">
+  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:22px;border:1px solid #2a4a4b"><svg class="ico" viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M15 5 l-7 7 7 7"></path></svg></div>
+  <div style="flex:1 1 auto; display:flex; align-items:baseline; gap:10px;">
+    <span class="serif" style="font-size:26px; color:#f1e9d8">Dilution</span><span class="mono" style="font-size:12px;color:#e8912b">01</span>
+  </div>
+  
+</div>
+<div class="hair" style="margin:0 16px"></div>
+  <div style="padding:16px 16px 0 16px; display:flex; flex-direction:column; gap:10px;">
+    
+    <div class="field" style="">
+      <div class="lab">Stock concentration<br></div>
+      <div class="val mono" style="color:#f1e9d8">10</div>
+      <div class="unit">mM<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#93aaa8;fill:none;stroke-width:2"><path d="M6 9 l6 6 6-6"></path></svg></div>
+    </div>
+    
+    <div class="field" style="">
+      <div class="lab">Final concentration<br></div>
+      <div class="val mono" style="color:#f1e9d8">12.5</div>
+      <div class="unit">µM<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#93aaa8;fill:none;stroke-width:2"><path d="M6 9 l6 6 6-6"></path></svg></div>
+    </div>
+    
+    <div class="field" style="">
+      <div class="lab">Final volume<br></div>
+      <div class="val mono" style="color:#f1e9d8">1000</div>
+      <div class="unit">µL<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#93aaa8;fill:none;stroke-width:2"><path d="M6 9 l6 6 6-6"></path></svg></div>
+    </div>
+    
+    <div class="field" style="border-color:#e8912b; box-shadow:inset 0 0 0 1px #e8912b;">
+      <div class="lab">Stock volume<br><span class="mono" style="font-size:10px;color:#e8912b;letter-spacing:0.15em;">SOLVED</span></div>
+      <div class="val mono" style="color:#e8912b">1.25</div>
+      <div class="unit">µL<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#93aaa8;fill:none;stroke-width:2"><path d="M6 9 l6 6 6-6"></path></svg></div>
+    </div>
+    <div class="cap" style="padding:6px 2px 0 2px;">Leave one field empty. It gets solved.</div>
+  </div>
+  <div style="margin:16px 16px 0 16px; padding:18px 16px; border-radius:12px; background:#1b3435; border:1px solid #2a4a4b;">
+    <div style="display:flex; align-items:baseline; gap:12px;">
+      <span class="mono" style="font-size:40px; color:#e8912b; line-height:1">1.25</span><span class="mono" style="font-size:16px; color:#93aaa8">µL stock</span>
+    </div>
+    <div style="display:flex; align-items:baseline; gap:12px; margin-top:6px;">
+      <span class="mono" style="font-size:40px; color:#2fa7ab; line-height:1">998.75</span><span class="mono" style="font-size:16px; color:#93aaa8">µL diluent</span>
+    </div>
+    <div style="margin-top:14px; font-size:15px; line-height:1.4; color:#f1e9d8">Add <strong>1.25 µL</strong> of stock to <strong>998.75 µL</strong> of diluent. Dilution factor 1 : 800.</div>
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <div class="btn" style="flex:1 1 0">Copy</div>
+      <div class="btn" style="flex:1 1 0">Serial…</div>
+      <div class="btn" style="flex:1 1 0; color:#93aaa8">Clear</div>
+    </div>
+  </div>
+  <div style="padding:18px 16px 0 16px;">
+    <div class="cap">Recent</div>
+    <div style="display:flex; flex-direction:column; margin-top:8px;">
+      <div style="display:flex; justify-content:space-between; min-height:44px; align-items:center; font-size:14px;"><span style="color:#93aaa8">10 mM → 1 µM · 500 µL</span><span class="mono" style="color:#f1e9d8">0.05 µL</span></div>
+      <div class="hair"></div>
+      <div style="display:flex; justify-content:space-between; min-height:44px; align-items:center; font-size:14px;"><span style="color:#93aaa8">1 mg/mL → 10 µg/mL · 2 mL</span><span class="mono" style="color:#f1e9d8">20 µL</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

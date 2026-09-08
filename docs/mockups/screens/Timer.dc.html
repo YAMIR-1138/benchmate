@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; background:#0e1c1d; color:#f1e9d8; font-family:'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+    a { color:#2fa7ab; } a:hover { color:#e8912b; }
+    .screen { width:390px; height:844px; overflow:hidden; background:#0e1c1d; display:flex; flex-direction:column; position:relative; }
+    .serif { font-family:'DM Serif Display', Georgia, 'Times New Roman', serif; font-weight:400; }
+    .mono { font-family:'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace; }
+    .cap { font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:#93aaa8; }
+    .hair { height:1px; background:#2a4a4b; }
+    .btn { display:flex; align-items:center; justify-content:center; min-height:48px; border-radius:10px; border:1px solid #2a4a4b; background:#152a2b; color:#f1e9d8; font-size:16px; font-weight:700; }
+    .btn-primary { background:#2fa7ab; border-color:#2fa7ab; color:#08191a; }
+    .btn-orange { background:#e8912b; border-color:#e8912b; color:#1a1206; }
+    .field { display:flex; align-items:center; gap:10px; min-height:56px; padding:0 14px; border:1px solid #2a4a4b; border-radius:10px; background:#152a2b; }
+    .field .lab { flex:1 1 auto; font-size:15px; color:#93aaa8; }
+    .field .val { font-size:22px; color:#f1e9d8; min-width:88px; text-align:right; }
+    .unit { display:flex; align-items:center; gap:6px; min-height:36px; padding:0 10px; border-radius:8px; border:1px solid #2a4a4b; background:#1b3435; font-size:14px; font-weight:700; color:#f1e9d8; }
+    .tile { display:flex; flex-direction:column; justify-content:space-between; min-height:124px; padding:14px; border:1px solid #2a4a4b; border-radius:12px; background:#152a2b; }
+    .tile .name { font-size:19px; font-weight:700; color:#f1e9d8; }
+    .tile .sub { font-size:12px; color:#93aaa8; margin-top:2px; }
+    .tile .idx { font-size:11px; color:#e8912b; }
+    .chip { display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 12px; border-radius:20px; border:1px solid #2a4a4b; background:#1b3435; font-size:14px; font-weight:700; color:#f1e9d8; }
+    .ico { width:22px; height:22px; stroke:#2fa7ab; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    </style>
+</helmet>
+
+<div class="screen">
+  
+<div style="display:flex; align-items:center; gap:12px; padding:58px 20px 12px 16px;">
+  <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:22px;border:1px solid #2a4a4b"><svg class="ico" viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M15 5 l-7 7 7 7"></path></svg></div>
+  <div style="flex:1 1 auto; display:flex; align-items:baseline; gap:10px;">
+    <span class="serif" style="font-size:26px; color:#f1e9d8">Timer</span><span class="mono" style="font-size:12px;color:#e8912b">04</span>
+  </div>
+  
+</div>
+<div class="hair" style="margin:0 16px"></div>
+  <div style="display:flex; flex-direction:column; align-items:center; padding-top:16px;">
+    <div style="position:relative; width:260px; height:260px;">
+      <svg viewBox="0 0 260 260" style="width:260px;height:260px; transform:rotate(-90deg)">
+        <circle cx="130" cy="130" r="110" fill="none" stroke="#2a4a4b" stroke-width="6"></circle>
+        <circle cx="130" cy="130" r="110" fill="none" stroke="#e8912b" stroke-width="6" stroke-linecap="round" stroke-dasharray="691.2" stroke-dashoffset="587.5"></circle>
+      </svg>
+      <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+        <div class="mono" style="font-size:64px; line-height:1; color:#f1e9d8; letter-spacing:-0.02em">12:47</div>
+        <div class="cap" style="color:#2fa7ab">Lyse · Dual-Glo</div>
+        <div class="mono" style="font-size:12px; color:#93aaa8">of 15:00</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:12px; margin-top:18px; width:100%; padding:0 24px;">
+      <div class="btn btn-orange" style="flex:2 1 0; min-height:56px; font-size:18px">Pause</div>
+      <div class="btn" style="flex:1 1 0; min-height:56px">Reset</div>
+    </div>
+  </div>
+  <div style="padding:22px 16px 0 16px;">
+    <div class="cap">Presets</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"><div class="chip" style="justify-content:center; font-size:13px;">30 s</div><div class="chip" style="justify-content:center; font-size:13px;">1 min</div><div class="chip" style="justify-content:center; font-size:13px;">5 min</div><div class="chip" style="justify-content:center; font-size:13px;">15 min</div><div class="chip" style="justify-content:center; font-size:13px;">30 min</div><div class="chip" style="justify-content:center; font-size:13px;">1 h</div><div class="chip" style="border-style:dashed; color:#93aaa8">+ custom</div></div>
+  </div>
+  <div style="padding:18px 16px 0 16px; flex:1 1 auto;">
+    <div class="cap">Also running</div>
+    <div style="display:flex; flex-direction:column; margin-top:6px;">
+      <div style="display:flex; align-items:center; gap:12px; min-height:52px;">
+        <span style="width:8px;height:8px;border-radius:4px;background:#2fa7ab"></span>
+        <span style="flex:1 1 auto; font-size:15px;">DNase · RNA isolation</span>
+        <span class="mono" style="font-size:18px; color:#f1e9d8">03:12</span>
+      </div>
+      <div class="hair"></div>
+      <div style="display:flex; align-items:center; gap:12px; min-height:52px;">
+        <span style="width:8px;height:8px;border-radius:4px;background:#e8912b"></span>
+        <span style="flex:1 1 auto; font-size:15px; color:#93aaa8">Medium change · Lipo 3000</span>
+        <span class="mono" style="font-size:18px; color:#93aaa8">2:10:40</span>
+      </div>
+    </div>
+  </div>
+  <div class="mono" style="padding:0 16px 18px 16px; font-size:11px; color:#93aaa8">screen stays awake while a timer runs</div>
+</div>
+</x-dc>
+</body>
+</html>

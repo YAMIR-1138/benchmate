@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f3ecdd; color:#0e1c1d; font-family:'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+    a { color:#1a7f86; } a:hover { color:#d9821a; }
+    .screen { width:390px; height:844px; overflow:hidden; background:#f3ecdd; display:flex; flex-direction:column; position:relative; }
+    .serif { font-family:'DM Serif Display', Georgia, 'Times New Roman', serif; font-weight:400; }
+    .mono { font-family:'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace; }
+    .cap { font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:#5f6f6e; }
+    .hair { height:1px; background:#d7cbb3; }
+    .btn { display:flex; align-items:center; justify-content:center; min-height:48px; border-radius:10px; border:1px solid #d7cbb3; background:#fbf6ea; color:#0e1c1d; font-size:16px; font-weight:700; }
+    .btn-primary { background:#1a7f86; border-color:#1a7f86; color:#08191a; }
+    .btn-orange { background:#d9821a; border-color:#d9821a; color:#1a1206; }
+    .field { display:flex; align-items:center; gap:10px; min-height:56px; padding:0 14px; border:1px solid #d7cbb3; border-radius:10px; background:#fbf6ea; }
+    .field .lab { flex:1 1 auto; font-size:15px; color:#5f6f6e; }
+    .field .val { font-size:22px; color:#0e1c1d; min-width:88px; text-align:right; }
+    .unit { display:flex; align-items:center; gap:6px; min-height:36px; padding:0 10px; border-radius:8px; border:1px solid #d7cbb3; background:#efe6d3; font-size:14px; font-weight:700; color:#0e1c1d; }
+    .tile { display:flex; flex-direction:column; justify-content:space-between; min-height:124px; padding:14px; border:1px solid #d7cbb3; border-radius:12px; background:#fbf6ea; }
+    .tile .name { font-size:19px; font-weight:700; color:#0e1c1d; }
+    .tile .sub { font-size:12px; color:#5f6f6e; margin-top:2px; }
+    .tile .idx { font-size:11px; color:#d9821a; }
+    .chip { display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 12px; border-radius:20px; border:1px solid #d7cbb3; background:#efe6d3; font-size:14px; font-weight:700; color:#0e1c1d; }
+    .ico { width:22px; height:22px; stroke:#1a7f86; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    </style>
+</helmet>
+
+<div class="screen">
+  <div style="padding:60px 20px 14px 20px; display:flex; align-items:flex-end; justify-content:space-between;">
+    <div>
+      <div class="serif" style="font-size:36px; line-height:1; color:#0e1c1d">Bench<span style="color:#1a7f86">Mate</span></div>
+      <div class="cap" style="margin-top:8px; display:flex; align-items:center; gap:8px;"><span style="display:inline-block;width:8px;height:8px;border-radius:4px;background:#d9821a"></span>TggR Lab</div>
+    </div>
+    <div class="mono" style="font-size:12px; color:#5f6f6e">offline</div>
+  </div>
+  <div class="hair" style="margin:0 20px"></div>
+  <div style="padding:16px 20px 0 20px; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; align-content:start; flex:1 1 auto;">
+    
+    <div class="tile">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3 C12 3 5 11 5 15 a7 7 0 0 0 14 0 C19 11 12 3 12 3 Z"></path><path d="M9 15 a3 3 0 0 0 3 3"></path></svg><span class="idx mono">01</span></div>
+      <div><div class="name">Dilution</div><div class="sub">C1V1 = C2V2</div></div>
+    </div>
+    <div class="tile">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;"><svg class="ico" viewBox="0 0 24 24"><path d="M12 4 v16"></path><path d="M4 8 h16"></path><path d="M6 8 l-3 7 a3 3 0 0 0 6 0 Z"></path><path d="M18 8 l-3 7 a3 3 0 0 0 6 0 Z"></path><path d="M8 20 h8"></path></svg><span class="idx mono">02</span></div>
+      <div><div class="name">Molar</div><div class="sub">mass · mol · M</div></div>
+    </div>
+    <div class="tile">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;"><svg class="ico" viewBox="0 0 24 24"><path d="M4 8 h13"></path><path d="M14 4 l4 4 -4 4"></path><path d="M20 16 H7"></path><path d="M10 12 l-4 4 4 4"></path></svg><span class="idx mono">03</span></div>
+      <div><div class="name">Convert</div><div class="sub">units, ×g ↔ rpm, A260</div></div>
+    </div>
+    <div class="tile">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"></circle><path d="M12 9 v4 l3 2"></path><path d="M9 3 h6"></path></svg><span class="idx mono">04</span></div>
+      <div><div class="name">Timer</div><div class="sub">alarms, presets</div></div>
+    </div>
+    <div class="tile">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;"><svg class="ico" viewBox="0 0 24 24"><path d="M5 5 v14"></path><path d="M9 5 v14"></path><path d="M13 5 v14"></path><path d="M17 5 v14"></path><path d="M3 17 L20 7"></path></svg><span class="idx mono">05</span></div>
+      <div><div class="name">Counter</div><div class="sub">colonies, cells</div></div>
+    </div>
+    <div class="tile">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="6" height="18" rx="1.5"></rect><rect x="14" y="3" width="6" height="18" rx="1.5"></rect><path d="M6.5 8 h3"></path><path d="M6.5 12 h3"></path><path d="M6.5 17 h3"></path><path d="M15.5 7 h3"></path><path d="M15.5 14 h3"></path></svg><span class="idx mono">06</span></div>
+      <div><div class="name">Ladders</div><div class="sub">DNA · RNA · protein</div></div>
+    </div>
+    <div class="tile">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8" cy="10" r="1.4"></circle><circle cx="12" cy="10" r="1.4"></circle><circle cx="16" cy="10" r="1.4"></circle><circle cx="8" cy="14.5" r="1.4"></circle><circle cx="12" cy="14.5" r="1.4"></circle><circle cx="16" cy="14.5" r="1.4"></circle></svg><span class="idx mono">07</span></div>
+      <div><div class="name">Plates</div><div class="sub">area, seeding</div></div>
+    </div>
+    <div class="tile">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;"><svg class="ico" viewBox="0 0 24 24"><path d="M9 6 h11"></path><path d="M9 12 h11"></path><path d="M9 18 h11"></path><path d="M4 6 l1 1 2-2"></path><path d="M4 12 l1 1 2-2"></path><circle cx="5" cy="18" r="1"></circle></svg><span class="idx mono">08</span></div>
+      <div><div class="name">Protocols</div><div class="sub">step by step</div></div>
+    </div>
+    <div class="tile" style="grid-column:span 2; min-height:76px; flex-direction:row; align-items:center; gap:14px; border-color:#d9821a">
+      <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="6" r="1.6"></circle><circle cx="17.2" cy="15" r="1.6"></circle><circle cx="6.8" cy="15" r="1.6"></circle></svg>
+      <div style="flex:1 1 auto"><div class="name"><span style="color:#d9821a">Σ</span>pinZero</div><div class="sub">balance the rotor</div></div>
+      <span class="idx mono">09</span>
+    </div>
+  </div>
+  <div style="padding:10px 20px 18px 20px; display:flex; justify-content:space-between;" class="mono">
+    <span style="font-size:11px; color:#5f6f6e">v0.1 · prototype</span>
+    <span style="font-size:11px; color:#5f6f6e">no ads · no accounts</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,88 @@
+{
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "title": "Home",
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844
+  },
+  {
+   "file": "Dilution.dc.html",
+   "x": 480,
+   "y": 0,
+   "w": 390,
+   "h": 844
+  },
+  {
+   "file": "Timer.dc.html",
+   "x": 960,
+   "y": 0,
+   "w": 390,
+   "h": 844
+  },
+  {
+   "file": "Ladders.dc.html",
+   "x": 1440,
+   "y": 0,
+   "w": 390,
+   "h": 844
+  },
+  {
+   "file": "Protocol.dc.html",
+   "x": 1920,
+   "y": 0,
+   "w": 390,
+   "h": 844
+  },
+  {
+   "file": "Counter.dc.html",
+   "x": 2400,
+   "y": 0,
+   "w": 390,
+   "h": 844
+  },
+  {
+   "file": "HomeCream.dc.html",
+   "title": "Home (cream alternate)",
+   "x": 0,
+   "y": 1000,
+   "w": 390,
+   "h": 844
+  }
+ ],
+ "annotations": [
+  {
+   "id": "brief",
+   "x": 0,
+   "y": -170,
+   "w": 420,
+   "text": "BenchMate phone screens, 390\u00d7844. Static mockups.\nDirection: 1970s bench instrument. Deep teal ground, cream text, orange for the thing you act on or the number you were looking for, teal for structure.\nType: DM Serif Display (wordmark, step titles) \u00b7 Atkinson Hyperlegible (UI) \u00b7 JetBrains Mono (every number)."
+  },
+  {
+   "id": "cream-note",
+   "x": 480,
+   "y": 1000,
+   "w": 300,
+   "text": "Alternate ground: cream paper instead of deep teal. Same components, same accents. Pick one, or keep both as light/dark."
+  },
+  {
+   "id": "ladder-note",
+   "x": 1440,
+   "y": -110,
+   "w": 340,
+   "text": "Bands drawn from core/data/ladders/generuler-1kb-plus.json on a log scale. Reference bands (5000, 1500, 500) are heavier and show ng in orange."
+  },
+  {
+   "id": "protocol-note",
+   "x": 1920,
+   "y": -110,
+   "w": 340,
+   "text": "Step 5 of the Lipofectamine 3000 sheet. The per-well lines from the Word doc become a master-mix table: wells \u00d7 amount + 10 %."
+  }
+ ],
+ "launch": {
+  "view": "canvas"
+ }
+}
