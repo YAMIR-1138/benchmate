@@ -89,7 +89,7 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 
 /* home nameplate */
 .brand { display: flex; align-items: center; gap: 14px; padding: 18px 16px 16px; background: var(--band); color: var(--band-ink); border-bottom: var(--bw) solid var(--line); }
-.brand img { width: 66px; height: 66px; object-fit: contain; background: var(--panel); border-radius: 33px; border: var(--bw) solid var(--line); padding: 4px; }
+.brand img { width: 66px; height: 66px; object-fit: contain; background: #fbf4e2; border-radius: 33px; border: var(--bw) solid var(--line); padding: 4px; }
 .brand .word { font-family: var(--display); font-weight: 700; font-size: 38px; line-height: 1; letter-spacing: 0.01em; color: var(--band-ink); }
 .brand .word b { font-weight: 700; color: var(--band-ink); }
 .brand .lab { font-family: var(--mono); font-size: 12px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--band-ink); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
