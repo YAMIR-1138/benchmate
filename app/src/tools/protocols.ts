@@ -150,6 +150,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     ${P.materials.length ? `<div class="section"><div class="cap">Materials</div><div class="list">${P.materials.map((m) => `<div class="item" style="min-height:40px">${esc(m)}</div>`).join('')}</div></div>` : ''}
   `);
   const tw = () => totalWells(run);
+  const hasMass = mixes.some((m) => m.perWell.some((p) => Object.values(p.byFormat).some((a) => isMass(a.unit)) || (p.all && isMass(p.all.unit))));
   const blockHtml = (b: Block, idx: string): string => {
     const parts: string[] = [];
     const fl = b.fmtLines.map((f) => `${esc(f.text)} ${f.byFormat[run.format] ? `<b>${esc(f.byFormat[run.format])}</b>` : `<span class="muted">(not set for ${esc(run.format)})</span>`}`);
@@ -178,8 +179,8 @@ function renderPaper(main: HTMLElement, P: Protocol) {
   }
   function paintCorner() {
     const box = main.querySelector('#corner'); if (!box) return;
-    box.innerHTML = `<div class="row cap" style="font-size:10px"><span style="flex:1 1 auto">${P.steps.some((s) => [s, ...s.subs].some((b) => b.perWell.some((p) => Object.values(p.byFormat).some((a) => isMass(a.unit)) || (p.all && isMass(p.all.unit))))) ? 'plasmid / condition' : 'condition'}</span><span style="flex:0 0 66px;text-align:right">ng/µL</span><span style="flex:0 0 58px;text-align:right">${esc(P.per)}s</span><span style="flex:0 0 26px"></span></div>` +
-      run.conditions.map((c, i) => `<div class="row"><input class="pen" data-c="${i}" data-f="name" value="${esc(c.name)}" placeholder="EV" style="flex:1 1 0;width:0;min-width:0" /><input class="pen" data-c="${i}" data-f="conc" value="${esc(c.conc)}" placeholder="823" inputmode="decimal" style="flex:0 0 66px;width:66px;text-align:right" /><input class="pen" data-c="${i}" data-f="wells" value="${esc(c.wells)}" placeholder="4.5" inputmode="decimal" style="flex:0 0 58px;width:58px;text-align:right" /><button data-del="${i}" style="flex:0 0 26px;border:0;background:transparent;color:var(--muted);font-size:20px;cursor:pointer;padding:0">×</button></div>`).join('') +
+    box.innerHTML = `<div class="row cap" style="font-size:10px"><span style="flex:1 1 auto">${hasMass ? 'plasmid / condition' : 'condition'}</span>${hasMass ? `<span style="flex:0 0 66px;text-align:right">ng/µL</span>` : ''}<span style="flex:0 0 58px;text-align:right">${esc(P.per)}s</span><span style="flex:0 0 26px"></span></div>` +
+      run.conditions.map((c, i) => `<div class="row"><input class="pen" data-c="${i}" data-f="name" value="${esc(c.name)}" placeholder="${hasMass ? 'EV' : 'plate A'}" style="flex:1 1 0;width:0;min-width:0" />${hasMass ? `<input class="pen" data-c="${i}" data-f="conc" value="${esc(c.conc)}" placeholder="823" inputmode="decimal" style="flex:0 0 66px;width:66px;text-align:right" />` : ''}<input class="pen" data-c="${i}" data-f="wells" value="${esc(c.wells)}" placeholder="4.5" inputmode="decimal" style="flex:0 0 58px;width:58px;text-align:right" /><button data-del="${i}" style="flex:0 0 26px;border:0;background:transparent;color:var(--muted);font-size:20px;cursor:pointer;padding:0">×</button></div>`).join('') +
       `<div class="row" style="justify-content:space-between"><button class="chip" id="addc" style="min-height:32px;font-size:12px">+ condition</button><span class="mono muted" style="font-size:12px">${fmt(tw(), 4)} ${esc(P.per)}s total</span></div>`;
     $$<HTMLInputElement>(box, 'input[data-c]').forEach((inp) => inp.addEventListener('input', () => { (run.conditions[Number(inp.dataset.c)] as any)[inp.dataset.f!] = inp.value; persist(); paintSteps(); paintTubes(); paintCalc(); box.querySelector('.mono.muted')!.textContent = `${fmt(tw(), 4)} ${P.per}s total`; }));
     $$<HTMLElement>(box, '[data-del]').forEach((b) => b.addEventListener('click', () => { if (run.conditions.length > 1) { run.conditions.splice(Number(b.dataset.del), 1); persist(); paintCorner(); paintSteps(); paintTubes(); paintCalc(); } }));
@@ -195,7 +196,8 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     for (const c of run.conditions) for (const m of mixes) for (const p of m.perWell) { const t = tube(p, run, c); if (t.calc) lines.push(`<div><span class="pen" style="font-size:20px">${esc(t.calc)}</span>${t.tiny ? `<div style="font-size:13px;color:var(--orange)">${esc(t.tiny)}: under 1 µL is hard to pipette.</div>` : ''}</div>`); }
     const cellsIn = Object.entries(run.inputs).find(([k]) => /cells per well/i.test(k))?.[1]; const cpw = cellsIn ? parseNum(cellsIn) : undefined; const w = tw();
     if (cpw && w) lines.push(`<div><span class="pen" style="font-size:20px">cells: ${sci(cpw)} × ${fmt(w, 4)} ${esc(P.per)}s = ${sci(cpw * w)}</span> <a href="#/plates" style="font-size:13px">seeding tool</a></div>`);
-    box.innerHTML = lines.join('') || `<span class="muted" style="font-size:13px">Add plasmid ng/µL in the corner and the DNA volumes are worked out here.</span>`;
+    box.innerHTML = lines.join('') || (hasMass ? `<span class="muted" style="font-size:13px">Add plasmid ng/µL in the corner and the DNA volumes are worked out here.</span>` : '');
+    (box as HTMLElement).hidden = !box.innerHTML;
   }
   main.querySelector('#formats')?.addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; run.format = b.dataset.f!; persist(); $$(main, '#formats .chip').forEach((x) => x.classList.toggle('on', x === b)); paintSteps(); paintTubes(); paintCalc(); });
   $(main, '#print').addEventListener('click', async () => { $(main, '#pqr').innerHTML = await qrSvg({ t: 'run', v: 1, id: P.id, run }); window.print(); });

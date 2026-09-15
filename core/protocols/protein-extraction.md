@@ -19,8 +19,8 @@ materials:
 input: Project
 input: Samples
 
-## 2. RIPA lysis buffer, per well
-Make fresh, keep on ice. 200 µL per well of a 6-well plate.
+## 2. RIPA lysis buffer
+RIPA lysis buffer: make fresh, keep on ice. 200 µL per well of a 6-well plate.
 per_well: RIPA buffer w/o Complete = 168 µL
 per_well: Complete mini 1:7 = 28 µL
 per_well: NaF 0.5 M (final 10 mM) = 4 µL
@@ -44,8 +44,8 @@ timer: 20m
 Carefully transfer the supernatant to new tubes. Discard the pellet. Quantify or freeze.
 
 ## 4. Harvest medium approach
-### a. Harvest medium, per well
-3.5 mL per well, made fresh, kept at 4 °C.
+### a. Harvest medium
+Harvest medium: 3.5 mL per well, made fresh, kept at 4 °C.
 per_well: PBS X1 cold = 3.5 mL
 per_well: PMSF 100 mM (final 1 mM) = 35 µL
 per_well: EDTA 0.5 M (final 0.5 mM) = 3.5 µL
