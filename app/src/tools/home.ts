@@ -6,7 +6,7 @@ import { mmss } from '../lib/fmt';
 import logo from '../assets/logo.png';
 
 export function renderHome(app: HTMLElement, main: HTMLElement) {
-  const brand = el('div', { class: 'brand' });
+  const brand = el('div', { class: 'brand phone' });
   brand.innerHTML = `
     <img src="${logo}" alt="TGGR Lab" />
     <div style="flex:1 1 auto"><div class="lab">TGGR</div><div class="word">Bench <b>Mate</b></div></div>

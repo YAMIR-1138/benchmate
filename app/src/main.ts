@@ -16,6 +16,7 @@ import { renderNanodrop } from './tools/nanodrop';
 import { renderLuciferase } from './tools/luciferase';
 import { renderPlateMap } from './tools/platemap';
 import { timerEngine } from './tools/timerEngine';
+import logo from './assets/logo.png';
 
 export interface Tool { id: string; idx: string; name: string; sub: string; icon: keyof typeof icons; render: (main: HTMLElement) => void; soon?: boolean }
 
@@ -65,23 +66,36 @@ export function header(title: string, idx?: string, right?: HTMLElement): HTMLEl
 const app = document.getElementById('app')!;
 let cleanup: (() => void) | undefined;
 
+// ---- wide layout (iPad, desktop): a persistent tool rail on the left ----
+const rail = el('aside', { class: 'rail' });
+const content = el('div', { class: 'content' });
+app.append(rail, content);
+function paintRail(active: string) {
+  const dark = isDark();
+  rail.innerHTML = `<a class="rbrand" href="#/"><img src="${logo}" alt="" /><span><span class="rlab">TGGR</span><span class="rword">Bench <b>Mate</b></span></span></a>
+    <nav>${TOOLS.map((t) => `<a class="navk ${t.id === active ? 'on' : ''}" href="#/${t.id}">${icons[t.icon]}<span>${t.name}</span><span class="idx">${t.idx}</span></a>`).join('')}</nav>
+    <div class="rfoot"><button class="iconbtn themebtn" aria-label="Toggle light/dark">${dark ? icons.sun : icons.moon}</button><span class="mono">model BM-1 · v${__APP_VERSION__}</span></div>`;
+  rail.querySelector<HTMLButtonElement>('.themebtn')!.onclick = toggleTheme;
+}
+
 function route() {
   cleanup?.(); cleanup = undefined;
   const hash = location.hash.replace(/^#\/?/, '');
   const [id, ...rest] = hash.split('/');
-  app.innerHTML = '';
+  content.innerHTML = '';
   const main = el('main');
   const tool = TOOLS.find((t) => t.id === id);
+  paintRail(tool?.id ?? '');
   if (!tool) {
-    renderHome(app, main);
+    renderHome(content, main);
   } else {
-    app.append(header(tool.name, tool.idx));
-    app.append(el('div', { class: 'stripe' }));
+    content.append(header(tool.name, tool.idx));
+    content.append(el('div', { class: 'stripe' }));
     (main as any).dataset.sub = rest.join('/');
     tool.render(main);
     cleanup = (main as any).__cleanup;
   }
-  if (!main.isConnected) app.append(main);
+  if (!main.isConnected) content.append(main);
   window.scrollTo(0, 0);
 }
 addEventListener('hashchange', route);
