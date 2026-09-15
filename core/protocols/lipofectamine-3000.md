@@ -40,7 +40,7 @@ hint: official range 1.5–3 µL per µg DNA, this sheet uses the low end
 per_well: Optimem = 6-well 125 µL; 12-well 50 µL; 24-well 25 µL; 96-well 5 µL
 per_well: DNA = 6-well 2500 ng; 12-well 500 ng; 24-well 500 ng; 96-well 100 ng | editable
 per_well: P3000 = 2 µL per µg DNA
-hint: change the DNA and Lipofectamine and P3000 follow
+hint: DNA is editable; Lipofectamine and P3000 follow
 
 ## 7. Mix well
 (no need to vortex)

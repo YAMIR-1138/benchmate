@@ -127,7 +127,7 @@ export function renderProtocols(main: HTMLElement) {
 
 function renderList(main: HTMLElement) {
   main.append(html`<div class="list" style="padding-top:10px">${PROTOCOLS.map((p) => `<a class="item" href="#/protocols/${p.id}" style="text-decoration:none;color:inherit;min-height:64px"><div class="grow"><div style="font-weight:700;font-size:17px">${esc(p.title)}</div><div class="muted" style="font-size:13px">${p.steps.length} steps${p.duration ? ` · ${esc(p.duration)}` : ''}${p.formats.length ? ` · ${esc(p.formats.join(', '))}` : p.vessel ? ` · ${esc(p.vessel)}` : ''}</div></div><span class="muted">›</span></a>`).join('')}</div>
-    <div class="note">Protocols are plain Markdown files in <span class="mono">core/protocols/</span>. Add one there and it shows up here.</div>`);
+    <div class="note">Source: Markdown files in <span class="mono">core/protocols/</span>.</div>`);
 }
 
 // ---- the paper edition ----

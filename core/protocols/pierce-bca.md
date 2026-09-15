@@ -30,7 +30,7 @@ Vials: 2 (stock), 1, 0.5, 0.25, 0.1 mg/mL, blank.
 Reagent A + B, 50 : 1. One "well" per reading: 6 standards in triplicate + 2 lysis-buffer blanks = 20, plus 4 per sample (two dilutions in duplicate).
 per_well: Reagent A = plate 200 µL; nanodrop 40 µL
 per_well: Reagent B = plate 4 µL; nanodrop 0.8 µL
-hint: enter 20 + 4 × samples as the wells in the corner
+hint: wells = 20 + 4 per sample
 note: WR keeps 1 week at room temperature.
 
 ## 5. Dilute samples 1 : 5
@@ -54,4 +54,4 @@ Take the USB stick for the results.
 
 ## 10. Calculate
 Subtract the average blank. Plot the standard curve (quadratic or best fit). Subtract the lysis-buffer reading from every sample.
-note: The BCA tool on the home screen does this from the raw readings.
+note: Or enter the readings in the BCA tool.

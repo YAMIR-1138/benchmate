@@ -19,7 +19,7 @@ export function renderMolar(main: HTMLElement) {
       <div class="field" data-k="conc"><label for="f-conc">Concentration<small></small></label><input id="f-conc" name="conc" type="text" inputmode="decimal" value="${esc(st.conc)}" placeholder="—" />${unitSelect('uconc', Object.keys(UNITS.molar), st.uconc)}</div>
       <div class="field" data-k="vol"><label for="f-vol">Volume<small></small></label><input id="f-vol" name="vol" type="text" inputmode="decimal" value="${esc(st.vol)}" placeholder="—" />${unitSelect('uvol', Object.keys(UNITS.volume), st.uvol)}</div>
       <div class="field" data-k="mass"><label for="f-mass">Mass<small></small></label><input id="f-mass" name="mass" type="text" inputmode="decimal" value="${esc(st.mass)}" placeholder="—" />${unitSelect('umass', Object.keys(UNITS.mass), st.umass)}</div>
-      <div class="hint">Leave one field empty. It gets solved.</div>
+      <div class="hint">Fill three · the fourth is solved</div>
     </div>
     <div class="error" hidden></div>
     <div class="result" hidden>

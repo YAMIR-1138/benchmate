@@ -55,9 +55,9 @@ export function renderConvert(main: HTMLElement) {
           <div class="field"><label for="c-r">Rotor radius <span class="muted">(centre to tube bottom)</span></label><input id="c-r" name="r" type="text" inputmode="decimal" value="${esc(v(c + '.r', '8.5'))}" /><span class="unit" style="border:0;background:transparent">cm</span></div>
           <div class="field"><label for="c-rpm">Speed</label><input id="c-rpm" name="rpm" type="text" inputmode="decimal" value="${esc(v(c + '.rpm', ''))}" /><span class="unit" style="border:0;background:transparent">rpm</span></div>
           <div class="field"><label for="c-rcf">Force</label><input id="c-rcf" name="rcf" type="text" inputmode="decimal" value="${esc(v(c + '.rcf', ''))}" /><span class="unit" style="border:0;background:transparent">×g</span></div>
-          <div class="hint">Type in either speed or force. The other follows.</div>
+          <div class="hint">Enter speed or force · the other follows</div>
         </div>
-        <div class="note">Rotor radius is on the rotor's datasheet, or measure from the axis to the bottom of the tube. A typical microcentrifuge rotor is about 8.5 cm; a swing-bucket plate rotor 10 to 16 cm.</div>`);
+        <div class="note">Radius: rotor datasheet, or axis to tube bottom. Microcentrifuge rotors ≈ 8.5 cm, swing-bucket plate rotors 10–16 cm.</div>`);
       const r = $<HTMLInputElement>(body, '[name=r]'), rpm = $<HTMLInputElement>(body, '[name=rpm]'), rcf = $<HTMLInputElement>(body, '[name=rcf]');
       const calc = (src: 'rpm' | 'rcf') => {
         const rr = parseNum(r.value); if (!rr) return;

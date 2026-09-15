@@ -6,7 +6,7 @@ export interface DilutionResult { c1: number; c2: number; v1: number; v2: number
 /** C1·V1 = C2·V2. Exactly one of the four must be undefined; it is solved. Concentrations share a unit, volumes share a unit. */
 export function dilution(i: DilutionInput): DilutionResult {
   const missing = (['c1', 'c2', 'v1', 'v2'] as const).filter((k) => i[k] === undefined || Number.isNaN(i[k]));
-  if (missing.length !== 1) throw new Error(missing.length === 0 ? 'Leave one field empty to solve it.' : 'Fill three fields.');
+  if (missing.length !== 1) throw new Error(missing.length === 0 ? 'All four are filled. Clear the one to solve.' : 'Fill three fields.');
   const k = missing[0];
   let { c1, c2, v1, v2 } = i as Record<string, number>;
   switch (k) {
@@ -15,7 +15,7 @@ export function dilution(i: DilutionInput): DilutionResult {
     case 'c1': c1 = (c2 * v2) / v1; break;
     case 'c2': c2 = (c1 * v1) / v2; break;
   }
-  if (![c1, c2, v1, v2].every((x) => Number.isFinite(x) && x >= 0)) throw new Error('Check the numbers.');
+  if (![c1, c2, v1, v2].every((x) => Number.isFinite(x) && x >= 0)) throw new Error('Negative or invalid value.');
   if (c2 > c1) throw new Error('Final concentration is higher than the stock.');
   return { c1, c2, v1, v2, diluent: v2 - v1, factor: c1 / c2, solved: k };
 }
@@ -25,7 +25,7 @@ export interface MolarInput { mass_g?: number; molarity_M?: number; volume_L?: n
 export function molar(i: MolarInput): Required<MolarInput> & { solved: keyof MolarInput } {
   const keys = ['mass_g', 'molarity_M', 'volume_L', 'mw'] as const;
   const missing = keys.filter((k) => i[k] === undefined || Number.isNaN(i[k]));
-  if (missing.length !== 1) throw new Error(missing.length === 0 ? 'Leave one field empty to solve it.' : 'Fill three fields.');
+  if (missing.length !== 1) throw new Error(missing.length === 0 ? 'All four are filled. Clear the one to solve.' : 'Fill three fields.');
   const k = missing[0];
   let { mass_g, molarity_M, volume_L, mw } = i as Record<string, number>;
   switch (k) {
@@ -34,7 +34,7 @@ export function molar(i: MolarInput): Required<MolarInput> & { solved: keyof Mol
     case 'volume_L': volume_L = mass_g / (molarity_M * mw); break;
     case 'mw': mw = mass_g / (molarity_M * volume_L); break;
   }
-  if (![mass_g, molarity_M, volume_L, mw].every((x) => Number.isFinite(x) && x >= 0)) throw new Error('Check the numbers.');
+  if (![mass_g, molarity_M, volume_L, mw].every((x) => Number.isFinite(x) && x >= 0)) throw new Error('Negative or invalid value.');
   return { mass_g, molarity_M, volume_L, mw, solved: k };
 }
 
@@ -88,19 +88,19 @@ export type NAType = 'dsDNA' | 'RNA' | 'ssDNA';
 export interface Verdict { status: 'good' | 'warn' | 'bad'; note: string }
 export function verdict260280(r: number, kind: NAType): Verdict {
   const [lo, hi, ideal] = kind === 'RNA' ? [1.9, 2.15, 2.0] : [1.75, 2.0, 1.8];
-  if (r >= lo && r <= hi) return { status: 'good', note: `Clean. ~${ideal} expected for ${kind}.` };
-  if (r < lo) return { status: r < lo - 0.2 ? 'bad' : 'warn', note: 'Low: protein or phenol carry-over. Re-purify or accept for gels only.' };
-  return { status: kind === 'RNA' ? 'warn' : 'warn', note: kind === 'RNA' ? 'High: usually fine for RNA. Check blank if > 2.2.' : 'High: RNA present in the DNA prep. Add RNase A if it matters.' };
+  if (r >= lo && r <= hi) return { status: 'good', note: `Within range (~${ideal} for ${kind}).` };
+  if (r < lo) return { status: r < lo - 0.2 ? 'bad' : 'warn', note: 'Low: protein or phenol carry-over.' };
+  return { status: kind === 'RNA' ? 'warn' : 'warn', note: kind === 'RNA' ? (r > 2.2 ? 'High: check the blank.' : 'Slightly high: normal for RNA.') : 'High: RNA in the DNA prep.' };
 }
 export function verdict260230(r: number): Verdict {
-  if (r >= 1.8 && r <= 2.3) return { status: 'good', note: '2.0–2.2 expected.' };
-  if (r < 1.8) return { status: r < 1.5 ? 'bad' : 'warn', note: 'Low: guanidine salt, phenol, EDTA or carbohydrate. Extra wash or re-precipitate. qPCR and sequencing may suffer.' };
-  return { status: 'warn', note: 'High: check the blank and the pedestal.' };
+  if (r >= 1.8 && r <= 2.3) return { status: 'good', note: 'Within range (2.0–2.2).' };
+  if (r < 1.8) return { status: r < 1.5 ? 'bad' : 'warn', note: 'Low: salt, phenol, EDTA or carbohydrate carry-over.' };
+  return { status: 'warn', note: 'High: blank mismatch.' };
 }
 export function verdictConc(c: number): Verdict {
-  if (c < 5) return { status: 'bad', note: 'Too low: ratios are meaningless below ~5 ng/µL.' };
-  if (c < 20) return { status: 'warn', note: 'Low: ratios are noisy under ~20 ng/µL.' };
-  if (c > 3000) return { status: 'warn', note: 'Very high: outside most pedestal ranges. Dilute and re-read.' };
+  if (c < 5) return { status: 'bad', note: 'Below 5 ng/µL: ratios not reliable.' };
+  if (c < 20) return { status: 'warn', note: 'Below 20 ng/µL: ratios are noisy.' };
+  if (c > 3000) return { status: 'warn', note: 'Above the pedestal range. Dilute and re-read.' };
   return { status: 'good', note: '' };
 }
 /** Volume (µL) that holds `amount_ng` at `conc` ng/µL. */

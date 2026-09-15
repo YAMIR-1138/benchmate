@@ -25,7 +25,7 @@ export function renderPlates(main: HTMLElement) {
     </div>
     <div class="fields" id="direct" hidden>
       <div class="field"><label for="p-direct">Suspension <span class="muted" style="font-weight:400">cells/mL</span></label><input id="p-direct" name="direct" type="text" inputmode="decimal" value="${esc(st.direct)}" placeholder="2.4" style="width:90px" />${EXP('directE', st.directE)}</div>
-      <div class="hint" style="text-transform:none;letter-spacing:0">You can also type 2e6 or 2×10^6 in any field.</div>
+      <div class="hint" style="text-transform:none;letter-spacing:0">2e6 and 2×10^6 also work in any field.</div>
     </div>
     <div class="fields" style="padding-top:12px"><div class="field"><label for="p-vol">Suspension volume you have <span class="muted" style="font-weight:400">(optional)</span></label><input id="p-vol" name="volume" type="text" inputmode="decimal" value="${esc(st.volume)}" placeholder="—" /><span class="unit" style="border:0;background:transparent;box-shadow:none">mL</span></div></div>
     <div class="result" id="count-out" hidden style="display:flex;align-items:center;gap:14px"><div id="count-seg"></div><div><div class="cap" style="color:inherit;opacity:0.8;text-transform:none">cells / mL</div><div id="count-note" style="font-size:14px"></div></div></div>
@@ -82,8 +82,8 @@ export function renderPlates(main: HTMLElement) {
     $(main, '#pl-susp').textContent = fmt(p.suspPerWell_mL * 1000, 3); $(main, '#pl-med').textContent = fmt(p.mediumPerWell_mL * 1000, 3);
     $(main, '#pl-mix').innerHTML = `Mix <b>${fmt(p.totalSusp_mL, 3)} mL</b> cells + <b>${fmt(p.totalMedium_mL, 3)} mL</b> medium, dispense <b>${fmt(wellVol, 3)} mL</b> per well × ${wells}.`;
     const over = p.suspPerWell_mL > wellVol;
-    $(main, '#pl-check').innerHTML = over ? `<span style="color:var(--danger)">Suspension is too dilute: ${fmt(p.suspPerWell_mL * 1000, 3)} µL of cells does not fit in ${fmt(wellVol * 1000, 3)} µL. Spin down and resuspend in less.</span>`
-      : p.available !== undefined ? (p.enough ? `You have ${sci(p.available)} cells, you need ${sci(p.totalCells)}. <span style="color:var(--teal)">Enough</span>, ${sci(p.available - p.totalCells)} spare.` : `<span style="color:var(--danger)">Short: you have ${sci(p.available)} cells, you need ${sci(p.totalCells)}.</span> Enough for ${Math.floor(p.available / perWell)} wells.`)
+    $(main, '#pl-check').innerHTML = over ? `<span style="color:var(--danger)">${fmt(p.suspPerWell_mL * 1000, 3)} µL of suspension per well exceeds the ${fmt(wellVol * 1000, 3)} µL well volume. Concentrate the suspension.</span>`
+      : p.available !== undefined ? (p.enough ? `Need ${sci(p.totalCells)} of ${sci(p.available)} available. <span style="color:var(--teal)">Enough</span>, ${sci(p.available - p.totalCells)} spare.` : `<span style="color:var(--danger)">Short: need ${sci(p.totalCells)}, have ${sci(p.available)}.</span> Enough for ${Math.floor(p.available / perWell)} wells.`)
       : `${sci(p.totalCells)} cells in total (${sci(perWell)} per well${st.by === 'cm2' ? `, ${v.area_cm2} cm²` : ''}).`;
   }
   $$(main, 'input[name], select[name]').forEach((i) => i.addEventListener('input', paint));

@@ -20,7 +20,7 @@ export function renderTimer(main: HTMLElement) {
       <div class="custom"><input id="c-dur" type="text" inputmode="numeric" placeholder="5m · 1h30m · 2:30" /><button class="btn primary" id="c-go" style="flex:0 0 96px">Start</button></div>
     </div>
     <div class="section" id="all"><div class="cap">All timers</div><div class="list" id="list"></div></div>
-    <div class="note" id="ios" hidden>On iPhone the alarm only sounds while BenchMate is open. The screen stays awake while a timer runs.</div>
+    <div class="note" id="ios" hidden>On iPhone the alarm sounds only while Bench Mate is open. The screen stays awake while a timer runs.</div>
   `);
   const presets = $(main, '#presets');
   presets.innerHTML = PRESETS.map(([l, ms]) => `<button class="chip" data-ms="${ms}">${l}</button>`).join('');

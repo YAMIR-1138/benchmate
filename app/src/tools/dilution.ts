@@ -24,7 +24,7 @@ export function renderDilution(main: HTMLElement) {
       ${field('c2', 'Final concentration', CONC_UNITS, st.uc2)}
       ${field('v2', 'Final volume', VOL_UNITS, st.uv2)}
       ${field('v1', 'Stock volume', VOL_UNITS, st.uv1)}
-      <div class="hint">Leave one field empty. It gets solved.</div>
+      <div class="hint">Fill three · the fourth is solved</div>
     </div>
     <div class="error" hidden></div>
     <div class="result" hidden>

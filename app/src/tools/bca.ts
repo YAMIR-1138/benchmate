@@ -14,7 +14,7 @@ const cell = (v: string, attrs: string, w = 58) => `<input type="text" inputmode
 export function renderBca(main: HTMLElement) {
   const st = load<State>('bca', DEFAULT);
   main.append(html`
-    <div class="note" style="margin-top:14px">Absorbance at 562 nm. Standards in triplicate against the water blank; samples in duplicate, undiluted and diluted, against the lysis-buffer blank. The fit is quadratic, like the sheet.</div>
+    <div class="note" style="margin-top:14px">A562. Standards in triplicate minus the water blank; samples in duplicate, undiluted and diluted, minus the lysis-buffer blank. Quadratic fit, as on the sheet.</div>
     <div class="section"><div class="cap">Standards · mg/mL</div>
       <table class="data" id="stds"><tr><th>mg/mL</th><th style="text-align:right">A1</th><th style="text-align:right">A2</th><th style="text-align:right">A3</th><th style="text-align:right">mean − blank</th></tr></table>
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px"><span class="grow" style="flex:1 1 auto">Lysis buffer blank</span>${cell(st.lysis[0], 'data-l="0"')}${cell(st.lysis[1], 'data-l="1"')}</div>
@@ -33,7 +33,7 @@ export function renderBca(main: HTMLElement) {
       <div class="actions"><button class="btn primary" id="toplate">Open in Plate Map</button></div>
     </div>
     <div class="section" id="out" hidden><div class="cap">Results · µg/µL</div><div id="res"></div><div class="actions"><button class="btn" id="copy">Copy table</button></div>
-      <div class="note">Final uses the dilution that lands inside the standards' range, or the mean of both when both do. Red means outside the curve: read the other dilution, or dilute more.</div></div>
+      <div class="note">Final = mean of the dilutions that fall inside the standard range. Red = above the top standard.</div></div>
   `);
   const persist = () => save('bca', st);
   const stdsT = $(main, '#stds'), smpT = $(main, '#smp');

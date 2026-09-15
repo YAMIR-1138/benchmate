@@ -29,14 +29,14 @@ export const TOOLS: Tool[] = [
   { id: 'convert', idx: '03', name: 'Convert', sub: 'units, ×g ↔ rpm, DNA, A260', icon: 'swap', render: renderConvert },
   { id: 'timer', idx: '04', name: 'Timer', sub: 'alarms, presets', icon: 'clock', render: renderTimer },
   { id: 'counter', idx: '05', name: 'Counter', sub: 'colonies, cells', icon: 'tally', render: renderCounter },
-  { id: 'ladders', idx: '06', name: 'Ladders', sub: 'DNA · RNA · protein', icon: 'lanes', render: renderLadders },
-  { id: 'plates', idx: '07', name: 'Seeding', sub: 'count → plate', icon: 'plate', render: renderPlates },
-  { id: 'protocols', idx: '08', name: 'Protocols', sub: 'step by step', icon: 'list', render: renderProtocols },
-  { id: 'spinzero', idx: '09', name: 'ΣpinZero', sub: 'balance the rotor', icon: 'rotor', render: renderSpinZero },
-  { id: 'nanodrop', idx: '10', name: 'NanoDrop', sub: 'what the numbers mean', icon: 'drop2', render: renderNanodrop },
-  { id: 'luciferase', idx: '11', name: 'Luciferase', sub: 'firefly / Renilla, fold', icon: 'flame', render: renderLuciferase },
-  { id: 'platemap', idx: '12', name: 'Plate Map', sub: 'qPCR and culture, 6 to 384', icon: 'grid', render: renderPlateMap },
-  { id: 'bca', idx: '13', name: 'BCA', sub: 'standard curve → µg/µL', icon: 'curve', render: renderBca },
+  { id: 'plates', idx: '06', name: 'Seeding', sub: 'count → plate', icon: 'plate', render: renderPlates },
+  { id: 'platemap', idx: '07', name: 'Plate Map', sub: 'qPCR and culture, 6 to 384', icon: 'grid', render: renderPlateMap },
+  { id: 'spinzero', idx: '08', name: 'ΣpinZero', sub: 'balance the rotor', icon: 'rotor', render: renderSpinZero },
+  { id: 'ladders', idx: '09', name: 'Ladders', sub: 'DNA · RNA · protein', icon: 'lanes', render: renderLadders },
+  { id: 'nanodrop', idx: '10', name: 'NanoDrop', sub: 'ratios and concentration', icon: 'drop2', render: renderNanodrop },
+  { id: 'bca', idx: '11', name: 'BCA', sub: 'standard curve → µg/µL', icon: 'curve', render: renderBca },
+  { id: 'luciferase', idx: '12', name: 'Luciferase', sub: 'firefly / Renilla, fold', icon: 'flame', render: renderLuciferase },
+  { id: 'protocols', idx: '13', name: 'Protocols', sub: 'interactive worksheets, print, hand-off', icon: 'list', render: renderProtocols },
 ];
 
 // ---- theme ----
@@ -78,7 +78,7 @@ function paintRail(active: string) {
   const dark = isDark();
   rail.innerHTML = `<a class="rbrand" href="#/"><img src="${logo}" alt="" /><span><span class="rlab">TGGR</span><span class="rword">Bench <b>Mate</b></span></span></a>
     <nav>${TOOLS.map((t) => `<a class="navk ${t.id === active ? 'on' : ''}" href="#/${t.id}">${icons[t.icon]}<span>${t.name}</span><span class="idx">${t.idx}</span></a>`).join('')}</nav>
-    <div class="rfoot"><button class="iconbtn themebtn" aria-label="Toggle light/dark">${dark ? icons.sun : icons.moon}</button><span class="mono" title="build ${__BUILD__}">model BM-1 · v${__APP_VERSION__} · ${__BUILD__.slice(5, 16)}</span></div>`;
+    <div class="rfoot"><button class="iconbtn themebtn" aria-label="Toggle light/dark">${dark ? icons.sun : icons.moon}</button><span class="mono" title="build ${__BUILD__}">model BM-1 · v${__APP_VERSION__} · ${__BUILD__.slice(5, 10)}</span></div>`;
   rail.querySelector<HTMLButtonElement>('.themebtn')!.onclick = toggleTheme;
 }
 
