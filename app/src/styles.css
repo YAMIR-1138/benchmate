@@ -173,6 +173,10 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 .timer-row .t { font-family: var(--mono); font-weight: 700; font-size: 24px; min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
 .timer-row .x { width: 40px; height: 40px; border: 0; background: transparent; color: var(--muted); font-size: 22px; cursor: pointer; }
 .custom { display: flex; gap: 10px; padding-top: 10px; }
+.build { display: flex; align-items: center; gap: 12px; padding-top: 10px; }
+.build .seg-wrap { flex: 1 1 auto; display: flex; justify-content: center; padding: 10px 14px; border-radius: var(--radius); }
+.build .btn { flex: 0 0 48px; min-height: 48px; padding: 0; font-size: 22px; }
+#keys .chip { min-height: 46px; font-size: 16px; font-family: var(--mono); font-weight: 700; }
 .custom input { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 12px; font-size: 17px; }
 
 /* counter */

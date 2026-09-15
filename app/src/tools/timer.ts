@@ -1,9 +1,10 @@
 import { timerEngine, type Timer } from './timerEngine';
 import { mmss, parseDuration } from '../lib/fmt';
-import { $, $$, esc, html, toast } from '../lib/dom';
+import { $, $$, esc, html, toast, vibrate } from '../lib/dom';
 import { sevenSeg } from '../lib/sevenseg';
 
 const PRESETS: [string, number][] = [['30 s', 30e3], ['1 min', 60e3], ['2 min', 120e3], ['5 min', 300e3], ['10 min', 600e3], ['15 min', 900e3], ['30 min', 1800e3], ['1 h', 3600e3]];
+const KEYS: [string, number][] = [['1 h', 3600e3], ['10 min', 600e3], ['5 min', 300e3], ['1 min', 60e3], ['30 s', 30e3], ['10 s', 10e3]];
 const R = 112, C = 2 * Math.PI * R;
 const TICKS = Array.from({ length: 60 }, (_, i) => { const a = (i * 6 - 90) * Math.PI / 180, big = i % 5 === 0, r1 = big ? 122 : 126, r2 = 132; return `<line x1="${(134 + r1 * Math.cos(a)).toFixed(1)}" y1="${(134 + r1 * Math.sin(a)).toFixed(1)}" x2="${(134 + r2 * Math.cos(a)).toFixed(1)}" y2="${(134 + r2 * Math.sin(a)).toFixed(1)}" stroke="${big ? 'var(--text)' : 'var(--line-soft)'}" stroke-width="${big ? 2 : 1}"/>`; }).join('');
 
@@ -15,9 +16,12 @@ export function renderTimer(main: HTMLElement) {
       <div class="in"><div class="t" id="big">${sevenSeg("00:00", { height: 84 })}</div><div class="l" id="lab">no timer</div><div class="s" id="sub"></div></div>
     </div>
     <div class="actions" id="ctl" style="padding:0 8px"></div>
-    <div class="section"><div class="cap">Presets</div><div class="chips" id="presets"></div>
-      <div class="custom"><input id="c-label" type="text" placeholder="label (optional)" /></div>
-      <div class="custom"><input id="c-dur" type="text" inputmode="numeric" placeholder="5m · 1h30m · 2:30" /><button class="btn primary" id="c-go" style="flex:0 0 96px">Start</button></div>
+    <div class="section"><div class="cap">Presets · tap to start</div><div class="chips" id="presets"></div></div>
+    <div class="section"><div class="cap">Custom · tap to build</div>
+      <div class="build"><div class="seg-wrap" id="b-seg"></div><button class="btn quiet" id="b-clear" aria-label="Clear">×</button></div>
+      <div class="chips" id="keys">${KEYS.map(([l, ms]) => `<button class="chip" data-add="${ms}">+${l}</button>`).join('')}</div>
+      <div class="custom"><input id="c-label" type="text" placeholder="label (optional)" /><input id="c-dur" type="text" inputmode="numeric" placeholder="or type 1h30m" style="flex:0 1 150px" /></div>
+      <div class="actions" style="padding-top:10px"><button class="btn primary tall" id="c-go" disabled>Start</button></div>
     </div>
     <div class="section" id="all"><div class="cap">All timers</div><div class="list" id="list"></div></div>
     <div class="note" id="ios" hidden>On iPhone the alarm sounds only while Bench Mate is open. The screen stays awake while a timer runs.</div>
@@ -61,13 +65,22 @@ export function renderTimer(main: HTMLElement) {
     const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return;
     startTimer(Number(b.dataset.ms), $<HTMLInputElement>(main, '#c-label').value.trim());
   });
+  // custom time: built from the keys, or typed
+  let built = 0;
+  const durIn = $<HTMLInputElement>(main, '#c-dur'), goBtn = $<HTMLButtonElement>(main, '#c-go');
+  const pending = () => built || parseDuration(durIn.value) || 0;
+  const paintBuild = () => { const ms = pending(); $(main, '#b-seg').innerHTML = sevenSeg(mmss(ms), { height: 44 }); goBtn.disabled = !ms; $(main, '#b-clear').hidden = !ms; };
+  $(main, '#keys').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('[data-add]'); if (!b) return; built = Math.min(built + Number(b.dataset.add), 99 * 3600e3); durIn.value = ''; vibrate(8); paintBuild(); });
+  $(main, '#b-clear').addEventListener('click', () => { built = 0; durIn.value = ''; paintBuild(); });
+  durIn.addEventListener('input', () => { built = 0; paintBuild(); });
   const go = () => {
-    const ms = parseDuration($<HTMLInputElement>(main, '#c-dur').value);
-    if (!ms) { toast('Try 5m, 1h30m or 2:30'); return; }
-    startTimer(ms, $<HTMLInputElement>(main, '#c-label').value.trim()); $<HTMLInputElement>(main, '#c-dur').value = '';
+    const ms = pending();
+    if (!ms) { toast('Tap the keys, or type 5m, 1h30m or 2:30'); return; }
+    startTimer(ms, $<HTMLInputElement>(main, '#c-label').value.trim()); built = 0; durIn.value = ''; $<HTMLInputElement>(main, '#c-label').value = ''; paintBuild();
   };
-  $(main, '#c-go').addEventListener('click', go);
-  $<HTMLInputElement>(main, '#c-dur').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  goBtn.addEventListener('click', go);
+  durIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  paintBuild();
   list.addEventListener('click', (e) => {
     const x = (e.target as HTMLElement).closest<HTMLElement>('[data-x]');
     if (x) { const t = timerEngine.timers.find((t) => t.id === x.dataset.x); if (t) timerEngine.remove(t); paint(); return; }
