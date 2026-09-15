@@ -54,3 +54,4 @@ Take the USB stick for the results.
 
 ## 10. Calculate
 Subtract the average blank. Plot the standard curve (quadratic or best fit). Subtract the lysis-buffer reading from every sample.
+note: The BCA tool on the home screen does this from the raw readings.

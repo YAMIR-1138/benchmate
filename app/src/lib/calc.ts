@@ -110,3 +110,49 @@ export function normalize(conc: number, target: number, finalVol: number): { sam
   const sample = (target * finalVol) / conc;
   return { sample, water: finalVol - sample, ok: sample <= finalVol };
 }
+
+// ---- standard curves (BCA) ----
+export interface Fit { kind: 'quadratic' | 'linear'; a: number; b: number; c: number; r2: number; n: number }
+/** Least-squares fit y = a·x² + b·x + c (quadratic when ≥ 4 points, else linear with a = 0). */
+export function fitCurve(points: { x: number; y: number }[]): Fit | undefined {
+  const pts = points.filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
+  if (pts.length < 2) return undefined;
+  const quad = pts.length >= 4;
+  // normal equations
+  const S = (fx: (p: { x: number; y: number }) => number) => pts.reduce((s, p) => s + fx(p), 0);
+  let a = 0, b: number, c: number;
+  if (quad) {
+    const m = [
+      [S((p) => p.x ** 4), S((p) => p.x ** 3), S((p) => p.x ** 2), S((p) => p.x ** 2 * p.y)],
+      [S((p) => p.x ** 3), S((p) => p.x ** 2), S((p) => p.x), S((p) => p.x * p.y)],
+      [S((p) => p.x ** 2), S((p) => p.x), pts.length, S((p) => p.y)],
+    ];
+    for (let i = 0; i < 3; i++) {
+      let piv = i; for (let r = i + 1; r < 3; r++) if (Math.abs(m[r][i]) > Math.abs(m[piv][i])) piv = r;
+      [m[i], m[piv]] = [m[piv], m[i]];
+      if (Math.abs(m[i][i]) < 1e-12) return undefined;
+      for (let r = 0; r < 3; r++) if (r !== i) { const f = m[r][i] / m[i][i]; for (let k = i; k < 4; k++) m[r][k] -= f * m[i][k]; }
+    }
+    a = m[0][3] / m[0][0]; b = m[1][3] / m[1][1]; c = m[2][3] / m[2][2];
+  } else {
+    const n = pts.length, sx = S((p) => p.x), sy = S((p) => p.y), sxx = S((p) => p.x * p.x), sxy = S((p) => p.x * p.y);
+    const d = n * sxx - sx * sx; if (Math.abs(d) < 1e-12) return undefined;
+    b = (n * sxy - sx * sy) / d; c = (sy - b * sx) / n;
+  }
+  const ybar = S((p) => p.y) / pts.length;
+  const ssTot = S((p) => (p.y - ybar) ** 2), ssRes = S((p) => (p.y - (a * p.x * p.x + b * p.x + c)) ** 2);
+  return { kind: quad ? 'quadratic' : 'linear', a, b, c, r2: ssTot > 0 ? 1 - ssRes / ssTot : 1, n: pts.length };
+}
+/** Concentration for an absorbance on the fitted curve (the root on the rising branch). */
+export function curveInvert(f: Fit, y: number): number | undefined {
+  if (f.kind === 'linear' || Math.abs(f.a) < 1e-12) return Math.abs(f.b) < 1e-12 ? undefined : (y - f.c) / f.b;
+  const disc = f.b * f.b - 4 * f.a * (f.c - y);
+  if (disc < 0) return undefined;
+  const r1 = (-f.b + Math.sqrt(disc)) / (2 * f.a), r2 = (-f.b - Math.sqrt(disc)) / (2 * f.a);
+  const cands = [r1, r2].filter((x) => x >= -1e-9);
+  if (!cands.length) return undefined;
+  // pick the root where the curve is rising (2ax + b > 0)
+  const rising = cands.filter((x) => 2 * f.a * x + f.b > 0);
+  return (rising.length ? rising : cands).sort((p, q) => p - q)[0];
+}
+export const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : NaN);

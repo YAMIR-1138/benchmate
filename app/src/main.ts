@@ -15,6 +15,7 @@ import { renderSpinZero } from './tools/spinzero';
 import { renderNanodrop } from './tools/nanodrop';
 import { renderLuciferase } from './tools/luciferase';
 import { renderPlateMap } from './tools/platemap';
+import { renderBca } from './tools/bca';
 import { timerEngine } from './tools/timerEngine';
 import logo from './assets/logo.png';
 import { renderImport } from './tools/importer';
@@ -35,6 +36,7 @@ export const TOOLS: Tool[] = [
   { id: 'nanodrop', idx: '10', name: 'NanoDrop', sub: 'what the numbers mean', icon: 'drop2', render: renderNanodrop },
   { id: 'luciferase', idx: '11', name: 'Luciferase', sub: 'firefly / Renilla, fold', icon: 'flame', render: renderLuciferase },
   { id: 'platemap', idx: '12', name: 'Plate Map', sub: 'qPCR and culture, 6 to 384', icon: 'grid', render: renderPlateMap },
+  { id: 'bca', idx: '13', name: 'BCA', sub: 'standard curve → µg/µL', icon: 'curve', render: renderBca },
 ];
 
 // ---- theme ----
