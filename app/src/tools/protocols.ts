@@ -9,7 +9,7 @@ interface PerWell { name: string; all?: Amount; byFormat: Record<string, Amount>
 interface FmtLine { text: string; byFormat: Record<string, string> }
 interface Block { title: string; body: string[]; timer?: string; warnings: string[]; notes: string[]; inputs: string[]; blanks: string[]; hints: FmtLine[]; perWell: PerWell[]; fmtLines: FmtLine[] }
 interface Step extends Block { subs: Block[] }
-interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; materials: string[]; scaling: string[]; note?: string; steps: Step[] }
+interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; per: string; materials: string[]; scaling: string[]; note?: string; steps: Step[] }
 interface Condition { name: string; wells: string; conc: string }
 interface Run { format: string; inputs: Record<string, string>; amounts: Record<string, string>; conditions: Condition[]; skipped: number[] }
 
@@ -25,6 +25,7 @@ function parsePerWell(raw: string): PerWell {
 }
 function parsePerWellPlain(s: string): PerWell {
   const eq = s.indexOf('=');
+  if (eq >= 0 && !s.includes(';')) { const single = parseAmount(s.slice(eq + 1)); if (single && /^[\d.]+\s*\S+$/.test(s.slice(eq + 1).trim())) return { name: s.slice(0, eq).trim(), all: single, byFormat: {} }; }
   if (eq < 0) { const m = s.match(/^([\d.]+)\s*([^\s\d]+)\s+(.*)$/); return m ? { name: m[3], all: { amount: Number(m[1]), unit: m[2] }, byFormat: {} } : { name: s, byFormat: {} }; }
   const name = s.slice(0, eq).trim(), byFormat: Record<string, Amount> = {};
   for (const part of s.slice(eq + 1).split(';')) { const m = part.trim().match(/^(\S+)\s+(.*)$/); if (!m) continue; const a = parseAmount(m[2]); if (a) byFormat[m[1]] = a; }
@@ -67,9 +68,9 @@ function parse(id: string, src: string): Protocol {
   const walk = (b: Block) => { b.perWell.forEach((p) => Object.keys(p.byFormat).forEach((f) => found.add(f))); b.fmtLines.forEach((f) => Object.keys(f.byFormat).forEach((x) => found.add(x))); };
   steps.forEach((s) => { walk(s); s.subs.forEach(walk); });
   const formats: string[] = Array.isArray(fm.formats) && fm.formats.length ? fm.formats : [...found];
-  return { id, title: fm.title ?? id, short: fm.short ?? fm.title ?? id, duration: fm.duration, tags: Array.isArray(fm.tags) ? fm.tags : [], vessel: fm.vessel, formats, materials: fm.materials ?? [], scaling: fm.scaling ?? [], note: fm.note, steps };
+  return { id, title: fm.title ?? id, short: fm.short ?? fm.title ?? id, duration: fm.duration, tags: Array.isArray(fm.tags) ? fm.tags : [], vessel: fm.vessel, formats, per: typeof fm.per === 'string' && fm.per ? fm.per : 'well', materials: fm.materials ?? [], scaling: fm.scaling ?? [], note: fm.note, steps };
 }
-const PROTOCOLS = Object.entries(RAW).map(([p, s]) => parse(p.split('/').pop()!.replace(/\.md$/, ''), s));
+const PROTOCOLS = Object.entries(RAW).filter(([p]) => !/README\.md$/i.test(p)).map(([p, s]) => parse(p.split('/').pop()!.replace(/\.md$/, ''), s));
 
 let ALL: PerWell[] = [];
 const baseAmount = (p: PerWell, run: Run): Amount | undefined => {
@@ -159,7 +160,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     if (b.inputs.length) parts.push(`<ul>${b.inputs.map((l) => `<li><span class="txt">${esc(l)}:</span> ${blankHtml(l, run)}</li>`).join('')}</ul>`);
     if (b.perWell.length) parts.push(`<ul>${b.perWell.map((p) => { const a = amountFor(p, run); const w = tw(); const total = a && w ? (isMass(a.unit) ? `${fmt(toNg(a) * w)} ng` : `${fmt(a.amount * w, 4)} ${a.unit}`) : '';
       const lead = p.editable && a ? `<span class="blank" style="min-width:60px"><input class="pen" data-amt="${esc(p.name)}" value="${esc(run.amounts[`${run.format}:${p.name}`] ?? String(a.amount))}" inputmode="decimal" style="width:64px" /></span> ${esc(a.unit)} ` : p.ratio ? `<span class="muted" style="font-size:14px">${fmt(p.ratio.amount)} ${esc(p.ratio.unit)}/${p.ratio.per} ${esc(p.ratio.ref)} →</span> ${a ? `<b>${fmt(a.amount, 3)} ${esc(a.unit)}</b> ` : ''}` : a ? `${fmt(a.amount)} ${esc(a.unit)} ` : '';
-      return `<li><span class="txt">${lead}${esc(p.name)} per well</span> ${total ? filled(total) : '<span class="blank">&nbsp;</span>'}</li>`; }).join('')}</ul>`);
+      return `<li><span class="txt">${lead}${esc(p.name)} per ${esc(P.per)}</span> ${total ? filled(total) : '<span class="blank">&nbsp;</span>'}</li>`; }).join('')}</ul>`);
     if (b.warnings.length) parts.push(b.warnings.map((w) => `<div style="color:var(--orange);font-weight:700;font-size:14px">${esc(w)}</div>`).join(''));
     if (b.notes.length) parts.push(b.notes.map((w) => `<div class="muted" style="font-size:14px">${esc(w)}</div>`).join(''));
     if (b.timer) { const tr = timerRange(b.timer); if (tr) parts.push(` <button class="chip" data-timer="${idx}" style="min-height:30px;font-size:12px;padding:0 10px;vertical-align:middle">timer ${esc(tr.label)}</button>`); }
@@ -177,23 +178,23 @@ function renderPaper(main: HTMLElement, P: Protocol) {
   }
   function paintCorner() {
     const box = main.querySelector('#corner'); if (!box) return;
-    box.innerHTML = `<div class="row cap" style="font-size:10px"><span style="flex:1 1 auto">plasmid / condition</span><span style="flex:0 0 66px;text-align:right">ng/µL</span><span style="flex:0 0 58px;text-align:right">wells</span><span style="flex:0 0 26px"></span></div>` +
+    box.innerHTML = `<div class="row cap" style="font-size:10px"><span style="flex:1 1 auto">${P.steps.some((s) => [s, ...s.subs].some((b) => b.perWell.some((p) => Object.values(p.byFormat).some((a) => isMass(a.unit)) || (p.all && isMass(p.all.unit))))) ? 'plasmid / condition' : 'condition'}</span><span style="flex:0 0 66px;text-align:right">ng/µL</span><span style="flex:0 0 58px;text-align:right">${esc(P.per)}s</span><span style="flex:0 0 26px"></span></div>` +
       run.conditions.map((c, i) => `<div class="row"><input class="pen" data-c="${i}" data-f="name" value="${esc(c.name)}" placeholder="EV" style="flex:1 1 0;width:0;min-width:0" /><input class="pen" data-c="${i}" data-f="conc" value="${esc(c.conc)}" placeholder="823" inputmode="decimal" style="flex:0 0 66px;width:66px;text-align:right" /><input class="pen" data-c="${i}" data-f="wells" value="${esc(c.wells)}" placeholder="4.5" inputmode="decimal" style="flex:0 0 58px;width:58px;text-align:right" /><button data-del="${i}" style="flex:0 0 26px;border:0;background:transparent;color:var(--muted);font-size:20px;cursor:pointer;padding:0">×</button></div>`).join('') +
-      `<div class="row" style="justify-content:space-between"><button class="chip" id="addc" style="min-height:32px;font-size:12px">+ condition</button><span class="mono muted" style="font-size:12px">${fmt(tw(), 4)} wells total</span></div>`;
-    $$<HTMLInputElement>(box, 'input[data-c]').forEach((inp) => inp.addEventListener('input', () => { (run.conditions[Number(inp.dataset.c)] as any)[inp.dataset.f!] = inp.value; persist(); paintSteps(); paintTubes(); paintCalc(); box.querySelector('.mono.muted')!.textContent = `${fmt(tw(), 4)} wells total`; }));
+      `<div class="row" style="justify-content:space-between"><button class="chip" id="addc" style="min-height:32px;font-size:12px">+ condition</button><span class="mono muted" style="font-size:12px">${fmt(tw(), 4)} ${esc(P.per)}s total</span></div>`;
+    $$<HTMLInputElement>(box, 'input[data-c]').forEach((inp) => inp.addEventListener('input', () => { (run.conditions[Number(inp.dataset.c)] as any)[inp.dataset.f!] = inp.value; persist(); paintSteps(); paintTubes(); paintCalc(); box.querySelector('.mono.muted')!.textContent = `${fmt(tw(), 4)} ${P.per}s total`; }));
     $$<HTMLElement>(box, '[data-del]').forEach((b) => b.addEventListener('click', () => { if (run.conditions.length > 1) { run.conditions.splice(Number(b.dataset.del), 1); persist(); paintCorner(); paintSteps(); paintTubes(); paintCalc(); } }));
     box.querySelector('#addc')?.addEventListener('click', () => { run.conditions.push({ name: '', wells: run.conditions[0]?.wells ?? '', conc: '' }); persist(); paintCorner(); paintTubes(); paintCalc(); });
   }
   function paintTubes() {
     const box = main.querySelector('#tubes'); if (!box) return;
-    box.innerHTML = run.conditions.map((c) => `<div class="cond"><div class="pen" style="font-size:20px;margin-bottom:2px">${esc(c.name || '')}${c.wells ? ` <span style="font-size:15px;opacity:0.8">${esc(c.wells)} wells</span>` : ''}</div><div class="pair">${mixes.map((m) => `<div class="tube">${TUBE_SVG}<div class="lines">${m.perWell.map((p) => { const t = tube(p, run, c); return `<div class="line"><span class="v"><span class="pen">${esc(t.text)}</span>&nbsp;</span><span>${esc(p.name)}</span></div>`; }).join('')}</div></div>`).join('')}</div></div>`).join('');
+    box.innerHTML = run.conditions.map((c) => `<div class="cond"><div class="pen" style="font-size:20px;margin-bottom:2px">${esc(c.name || '')}${c.wells ? ` <span style="font-size:15px;opacity:0.8">${esc(c.wells)} ${esc(P.per)}s</span>` : ''}</div><div class="pair">${mixes.map((m) => `<div class="tube">${TUBE_SVG}<div class="lines">${m.perWell.map((p) => { const t = tube(p, run, c); return `<div class="line"><span class="v"><span class="pen">${esc(t.text)}</span>&nbsp;</span><span>${esc(p.name)}</span></div>`; }).join('')}</div></div>`).join('')}</div></div>`).join('');
   }
   function paintCalc() {
     const box = main.querySelector('#calc'); if (!box) return;
     const lines: string[] = [];
     for (const c of run.conditions) for (const m of mixes) for (const p of m.perWell) { const t = tube(p, run, c); if (t.calc) lines.push(`<div><span class="pen" style="font-size:20px">${esc(t.calc)}</span>${t.tiny ? `<div style="font-size:13px;color:var(--orange)">${esc(t.tiny)}: under 1 µL is hard to pipette.</div>` : ''}</div>`); }
     const cellsIn = Object.entries(run.inputs).find(([k]) => /cells per well/i.test(k))?.[1]; const cpw = cellsIn ? parseNum(cellsIn) : undefined; const w = tw();
-    if (cpw && w) lines.push(`<div><span class="pen" style="font-size:20px">cells: ${sci(cpw)} × ${fmt(w, 4)} wells = ${sci(cpw * w)}</span> <a href="#/plates" style="font-size:13px">seeding tool</a></div>`);
+    if (cpw && w) lines.push(`<div><span class="pen" style="font-size:20px">cells: ${sci(cpw)} × ${fmt(w, 4)} ${esc(P.per)}s = ${sci(cpw * w)}</span> <a href="#/plates" style="font-size:13px">seeding tool</a></div>`);
     box.innerHTML = lines.join('') || `<span class="muted" style="font-size:13px">Add plasmid ng/µL in the corner and the DNA volumes are worked out here.</span>`;
   }
   main.querySelector('#formats')?.addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; run.format = b.dataset.f!; persist(); $$(main, '#formats .chip').forEach((x) => x.classList.toggle('on', x === b)); paintSteps(); paintTubes(); paintCalc(); });
@@ -208,7 +209,7 @@ function renderStep(main: HTMLElement, P: Protocol, n: number) {
   const blocks: Block[] = [s, ...s.subs];
   const tr = s.timer ? timerRange(s.timer) : undefined;
   const mixHtml = (b: Block) => b.perWell.length ? `<div class="result" style="margin-top:12px;padding:12px 14px">
-      <div style="display:flex;justify-content:space-between" class="cap"><span>${esc(b.title)} · ${esc(run.format)}</span><span style="color:var(--orange)">${tw ? `${fmt(tw, 4)} wells` : '<a href="#/protocols/' + P.id + '">set conditions</a>'}</span></div>
+      <div style="display:flex;justify-content:space-between" class="cap"><span>${esc(b.title)}${run.format ? ` · ${esc(run.format)}` : ''}</span><span style="color:var(--orange)">${tw ? `${fmt(tw, 4)} ${esc(P.per)}s` : '<a href="#/protocols/' + P.id + '">set conditions</a>'}</span></div>
       <div class="list" style="margin-top:4px">${b.perWell.map((p) => { const a = amountFor(p, run); return `<div class="item"><span class="grow">${esc(p.name)}</span><span class="mono muted" style="font-size:14px">${a ? `${fmt(a.amount)} ${esc(a.unit)}` : '—'}</span>${a && tw ? `<span class="mono" style="color:var(--orange);font-size:18px;min-width:80px;text-align:right">${isMass(a.unit) ? fmt(toNg(a) * tw) + ' ng' : fmt(a.amount * tw, 4) + ' ' + esc(a.unit)}</span>` : ''}</div>`; }).join('')}</div>
       ${run.conditions.length > 1 || run.conditions[0].conc ? `<div class="cap" style="margin-top:10px;color:inherit;opacity:0.8">Per tube</div>${run.conditions.map((c) => `<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:14px;margin-top:4px"><b style="min-width:60px">${esc(c.name || 'Cond.')}</b>${b.perWell.map((p) => { const t = tube(p, run, c); return `<span>${esc(p.name)} <b class="mono" style="color:var(--orange)">${esc(t.text)}</b></span>`; }).join('')}</div>`).join('')}` : ''}
     </div>` : '';
