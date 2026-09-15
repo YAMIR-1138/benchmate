@@ -13,6 +13,8 @@ Lines starting with a keyword are parsed into UI elements; everything else is pr
 | `hint: text` | Small muted text in brackets. Takes the `= format value; …` form too. |
 | `per_well: 25 µL Optimem` | A quantity per well. The app multiplies by the wells of each condition and lists the tubes. |
 | `per_well: Opti-MEM = 12-well 50 µL; 24-well 25 µL` | Same, with a different amount per plate format. The sheet has a format picker; `vessel:` is the default and `formats:` lists the choices. |
+| `per_well: DNA = 12-well 500 ng; 24-well 500 ng \| editable` | The amount becomes a blank the user can change for this run. |
+| `per_well: Lipofectamine = 1.5 µL per µg DNA` | A reagent tied to another reagent by ratio. It follows whatever DNA amount is in use. |
 | `fmt: Add drop-wise per well = 12-well 100 µL; 24-well 50 µL` | A sentence whose number depends on the format. |
 | `### a. Sub-step` | A lettered sub-step inside a step (a, b, c), with its own text and `per_well:` lines. |
 | `<!-- … -->` | A one-line comment, not shown. |

@@ -4,19 +4,25 @@ import { timerEngine } from './timerEngine';
 import { $, $$, esc, html, toast } from '../lib/dom';
 
 interface Amount { amount: number; unit: string }
-interface PerWell { name: string; all?: Amount; byFormat: Record<string, Amount> }
+interface PerWell { name: string; all?: Amount; byFormat: Record<string, Amount>; editable?: boolean; ratio?: { amount: number; unit: string; per: 'µg' | 'ng'; ref: string } }
 interface FmtLine { text: string; byFormat: Record<string, string> }
 interface Block { title: string; body: string[]; timer?: string; warnings: string[]; notes: string[]; inputs: string[]; blanks: string[]; hints: FmtLine[]; perWell: PerWell[]; fmtLines: FmtLine[] }
 interface Step extends Block { subs: Block[] }
 interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; materials: string[]; scaling: string[]; note?: string; steps: Step[] }
 interface Condition { name: string; wells: string; conc: string }
-interface Run { format: string; inputs: Record<string, string>; conditions: Condition[]; skipped: number[] }
+interface Run { format: string; inputs: Record<string, string>; amounts: Record<string, string>; conditions: Condition[]; skipped: number[] }
 
 const RAW = import.meta.glob('@core/protocols/*.md', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
 
 const newBlock = (title: string): Block => ({ title, body: [], warnings: [], notes: [], inputs: [], blanks: [], hints: [], perWell: [], fmtLines: [] });
 const parseAmount = (s: string): Amount | undefined => { const m = s.trim().match(/^([\d.]+)\s*(.*)$/); return m ? { amount: Number(m[1]), unit: m[2].trim() } : undefined; };
-function parsePerWell(s: string): PerWell {
+function parsePerWell(raw: string): PerWell {
+  const editable = /\|\s*editable\s*$/i.test(raw); const s = raw.replace(/\|\s*editable\s*$/i, '').trim();
+  const eq = s.indexOf('=');
+  if (eq >= 0) { const r = s.slice(eq + 1).trim().match(/^([\d.]+)\s*(\S+)\s+per\s+(µg|ug|ng)\s+(.+)$/i); if (r) return { name: s.slice(0, eq).trim(), byFormat: {}, editable, ratio: { amount: Number(r[1]), unit: r[2], per: /ng/i.test(r[3]) ? 'ng' : 'µg', ref: r[4].trim() } }; }
+  const pw = parsePerWellPlain(s); pw.editable = editable; return pw;
+}
+function parsePerWellPlain(s: string): PerWell {
   const eq = s.indexOf('=');
   if (eq < 0) { const m = s.match(/^([\d.]+)\s*([^\s\d]+)\s+(.*)$/); return m ? { name: m[3], all: { amount: Number(m[1]), unit: m[2] }, byFormat: {} } : { name: s, byFormat: {} }; }
   const name = s.slice(0, eq).trim(), byFormat: Record<string, Amount> = {};
@@ -64,10 +70,23 @@ function parse(id: string, src: string): Protocol {
 }
 const PROTOCOLS = Object.entries(RAW).map(([p, s]) => parse(p.split('/').pop()!.replace(/\.md$/, ''), s));
 
-const amountFor = (p: PerWell, format: string): Amount | undefined => p.byFormat[format] ?? p.all;
+let ALL: PerWell[] = [];
+const baseAmount = (p: PerWell, run: Run): Amount | undefined => {
+  const a = p.byFormat[run.format] ?? p.all; if (!a) return undefined;
+  if (p.editable) { const o = parseNum(run.amounts[`${run.format}:${p.name}`] ?? ''); if (o !== undefined && !Number.isNaN(o)) return { amount: o, unit: a.unit }; }
+  return a;
+};
+/** Amount per well after overrides and ratios. */
+function amountFor(p: PerWell, run: Run): Amount | undefined {
+  if (!p.ratio) return baseAmount(p, run);
+  const ref = ALL.find((x) => x.name.toLowerCase() === p.ratio!.ref.toLowerCase()); const ra = ref ? baseAmount(ref, run) : undefined;
+  if (!ra || !isMass(ra.unit)) return undefined;
+  const ng = toNg(ra); return { amount: p.ratio.amount * (p.ratio.per === 'µg' ? ng / 1000 : ng), unit: p.ratio.unit };
+}
 const isMass = (u: string) => /^(ng|µg|ug)$/i.test(u);
 const toNg = (a: Amount) => (/^(µg|ug)$/i.test(a.unit) ? a.amount * 1000 : a.amount);
 const blocksWithMix = (P: Protocol): Block[] => P.steps.flatMap((s) => [s, ...s.subs]).filter((b) => b.perWell.length);
+const setAll = (P: Protocol) => { ALL = blocksWithMix(P).flatMap((b) => b.perWell); };
 function timerRange(t: string): { ms: number; label: string } | undefined {
   const r = t.match(/^(\d+)-(\d+)\s*(m|h|s)$/);
   if (r) { const ms = parseDuration(r[1] + r[3]); return ms ? { ms, label: `${r[1]}–${r[2]} ${r[3] === 'm' ? 'min' : r[3]}` } : undefined; }
@@ -75,12 +94,13 @@ function timerRange(t: string): { ms: number; label: string } | undefined {
 }
 function runState(P: Protocol): Run {
   const r = load<Partial<Run> & { wells?: string }>(`protocol.${P.id}`, {});
-  return { format: r.format && P.formats.includes(r.format) ? r.format : (P.vessel && P.formats.includes(P.vessel) ? P.vessel : P.formats[0] ?? ''), inputs: r.inputs ?? {}, conditions: r.conditions?.length ? r.conditions : [{ name: '', wells: r.wells ?? '', conc: '' }], skipped: r.skipped ?? [] };
+  setAll(P);
+  return { format: r.format && P.formats.includes(r.format) ? r.format : (P.vessel && P.formats.includes(P.vessel) ? P.vessel : P.formats[0] ?? ''), inputs: r.inputs ?? {}, amounts: r.amounts ?? {}, conditions: r.conditions?.length ? r.conditions : [{ name: '', wells: r.wells ?? '', conc: '' }], skipped: r.skipped ?? [] };
 }
 const totalWells = (run: Run) => run.conditions.reduce((s, c) => s + (parseNum(c.wells) ?? 0), 0);
 /** What goes in one tube for one reagent. DNA in ng becomes µL when the plasmid concentration is known. */
 function tube(p: PerWell, run: Run, c: Condition): { text: string; calc?: string; tiny?: string } {
-  const a = amountFor(p, run.format); const w = parseNum(c.wells) ?? 0;
+  const a = amountFor(p, run); const w = parseNum(c.wells) ?? 0;
   if (!a || !w) return { text: '' };
   if (isMass(a.unit)) {
     const ng = toNg(a) * w, conc = parseNum(c.conc);
@@ -133,7 +153,9 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     const hints = b.hints.map((h) => { const v = Object.keys(h.byFormat).length ? h.byFormat[run.format] : ''; return v || !Object.keys(h.byFormat).length ? ` <span class="muted" style="font-size:14px">(${esc(h.text)} ${esc(v)})</span>` : ''; }).join('');
     parts.push(`<span class="txt">${head}</span>${b.blanks.map((l) => ' ' + blankHtml(l, run)).join('')}${hints}`);
     if (b.inputs.length) parts.push(`<ul>${b.inputs.map((l) => `<li><span class="txt">${esc(l)}:</span> ${blankHtml(l, run)}</li>`).join('')}</ul>`);
-    if (b.perWell.length) parts.push(`<ul>${b.perWell.map((p) => { const a = amountFor(p, run.format); const w = tw(); const total = a && w ? (isMass(a.unit) ? `${fmt(toNg(a) * w)} ng` : `${fmt(a.amount * w, 4)} ${a.unit}`) : ''; return `<li><span class="txt">${a ? `${fmt(a.amount)} ${esc(a.unit)} ` : ''}${esc(p.name)} per well</span> ${total ? filled(total) : '<span class="blank">&nbsp;</span>'}</li>`; }).join('')}</ul>`);
+    if (b.perWell.length) parts.push(`<ul>${b.perWell.map((p) => { const a = amountFor(p, run); const w = tw(); const total = a && w ? (isMass(a.unit) ? `${fmt(toNg(a) * w)} ng` : `${fmt(a.amount * w, 4)} ${a.unit}`) : '';
+      const lead = p.editable && a ? `<span class="blank" style="min-width:60px"><input class="pen" data-amt="${esc(p.name)}" value="${esc(run.amounts[`${run.format}:${p.name}`] ?? String(a.amount))}" inputmode="decimal" style="width:64px" /></span> ${esc(a.unit)} ` : p.ratio ? `<span class="muted" style="font-size:14px">${fmt(p.ratio.amount)} ${esc(p.ratio.unit)}/${p.ratio.per} ${esc(p.ratio.ref)} →</span> ${a ? `<b>${fmt(a.amount, 3)} ${esc(a.unit)}</b> ` : ''}` : a ? `${fmt(a.amount)} ${esc(a.unit)} ` : '';
+      return `<li><span class="txt">${lead}${esc(p.name)} per well</span> ${total ? filled(total) : '<span class="blank">&nbsp;</span>'}</li>`; }).join('')}</ul>`);
     if (b.warnings.length) parts.push(b.warnings.map((w) => `<div style="color:var(--orange);font-weight:700;font-size:14px">${esc(w)}</div>`).join(''));
     if (b.notes.length) parts.push(b.notes.map((w) => `<div class="muted" style="font-size:14px">${esc(w)}</div>`).join(''));
     if (b.timer) { const tr = timerRange(b.timer); if (tr) parts.push(` <button class="chip" data-timer="${idx}" style="min-height:30px;font-size:12px;padding:0 10px;vertical-align:middle">timer ${esc(tr.label)}</button>`); }
@@ -146,6 +168,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     }).join('');
     $$<HTMLElement>(main, '[data-skip]').forEach((b) => b.addEventListener('click', () => { const n = Number(b.dataset.skip); run.skipped = run.skipped.includes(n) ? run.skipped.filter((x) => x !== n) : [...run.skipped, n]; persist(); paintSteps(); }));
     $$<HTMLInputElement>(main, '#steps input[data-inp]').forEach((i) => i.addEventListener('input', () => { run.inputs[i.dataset.inp!] = i.value; persist(); paintCalc(); }));
+    $$<HTMLInputElement>(main, '#steps input[data-amt]').forEach((i) => i.addEventListener('input', () => { run.amounts[`${run.format}:${i.dataset.amt}`] = i.value; persist(); const keep = i.dataset.amt; paintSteps(); paintTubes(); paintCalc(); const again = main.querySelector<HTMLInputElement>(`#steps input[data-amt="${keep}"]`); if (again) { again.focus(); const n = again.value.length; again.setSelectionRange(n, n); } }));
     $$<HTMLElement>(main, '[data-timer]').forEach((b) => b.addEventListener('click', () => { const [i, j] = b.dataset.timer!.split('.').map(Number); const blk = j === undefined || Number.isNaN(j) ? P.steps[i] : P.steps[i].subs[j]; const tr = timerRange(blk.timer!)!; timerEngine.add(tr.ms, `${P.short} · ${blk.title}`); timerEngine.requestNotifications(); toast(`Timer started · ${tr.label}`); }));
   }
   function paintCorner() {
@@ -180,7 +203,7 @@ function renderStep(main: HTMLElement, P: Protocol, n: number) {
   const tr = s.timer ? timerRange(s.timer) : undefined;
   const mixHtml = (b: Block) => b.perWell.length ? `<div class="result" style="margin-top:12px;padding:12px 14px">
       <div style="display:flex;justify-content:space-between" class="cap"><span>${esc(b.title)} · ${esc(run.format)}</span><span style="color:var(--orange)">${tw ? `${fmt(tw, 4)} wells` : '<a href="#/protocols/' + P.id + '">set conditions</a>'}</span></div>
-      <div class="list" style="margin-top:4px">${b.perWell.map((p) => { const a = amountFor(p, run.format); return `<div class="item"><span class="grow">${esc(p.name)}</span><span class="mono muted" style="font-size:14px">${a ? `${fmt(a.amount)} ${esc(a.unit)}` : '—'}</span>${a && tw ? `<span class="mono" style="color:var(--orange);font-size:18px;min-width:80px;text-align:right">${isMass(a.unit) ? fmt(toNg(a) * tw) + ' ng' : fmt(a.amount * tw, 4) + ' ' + esc(a.unit)}</span>` : ''}</div>`; }).join('')}</div>
+      <div class="list" style="margin-top:4px">${b.perWell.map((p) => { const a = amountFor(p, run); return `<div class="item"><span class="grow">${esc(p.name)}</span><span class="mono muted" style="font-size:14px">${a ? `${fmt(a.amount)} ${esc(a.unit)}` : '—'}</span>${a && tw ? `<span class="mono" style="color:var(--orange);font-size:18px;min-width:80px;text-align:right">${isMass(a.unit) ? fmt(toNg(a) * tw) + ' ng' : fmt(a.amount * tw, 4) + ' ' + esc(a.unit)}</span>` : ''}</div>`; }).join('')}</div>
       ${run.conditions.length > 1 || run.conditions[0].conc ? `<div class="cap" style="margin-top:10px;color:inherit;opacity:0.8">Per tube</div>${run.conditions.map((c) => `<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:14px;margin-top:4px"><b style="min-width:60px">${esc(c.name || 'Cond.')}</b>${b.perWell.map((p) => { const t = tube(p, run, c); return `<span>${esc(p.name)} <b class="mono" style="color:var(--orange)">${esc(t.text)}</b></span>`; }).join('')}</div>`).join('')}` : ''}
     </div>` : '';
   main.append(html`
