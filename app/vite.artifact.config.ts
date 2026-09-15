@@ -9,7 +9,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 export default defineConfig({
   base: './',
   define: { __APP_VERSION__: JSON.stringify(pkg.version), __BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ') + 'Z') },
-  resolve: { alias: { '@core': fileURLToPath(new URL('../core', import.meta.url)) } },
+  resolve: { alias: { '@core': fileURLToPath(new URL('../core', import.meta.url)), 'virtual:pwa-register': fileURLToPath(new URL('./src/pwa-stub.ts', import.meta.url)) } },
   server: { fs: { allow: ['..'] } },
   build: { outDir: 'dist-single', assetsInlineLimit: 100000000, cssCodeSplit: false },
   plugins: [viteSingleFile()],
