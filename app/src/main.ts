@@ -18,6 +18,7 @@ import { renderPlateMap } from './tools/platemap';
 import { timerEngine } from './tools/timerEngine';
 import logo from './assets/logo.png';
 import { renderImport } from './tools/importer';
+import { setupUpdates } from './update';
 
 export interface Tool { id: string; idx: string; name: string; sub: string; icon: keyof typeof icons; render: (main: HTMLElement) => void; soon?: boolean }
 
@@ -75,7 +76,7 @@ function paintRail(active: string) {
   const dark = isDark();
   rail.innerHTML = `<a class="rbrand" href="#/"><img src="${logo}" alt="" /><span><span class="rlab">TGGR</span><span class="rword">Bench <b>Mate</b></span></span></a>
     <nav>${TOOLS.map((t) => `<a class="navk ${t.id === active ? 'on' : ''}" href="#/${t.id}">${icons[t.icon]}<span>${t.name}</span><span class="idx">${t.idx}</span></a>`).join('')}</nav>
-    <div class="rfoot"><button class="iconbtn themebtn" aria-label="Toggle light/dark">${dark ? icons.sun : icons.moon}</button><span class="mono">model BM-1 · v${__APP_VERSION__}</span></div>`;
+    <div class="rfoot"><button class="iconbtn themebtn" aria-label="Toggle light/dark">${dark ? icons.sun : icons.moon}</button><span class="mono" title="build ${__BUILD__}">model BM-1 · v${__APP_VERSION__} · ${__BUILD__.slice(5, 16)}</span></div>`;
   rail.querySelector<HTMLButtonElement>('.themebtn')!.onclick = toggleTheme;
 }
 
@@ -105,3 +106,4 @@ function route() {
 addEventListener('hashchange', route);
 timerEngine.start();
 route();
+setupUpdates();

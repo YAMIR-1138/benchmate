@@ -333,3 +333,7 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
 .sheet .card { width: 100%; max-width: 520px; background: var(--bg); border: var(--bw) solid var(--line); border-bottom: 0; border-radius: 16px 16px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
 .sheet .qr { display: block; margin: 12px auto; width: 240px; height: 240px; image-rendering: pixelated; background: #fff; padding: 8px; border-radius: 8px; border: var(--bw) solid var(--line); }
 .sheet .link { font-family: var(--mono); font-size: 11px; word-break: break-all; color: var(--muted); max-height: 48px; overflow: hidden; }
+
+.update-banner { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; background: var(--panel); border: var(--bw) solid var(--line); border-radius: 14px; box-shadow: 0 var(--edge) 0 var(--key-edge); font-weight: 700; }
+.update-banner .btn { flex: 0 0 auto; min-height: 40px; padding: 0 14px; font-size: 15px; }
+@media print { .update-banner { display: none !important; } }

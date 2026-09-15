@@ -7,7 +7,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 
 export default defineConfig({
   base: process.env.BASE_PATH ?? '/benchmate/',
-  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  define: { __APP_VERSION__: JSON.stringify(pkg.version), __BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ') + 'Z') },
   build: { assetsInlineLimit: 4096 },
   resolve: {
     alias: { '@core': fileURLToPath(new URL('../core', import.meta.url)) },
@@ -15,7 +15,7 @@ export default defineConfig({
   server: { fs: { allow: ['..'] } },
   plugins: [
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
         name: 'TGGR Bench Mate',
