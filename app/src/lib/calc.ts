@@ -20,6 +20,19 @@ export function dilution(i: DilutionInput): DilutionResult {
   return { c1, c2, v1, v2, diluent: v2 - v1, factor: c1 / c2, solved: k };
 }
 
+/** When the stock transfer is below what a pipette can do, pre-dilute in steps of at most 1:100. All volumes in litres. */
+export interface StepPlan { factor: number; steps: { factor: number; stock: number; diluent: number }[]; final: { stock: number; diluent: number } }
+export function intermediatePlan(v1: number, v2: number, min: number): StepPlan | undefined {
+  if (!(v1 > 0) || !(min > 0) || v1 >= min) return undefined;
+  let D = 1; while (v1 * D < min && D < 1e9) D *= 10;
+  const transfer = v1 * D;
+  if (transfer >= v2) return undefined;
+  const a = Math.max(min, 2e-6);
+  const steps: StepPlan['steps'] = []; let rem = D;
+  while (rem > 1) { const f = Math.min(rem, 100); rem /= f; steps.push({ factor: f, stock: a, diluent: a * (f - 1) }); }
+  return { factor: D, steps, final: { stock: transfer, diluent: v2 - transfer } };
+}
+
 export interface MolarInput { mass_g?: number; molarity_M?: number; volume_L?: number; mw?: number }
 /** mass = M · V · MW. Exactly one field undefined; it is solved. */
 export function molar(i: MolarInput): Required<MolarInput> & { solved: keyof MolarInput } {
@@ -89,13 +102,13 @@ export interface Verdict { status: 'good' | 'warn' | 'bad'; note: string }
 export function verdict260280(r: number, kind: NAType): Verdict {
   const [lo, hi, ideal] = kind === 'RNA' ? [1.9, 2.15, 2.0] : [1.75, 2.0, 1.8];
   if (r >= lo && r <= hi) return { status: 'good', note: `Within range (~${ideal} for ${kind}).` };
-  if (r < lo) return { status: r < lo - 0.2 ? 'bad' : 'warn', note: 'Low: protein or phenol carry-over.' };
-  return { status: kind === 'RNA' ? 'warn' : 'warn', note: kind === 'RNA' ? (r > 2.2 ? 'High: check the blank.' : 'Slightly high: normal for RNA.') : 'High: RNA in the DNA prep.' };
+  if (r < lo) return { status: r < lo - 0.2 ? 'bad' : 'warn', note: 'Low: possibly protein or phenol. Check the spectrum near 270 nm and the blank.' };
+  return { status: kind === 'RNA' ? 'warn' : 'warn', note: kind === 'RNA' ? (r > 2.2 ? 'High: possibly a blank mismatch.' : 'Slightly high: common for RNA.') : 'High: possibly RNA in the prep.' };
 }
 export function verdict260230(r: number): Verdict {
   if (r >= 1.8 && r <= 2.3) return { status: 'good', note: 'Within range (2.0–2.2).' };
-  if (r < 1.8) return { status: r < 1.5 ? 'bad' : 'warn', note: 'Low: salt, phenol, EDTA or carbohydrate carry-over.' };
-  return { status: 'warn', note: 'High: blank mismatch.' };
+  if (r < 1.8) return { status: r < 1.5 ? 'bad' : 'warn', note: 'Low: possibly salt, phenol or a dilute sample. Check the concentration and the blank first.' };
+  return { status: 'warn', note: 'High: possibly a blank mismatch.' };
 }
 export function verdictConc(c: number): Verdict {
   if (c < 5) return { status: 'bad', note: 'Below 5 ng/µL: ratios not reliable.' };

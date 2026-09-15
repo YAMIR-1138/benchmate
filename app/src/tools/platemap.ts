@@ -41,7 +41,7 @@ export function renderPlateMap(main: HTMLElement) {
     <div class="print" id="printblock">
       <div class="print-only" style="font-family:var(--mono);font-size:11px;margin-bottom:6px;color:#555"><span id="print-head"></span></div>
       <div class="print-flex" style="justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px"><div style="font-family:var(--display);font-weight:700;font-size:20px" id="print-title"></div><span class="pqr" id="pqr"></span></div>
-      <div class="result" style="padding:6px;touch-action:none;user-select:none;-webkit-user-select:none" id="gridbox"></div>
+      <div class="result" style="padding:6px;overflow-x:auto;touch-action:none;user-select:none;-webkit-user-select:none" id="gridbox"></div>
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px" class="mono screen-only"><span id="progress" style="font-size:14px"></span><span class="muted" style="font-size:12px;text-align:right">drag across wells for a block, or across the letters and numbers for whole lines</span></div>
     <div id="keys" style="margin-top:10px;font-size:13px"></div>
     </div>
@@ -219,4 +219,8 @@ export function renderPlateMap(main: HTMLElement) {
     if (await copyText(lines.join('\n'))) toast('Copied as a table');
   });
   paintHeader(); paintGrid();
+  let rz: number | undefined;
+  const onWinResize = () => { if (overlay) return; clearTimeout(rz); rz = window.setTimeout(paintGrid, 120); };
+  window.addEventListener('resize', onWinResize);
+  (main as any).__cleanup = () => { clearTimeout(rz); window.removeEventListener('resize', onWinResize); };
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { dilution, molar, rcfFromRpm, rpmFromRcf } from '../src/lib/calc';
+import { dilution, intermediatePlan, molar, rcfFromRpm, rpmFromRcf } from '../src/lib/calc';
 import { parseDuration, fmt, parseNum } from '../src/lib/fmt';
 import { convert, autoUnit } from '../src/lib/units';
 
@@ -66,5 +66,22 @@ describe('exponent input', () => {
     expect(parseNum('10^6')).toBe(1e6);
     expect(parseNum('0.5×10⁵')).toBe(50000);
     expect(parseNum('1,5e3')).toBe(1500);
+  });
+});
+
+describe('intermediate dilution plan', () => {
+  it('splits a 1:1000 pre-dilution into 1:100 then 1:10 and keeps the final concentration', () => {
+    const r = dilution({ c1: 0.1, c2: 1e-6, v2: 100e-6 }); // 100 mM → 1 µM in 100 µL
+    expect(r.v1).toBeCloseTo(1e-9, 15);
+    const plan = intermediatePlan(r.v1, r.v2, 1e-6)!;
+    expect(plan.factor).toBe(1000);
+    expect(plan.steps.map((s) => s.factor)).toEqual([100, 10]);
+    expect(plan.steps[0].stock).toBeCloseTo(2e-6, 12); expect(plan.steps[0].diluent).toBeCloseTo(198e-6, 12);
+    expect(plan.final.stock).toBeCloseTo(1e-6, 12); expect(plan.final.diluent).toBeCloseTo(99e-6, 12);
+    const cInt = 0.1 / plan.factor, cFinal = (cInt * plan.final.stock) / (plan.final.stock + plan.final.diluent);
+    expect(cFinal).toBeCloseTo(1e-6, 12);
+  });
+  it('is not needed when the transfer is pipettable', () => {
+    expect(intermediatePlan(10e-6, 1000e-6, 1e-6)).toBeUndefined();
   });
 });

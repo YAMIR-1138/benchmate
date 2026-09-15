@@ -9,24 +9,24 @@ const light = (s: 'good' | 'warn' | 'bad') => { const c = s === 'good' ? 'var(--
 const GUIDE: { title: string; rows: [string, string][] }[] = [
   { title: 'What each number is', rows: [
     ['ng/µL', 'A260 × 50 (dsDNA), × 40 (RNA) or × 33 (ssDNA). Includes everything that absorbs at 260 nm: degraded fragments, free nucleotides, RNA in a DNA prep.'],
-    ['260 / 280', 'Protein and phenol. Expected ~1.8 for DNA, ~2.0 for RNA. Both absorb near 280 nm and lower the ratio.'],
-    ['260 / 230', 'Salts, phenol, EDTA, carbohydrates, guanidine from lysis buffers. Expected 2.0–2.2.'],
+    ['260 / 280', 'Sensitive to protein and phenol, which absorb near 280 nm. Typical: ~1.8 for DNA, ~2.0 for RNA.'],
+    ['260 / 230', 'Sensitive to salts, phenol, EDTA, carbohydrates and guanidine from lysis buffers. Typical: 2.0–2.2.'],
   ] },
   { title: '260 / 280', rows: [
-    ['< 1.7', 'Protein or phenol carry-over. Fine for gels and digests. For enzymatic work: column, or phenol/chloroform + ethanol.'],
-    ['DNA > 2.0', 'RNA in the prep. Concentration reads high. RNase A if it matters downstream.'],
-    ['RNA < 1.9', 'Protein or DNA carry-over. DNase before qPCR if genomic DNA is a concern.'],
-    ['± 0.1', 'Normal variation. Buffer pH and salt shift the ratio by 0.2–0.3. Water reads lower than TE.'],
+    ['< 1.7', 'Possible causes: protein, phenol. Check: the spectrum near 270 nm (phenol), the blank, the buffer. Sensitive downstream steps: enzymatic reactions, sequencing.'],
+    ['DNA > 2.0', 'Possible causes: RNA in the prep, buffer effects. Check: a gel for an RNA smear; RNase treatment if the next step is affected.'],
+    ['RNA < 1.9', 'Possible causes: protein, genomic DNA. Check: a −RT control in qPCR; DNase treatment.'],
+    ['± 0.1', 'Within normal variation. Buffer pH and salt move the ratio by 0.2–0.3. Water reads lower than TE.'],
   ] },
   { title: '260 / 230', rows: [
-    ['< 1.8', 'Guanidine from column kits, phenol, or a dilute sample. Extra ethanol-buffer wash, dry spin of the empty column, or re-precipitation. Inhibits qPCR, RT and ligation.'],
-    ['< 1.8 and < 20 ng/µL', 'Mostly noise at 230 nm. Re-read a more concentrated sample first.'],
-    ['> 2.3', 'Blank mismatch. Blank with the elution buffer.'],
+    ['< 1.8', 'Possible causes: guanidine from column kits, phenol, a dilute sample. Check: concentration first, then the blank. Remedies: extra ethanol-buffer wash, dry spin of the empty column, re-precipitation. Sensitive steps: qPCR, RT, ligation.'],
+    ['< 1.8 and < 20 ng/µL', 'The 230 nm reading is mostly noise at this concentration. Re-read a more concentrated sample before drawing conclusions.'],
+    ['> 2.3', 'Possible cause: blank mismatch. Check: re-blank with the elution buffer.'],
   ] },
   { title: 'Spectrum', rows: [
     ['Clean', 'Peak at 260, trough at 230, flat near zero from 320 nm.'],
-    ['Peak near 270', 'Phenol.'],
-    ['No trough at 230', 'Guanidine or other salt. The curve rises to the left.'],
+    ['Peak near 270', 'Consistent with phenol.'],
+    ['No trough at 230', 'Consistent with guanidine or other salt. The curve rises to the left.'],
     ['Raised above 320', 'Turbidity, particles or a bubble. Re-pipette, re-read.'],
     ['Negative', 'Blank higher than the sample. Clean the pedestal, re-blank.'],
   ] },
@@ -35,7 +35,7 @@ const GUIDE: { title: string; rows: [string, string][] }[] = [
     ['Wipe', 'Lint-free wipe on both pedestals between samples.'],
     ['Volume', '1–2 µL, no bubbles. Close the arm promptly.'],
     ['Repeat', 'Two readings within 5 %.'],
-    ['Scope', 'Quantity and gross contamination. RNA integrity: gel or Bioanalyzer. dsDNA in a mixed sample: Qubit.'],
+    ['Scope', 'Quantity and gross contamination only. Integrity: gel or Bioanalyzer. dsDNA in a mixed sample: Qubit.'],
   ] },
 ];
 
@@ -51,6 +51,7 @@ export function renderNanodrop(main: HTMLElement) {
     </div>
     <div class="result" id="qc" hidden><div class="list" id="verdicts"></div></div>
     <div class="note">Expected for ${'<b id="exp"></b>'}: 260/280 <b id="exp280"></b>, 260/230 <b>2.0–2.2</b>, factor <b id="expf"></b> ng/µL per A260.</div>
+    <div class="note" style="margin-top:18px">Ratios are indicators, not a verdict. Concentration, the full spectrum and the blank matter as much, and a good ratio does not guarantee the next step works.</div>
     <div id="guide"></div>
   `);
   const guide = $(main, '#guide');
@@ -65,7 +66,7 @@ export function renderNanodrop(main: HTMLElement) {
     if (c) { const v = verdictConc(c); rows.push(row(v.status, `${fmt(c, 4)} ng/µL`, v.note || 'Within range.')); }
     if (r280) { const v = verdict260280(r280, st.kind); rows.push(row(v.status, `260/280 = ${fmt(r280, 3)}`, v.note)); }
     if (r230) { const v = verdict260230(r230); rows.push(row(v.status, `260/230 = ${fmt(r230, 3)}`, v.note)); }
-    if (c && c < 20 && r230 && r230 < 1.8) rows.push(row('warn', 'Low 260/230 at low concentration', 'Likely noise rather than contamination.'));
+    if (c && c < 20 && r230 && r230 < 1.8) rows.push(row('warn', 'Low 260/230 at low concentration', 'Possibly noise rather than contamination.'));
     $(main, '#qc').hidden = rows.length === 0; $(main, '#verdicts').innerHTML = rows.join('');
   }
   $$(main, 'input[name]').forEach((i) => i.addEventListener('input', paint));

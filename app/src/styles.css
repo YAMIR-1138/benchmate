@@ -226,7 +226,7 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
 .calc { margin-top: 16px; border-top: 1px dashed var(--line-soft); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 
 /* ---- wide layout: iPad and desktop ---- */
-@media (min-width: 760px) {
+@media (min-width: 760px) and (min-height: 500px) {
   #app { max-width: none; margin: 0; display: grid; grid-template-columns: 236px minmax(0, 1fr); align-items: start; }
   .rail { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0; height: 100vh; padding: 16px 12px calc(16px + env(safe-area-inset-bottom)); border-right: var(--bw) solid var(--line); background: var(--panel); box-sizing: border-box; overflow-y: auto; }
   .rail .rbrand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); padding: 4px 6px 12px; }
@@ -256,7 +256,7 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
   .paper .tubes .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
   .tapzone { min-height: 46vh; }
 }
-@media (min-width: 1100px) {
+@media (min-width: 1100px) and (min-height: 500px) {
   #app { grid-template-columns: 260px minmax(0, 1fr); }
   .content > .top, .content > .stripe, .content > main, .content > .foot, .content > .credit { max-width: 960px; }
 }
@@ -338,3 +338,19 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
 .update-banner { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; background: var(--panel); border: var(--bw) solid var(--line); border-radius: 14px; box-shadow: 0 var(--edge) 0 var(--key-edge); font-weight: 700; }
 .update-banner .btn { flex: 0 0 auto; min-height: 40px; padding: 0 14px; font-size: 15px; }
 @media print { .update-banner { display: none !important; } }
+
+/* ---- running-timer strip, visible in every tool except Timer and Home ---- */
+.tstrip { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 45; display: flex; align-items: center; gap: 10px; padding: 6px 14px; min-height: 44px; max-width: calc(100vw - 32px); box-sizing: border-box; border-radius: 14px; background: var(--panel); border: var(--bw) solid var(--line); box-shadow: 0 var(--edge) 0 var(--key-edge); color: var(--text); text-decoration: none; font-family: var(--display); font-weight: 700; font-size: 15px; }
+.tstrip .dot { width: 10px; height: 10px; border-radius: 5px; background: var(--teal); box-shadow: 0 0 6px var(--teal); flex: 0 0 auto; }
+.tstrip .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tstrip .t { font-family: var(--mono); font-size: 19px; flex: 0 0 auto; }
+.tstrip .more { font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 0 0 auto; }
+.tstrip.done { background: var(--orange); color: var(--key-ink); }
+.tstrip.done .dot { background: var(--key-ink); box-shadow: none; animation: tsblink 1s steps(2) infinite; }
+.tstrip.done .more { color: var(--key-ink); }
+@keyframes tsblink { to { opacity: 0.2; } }
+body.has-strip main { padding-bottom: 92px; }
+body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom)); }
+@media (min-width: 760px) and (min-height: 500px) { .tstrip { left: calc(50% + 118px); } }
+@media (prefers-reduced-motion: reduce) { .tstrip.done .dot { animation: none; } }
+@media print { .tstrip { display: none !important; } }

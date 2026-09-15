@@ -1,7 +1,8 @@
 import './styles.css';
 import { icons } from './lib/icons';
 import { load, save } from './lib/store';
-import { el } from './lib/dom';
+import { el, esc } from './lib/dom';
+import { mmss } from './lib/fmt';
 import { renderHome } from './tools/home';
 import { renderDilution } from './tools/dilution';
 import { renderMolar } from './tools/molar';
@@ -82,6 +83,23 @@ function paintRail(active: string) {
   rail.querySelector<HTMLButtonElement>('.themebtn')!.onclick = toggleTheme;
 }
 
+// ---- running-timer strip: label + countdown, tap to open the timer ----
+const strip = el('a', { class: 'tstrip', href: '#/timer' });
+strip.hidden = true;
+app.append(strip);
+function paintStrip() {
+  const id = location.hash.replace(/^#\/?/, '').split('/')[0];
+  const ts = timerEngine.timers.filter((t) => t.endAt || t.done);
+  const show = ts.length > 0 && id !== 'timer' && id !== '';
+  strip.hidden = !show; document.body.classList.toggle('has-strip', show);
+  if (!show) return;
+  const done = ts.find((t) => t.done);
+  const t = done ?? ts.filter((x) => x.endAt).sort((a, b) => a.endAt! - b.endAt!)[0];
+  strip.classList.toggle('done', !!done);
+  strip.innerHTML = `<span class="dot"></span><span class="lbl">${esc(t.label)}</span><span class="t">${done ? 'done' : mmss(timerEngine.remaining(t))}</span>${ts.length > 1 ? `<span class="more">+${ts.length - 1}</span>` : ''}`;
+}
+timerEngine.onChange(paintStrip);
+
 function route() {
   cleanup?.(); cleanup = undefined;
   const hash = location.hash.replace(/^#\/?/, '');
@@ -103,6 +121,7 @@ function route() {
     cleanup = (main as any).__cleanup;
   }
   if (!main.isConnected) content.append(main);
+  paintStrip();
   window.scrollTo(0, 0);
 }
 addEventListener('hashchange', route);

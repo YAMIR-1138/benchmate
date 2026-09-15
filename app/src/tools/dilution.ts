@@ -1,4 +1,4 @@
-import { dilution } from '../lib/calc';
+import { dilution, intermediatePlan } from '../lib/calc';
 import { UNITS, familyOf, toBase, autoUnit, type Family } from '../lib/units';
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
@@ -6,11 +6,11 @@ import { $, $$, copyText, esc, html, toast, unitSelect } from '../lib/dom';
 
 const CONC_UNITS = [...Object.keys(UNITS.molar), ...Object.keys(UNITS.massconc), 'X'];
 const VOL_UNITS = Object.keys(UNITS.volume);
-type State = { c1: string; c2: string; v1: string; v2: string; uc1: string; uc2: string; uv1: string; uv2: string };
+type State = { c1: string; c2: string; v1: string; v2: string; uc1: string; uc2: string; uv1: string; uv2: string; minVol: string };
 type Recent = { text: string; result: string };
 
 export function renderDilution(main: HTMLElement) {
-  const st = load<State>('dilution', { c1: '', c2: '', v1: '', v2: '', uc1: 'mM', uc2: 'µM', uv1: 'µL', uv2: 'µL' });
+  const st = load<State>('dilution', { c1: '', c2: '', v1: '', v2: '', uc1: 'mM', uc2: 'µM', uv1: 'µL', uv2: 'µL', minVol: '1' });
   const recents = load<Recent[]>('dilution.recent', []);
   const field = (k: 'c1' | 'c2' | 'v1' | 'v2', label: string, units: string[], unit: string) => `
     <div class="field" data-k="${k}">
@@ -25,12 +25,14 @@ export function renderDilution(main: HTMLElement) {
       ${field('v2', 'Final volume', VOL_UNITS, st.uv2)}
       ${field('v1', 'Stock volume', VOL_UNITS, st.uv1)}
       <div class="hint">Fill three · the fourth is solved</div>
+      <div class="field" style="margin-top:6px"><label for="f-min">Min pipette volume<small></small></label><input id="f-min" name="minVol" type="text" inputmode="decimal" value="${esc(st.minVol)}" style="width:70px" /><span class="unit" style="border:0;background:transparent;box-shadow:none">µL</span></div>
     </div>
     <div class="error" hidden></div>
     <div class="result" hidden>
       <div class="big o"><span class="n" id="r-v1"></span><span class="u" id="r-v1u"></span></div>
       <div class="big t" style="margin-top:6px"><span class="n" id="r-dil"></span><span class="u" id="r-dilu"></span></div>
       <p id="r-text"></p>
+      <div class="note warn" id="r-min" hidden style="color:var(--text)"></div>
       <div class="actions"><button class="btn" id="copy">Copy</button><button class="btn quiet" id="clear">Clear</button></div>
     </div>
     <div class="section" id="recent" hidden><div class="cap">Recent</div><div class="list"></div></div>
@@ -72,6 +74,15 @@ export function renderDilution(main: HTMLElement) {
       const c2disp = fmt(r.c2 / UNITS[fc2][st.uc2]);
       sentence = `Add ${fmt(a.value, 5)} ${a.unit} of stock to ${fmt(b.value, 5)} ${b.unit} of diluent for ${c2disp} ${st.uc2}. Dilution 1 : ${fmt(r.factor)}.`;
       $(main, '#r-text').innerHTML = `Add <strong>${fmt(a.value, 5)} ${a.unit}</strong> of stock to <strong>${fmt(b.value, 5)} ${b.unit}</strong> of diluent. Dilution factor 1 : ${fmt(r.factor)}.`;
+      const minL = (parseNum(st.minVol) || 1) * 1e-6, plan = intermediatePlan(r.v1, r.v2, minL), minBox = $(main, '#r-min');
+      minBox.hidden = !plan;
+      if (plan) {
+        const vol = (L: number) => { const u = autoUnit(L, 'volume', ['mL', 'µL']); return `${fmt(u.value, 4)} ${u.unit}`; };
+        const lines = plan.steps.map((s, i) => `<b>${i + 1}.</b> 1 : ${fmt(s.factor)} — ${vol(s.stock)} ${i === 0 ? 'stock' : `of ${i}`} + ${vol(s.diluent)} diluent`);
+        lines.push(`<b>${plan.steps.length + 1}.</b> ${vol(plan.final.stock)} of ${plan.steps.length} + ${vol(plan.final.diluent)} diluent`);
+        minBox.innerHTML = `<b>${fmt(a.value, 5)} ${a.unit} is below the ${fmt(minL * 1e6)} µL minimum.</b> Same result via a 1 : ${fmt(plan.factor)} intermediate:<div style="margin-top:6px;line-height:1.6">${lines.join('<br>')}</div>`;
+        sentence += ` Below ${fmt(minL * 1e6)} µL; intermediate: ${lines.map((l) => l.replace(/<[^>]+>/g, '')).join('; ')}.`;
+      }
       res.hidden = false;
     } catch (e) {
       errBox.textContent = (e as Error).message; errBox.hidden = false;
@@ -89,6 +100,6 @@ export function renderDilution(main: HTMLElement) {
     recents.unshift({ text, result: `${$(main, '#r-v1').textContent} ${$(main, '#r-v1u').textContent!.split(' ')[0]}` });
     recents.splice(5); save('dilution.recent', recents); renderRecent();
   });
-  $(main, '#clear').addEventListener('click', () => { inputs.forEach((i) => (i.value = '')); compute(); inputs[0].focus(); });
+  $(main, '#clear').addEventListener('click', () => { inputs.forEach((i) => { if (i.name !== 'minVol') i.value = ''; }); compute(); inputs[0].focus(); });
   renderRecent(); compute();
 }
