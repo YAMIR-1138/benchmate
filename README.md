@@ -1,41 +1,39 @@
 # TGGR Bench Mate
 
-A bench companion for molecular biology, made by and for TGGR Lab. Offline, no ads, no
-accounts. Runs as an installable web app on Android, iPhone and iPad; an ESP32 bench
-edition is planned.
+Bench tools for molecular biology, as an installable web app. Works offline. No ads, no accounts.
 
-Tools: dilution, molar, unit converter (incl. ×g ↔ rpm, DNA amount, A260), timers,
-counter, DNA/RNA/protein ladders, plates and seeding, step-by-step protocols, and a built-in
-edition of [ΣpinZero](https://github.com/YAMIR-1138/SpinZero) for rotor balancing.
+**App:** https://yamir-1138.github.io/benchmate/ — open on a phone and add to the home screen.
 
-## Layout
+<img src="docs/screenshots/light-home.png" width="280" alt="Home screen"> <img src="docs/screenshots/light-paper.png" width="280" alt="Protocol sheet">
 
-| Path | What |
+## Tools
+
+Dilution · molar · unit converter (×g ↔ rpm, DNA amount, A260) · timers · counter · DNA, RNA and protein ladders · cell count to seeding · protocols as interactive worksheets · [ΣpinZero](https://github.com/YAMIR-1138/SpinZero) rotor balancing · NanoDrop reading guide · luciferase fold change · plate maps for qPCR and cell culture.
+
+## Repository
+
+| Path | Contents |
 |---|---|
-| `app/` | The web app (Vite + TypeScript, no framework). |
-| `core/data/` | Ladders, vessels: JSON shared by every edition. |
-| `core/protocols/` | Protocols as Markdown, one file each. Format in `core/protocols/README.md`. |
-| `core/tests/vectors/` | Input/expected pairs every edition must reproduce. |
-| `assets/brand/` | Logo. |
-| `docs/` | Brainstorm, decisions, screen mockups. |
+| `app/` | The web app. Vite, TypeScript, no framework. |
+| `core/data/` | Ladders and vessels as JSON. |
+| `core/protocols/` | Protocols as Markdown. Format in [`core/protocols/README.md`](core/protocols/README.md). |
+| `core/tests/vectors/` | Expected values every edition must reproduce. |
+| `docs/` | Notes, hardware list for the planned ESP32 edition, screenshots. |
 
-## Run it
+## Develop
 
 ```bash
 cd app
 npm install
-npm run dev      # http://localhost:5173/benchmate/
+npm run dev
 npm test
-npm run build    # -> app/dist
+npm run build
 ```
 
-## Deploy
+Pushes build and deploy to GitHub Pages through `.github/workflows/pages.yml`.
 
-Pushes to `main` build and publish to GitHub Pages via `.github/workflows/pages.yml`.
-One-time setup: repository Settings → Pages → Source: **GitHub Actions**. The app is then at
-`https://yamir-1138.github.io/benchmate/`. Open it on a phone and "Add to Home Screen".
+## Protocols
 
-## Add a protocol
+Add a Markdown file to `core/protocols/` and it appears in the app. Per-well amounts, plate formats, timers and fill-in blanks are plain text lines; see the format README.
 
-Drop a Markdown file into `core/protocols/`. One `##` heading per step; `timer:`,
-`warning:`, `note:`, `input:` and `per_well:` lines become UI. See the README there.
+Made at TGGR Lab with Claude Code.
