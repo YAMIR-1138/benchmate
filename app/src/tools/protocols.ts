@@ -141,7 +141,8 @@ function renderPaper(main: HTMLElement, P: Protocol) {
       ${mixes.length ? `<div class="corner" id="corner"></div>` : ''}
       <ol id="steps"></ol>
       ${mixes.length ? `<div class="tubes" id="tubes"></div><div class="calc" id="calc"></div>` : ''}
-      <div class="print-only pfoot"><span>TGGR Bench Mate · ${esc(run.format)} · printed ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · scan to open this run in the app</span><span class="pqr" id="pqr"></span></div>
+      <div class="print-only pqrbox"><span class="pqr" id="pqr"></span><span class="muted" style="font-size:8pt">scan to open this run in the app</span></div>
+      <div class="print-only pfoot">TGGR Bench Mate · ${esc(run.format)} · printed ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
     </div>
     <div class="actions" style="margin-top:16px"><a class="btn primary tall" href="#/protocols/${P.id}/1">Step by step</a><button class="btn" id="print">Print A4</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="share">Send run to device</button><a class="btn" href="#/platemap">Plate map</a></div>

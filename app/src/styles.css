@@ -261,7 +261,7 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
 }
 
 /* ---- print: A4, only the sheet or the plate ---- */
-.print-only { display: none; }
+.print-only, .print-flex { display: none; }
 @media print {
   @page { size: A4; margin: 11mm 12mm; }
   html, body { background: #fff !important; color: #111 !important; }
@@ -271,11 +271,12 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
   .content > main { padding: 0 !important; max-width: none !important; }
   main > *:not(.print) { display: none !important; }
   .print-only { display: block !important; }
+  .print-flex { display: flex !important; }
   .screen-only { display: none !important; }
   .print { display: block !important; }
   .paper.print { display: grid !important; }
   .paper { margin: 0; padding: 0; background: #fff; border: 0; box-shadow: none; color: #111; --paper: #fff; --text: #111; --pen: #1f3fbf; --line-soft: #bbb; --muted: #555;
-    display: grid; grid-template-columns: minmax(0, 1fr) 62mm; grid-template-areas: "head head" "steps corner" "steps tubes" "steps calc" "steps ." "foot foot"; grid-template-rows: auto auto auto auto 1fr auto; column-gap: 9mm; row-gap: 4mm; align-items: start; min-height: 268mm;
+    display: grid; grid-template-columns: minmax(0, 1fr) 62mm; grid-template-areas: "head head" "steps corner" "steps tubes" "steps calc" "steps qr" "foot foot"; grid-template-rows: auto auto auto auto 1fr auto; column-gap: 9mm; row-gap: 4mm; align-items: start; min-height: 268mm;
     font-size: 12.5pt; line-height: 1.4; }
   .paper h2 { grid-area: head; display: flex; justify-content: space-between; align-items: baseline; gap: 12mm; font-size: 19pt; margin: 0; text-decoration: none; border-bottom: 2px solid #111; padding-bottom: 4px; }
   .paper h2::after { content: attr(data-date); font-family: var(--mono); font-size: 10pt; font-weight: 400; color: #555; white-space: nowrap; }
@@ -307,7 +308,8 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
   .calc { grid-area: calc; margin: 0; padding-top: 3mm; border-top: 1px dashed #bbb; display: flex; flex-direction: column; gap: 3px; }
   .calc .pen { font-size: 13.5px !important; }
   .calc a { display: none; }
-  .paper .pfoot { grid-area: foot; font-family: var(--mono); font-size: 8.5pt; color: #777; border-top: 1px solid #ddd; padding-top: 4px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8mm; }
+  .paper .pfoot { grid-area: foot; font-family: var(--mono); font-size: 8.5pt; color: #777; border-top: 1px solid #ddd; padding-top: 4px; }
+  .paper .pqrbox { grid-area: qr; align-self: end; justify-self: end; display: flex !important; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
   .pqr { display: inline-block; width: 26mm; height: 26mm; flex: 0 0 auto; }
   .pqr:empty { display: none; }
   .paper .num { color: #111; }
