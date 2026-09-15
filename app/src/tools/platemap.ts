@@ -37,10 +37,15 @@ export function renderPlateMap(main: HTMLElement) {
     <div class="seg-ctl" id="mode"><button data-m="sample">Samples</button><button data-m="gene">Genes</button><button data-m="done">Done</button></div>
     <div id="legend" class="chips"></div>
     <div style="display:flex;gap:8px;margin-top:8px" id="addrow"><input id="newlabel" type="text" style="flex:1 1 auto;min-width:0;min-height:44px;padding:0 12px" /><button class="btn" id="addlabel" style="flex:0 0 80px">Add</button></div>
-    <div class="result" style="padding:6px;touch-action:none;user-select:none;-webkit-user-select:none" id="gridbox"></div>
-    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px" class="mono"><span id="progress" style="font-size:14px"></span><span class="muted" style="font-size:12px;text-align:right">drag across wells for a block, or across the letters and numbers for whole lines</span></div>
+    <div class="print" id="printblock">
+      <div class="print-only" style="font-family:var(--mono);font-size:11px;margin-bottom:6px;color:#555"><span id="print-head"></span></div>
+      <div class="print-only" style="font-family:var(--display);font-weight:700;font-size:20px;margin-bottom:8px" id="print-title"></div>
+      <div class="result" style="padding:6px;touch-action:none;user-select:none;-webkit-user-select:none" id="gridbox"></div>
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px" class="mono screen-only"><span id="progress" style="font-size:14px"></span><span class="muted" style="font-size:12px;text-align:right">drag across wells for a block, or across the letters and numbers for whole lines</span></div>
     <div id="keys" style="margin-top:10px;font-size:13px"></div>
-    <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="copy">Copy map</button><button class="btn" id="resetdone">Clear ticks</button></div>
+    </div>
+    <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="copy">Copy map</button><button class="btn" id="print">Print A4</button></div>
+    <div class="actions" style="margin-top:8px"><button class="btn" id="resetdone">Clear ticks</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn quiet" id="clear">Clear plate</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="newplate">+ New plate</button><button class="btn quiet" id="delplate">Delete plate</button></div>
   `);
@@ -89,6 +94,8 @@ export function renderPlateMap(main: HTMLElement) {
     if (fsBox) { const b = fsCell(); fsBox.innerHTML = gridHtml(b.cell, b.gap, b.fs).html; $(overlay!, '#fs-progress').textContent = `${g.done} / ${g.used || g.rows * g.cols}`; }
     const { done, used, rows, cols } = g;
     $(main, '#progress').textContent = `${done} / ${used || rows * cols} ${kindOf(p) === 'culture' ? 'done' : 'pipetted'} · ${used} in use`;
+    $(main, '#print-head').textContent = `TGGR Bench Mate · ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+    $(main, '#print-title').textContent = `${p.name} · ${p.fmt}-well${p.note ? ` · ${p.note}` : ''}`;
     const usedS = new Set<number>(), usedG = new Set<number>();
     for (const w of Object.values(p.wells)) { if (w.s !== undefined) usedS.add(w.s); if (w.g !== undefined) usedG.add(w.g); }
     $(main, '#keys').innerHTML = [...usedS].sort((a, b) => a - b).map((i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0"><span style="width:12px;height:12px;border-radius:6px;background:${S_COL[i % S_COL.length]};border:1.5px solid var(--line)"></span>${esc(p.samples[i] ?? '?')}</span>`).join('')
@@ -186,6 +193,7 @@ export function renderPlateMap(main: HTMLElement) {
     paintFs();
   }
   $(main, '#fullscreen').addEventListener('click', openFullscreen);
+  $(main, '#print').addEventListener('click', () => { const p = P(); const [cc] = [fitCell(p.fmt, 700)]; gridbox.innerHTML = gridHtml(cc, GAP[p.fmt], cc >= 36 ? 12 : cc >= 20 ? 11 : 8).html; window.print(); setTimeout(paintGrid, 500); });
 
   $(main, '#plates').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; st.active = b.dataset.id!; st.curS = 0; st.curG = 0; persist(); paintHeader(); paintGrid(); });
   $(main, '#fmt').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; const f = Number(b.dataset.f) as Fmt; const p = P(); if (p.fmt === f) return; if (Object.keys(p.wells).length && !confirm('Changing the format clears the wells. Continue?')) return; p.fmt = f; p.wells = {}; persist(); paintHeader(); paintGrid(); });

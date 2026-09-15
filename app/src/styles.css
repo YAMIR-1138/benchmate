@@ -259,3 +259,32 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
   #app { grid-template-columns: 260px minmax(0, 1fr); }
   .content > .top, .content > .stripe, .content > main, .content > .foot, .content > .credit { max-width: 960px; }
 }
+
+/* ---- print: A4, only the sheet or the plate ---- */
+.print-only { display: none; }
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #fff !important; color: #111 !important; }
+  body::before { display: none; }
+  #app { display: block !important; max-width: none; }
+  .rail, .content > .top, .content > .stripe, .content > .foot, .content > .credit, .brand, .actions, .chips, .seg-ctl, .hint, .note, .section, .toast, #formats, #addrow, #pnote, #pname, #plates, #kind, #fmt, #legend, #progress, .field, .fields { display: none !important; }
+  .content > main { padding: 0 !important; max-width: none !important; }
+  main > *:not(.print) { display: none !important; }
+  .print-only { display: block !important; }
+  .screen-only { display: none !important; }
+  .print { display: block !important; }
+  .paper { margin: 0; padding: 0; background: #fff; border: 0; box-shadow: none; font-size: 12.5pt; color: #111; --paper: #fff; --text: #111; --pen: #1f3fbf; --line-soft: #bbb; --muted: #555; }
+  .paper .num { color: #111; }
+  .paper .corner { border-color: #bbb; }
+  .corner input, .blank input { color: #1f3fbf; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .corner input::placeholder, .blank input::placeholder { color: transparent; }
+  .paper .chip, .paper [data-del], #printblock ~ *, #printblock .muted { display: none !important; }
+  #printblock #keys { display: block !important; }
+  .paper li.struck > .txt { color: #888; }
+  .tubes { break-inside: avoid; }
+  #printblock .result { background: #fff !important; border: 1px solid #bbb; box-shadow: none; background-image: none !important; }
+  #printblock .w { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #printblock .hd { color: #111 !important; opacity: 1 !important; }
+  #keys { display: block !important; color: #111; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
