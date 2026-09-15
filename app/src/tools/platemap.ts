@@ -143,15 +143,15 @@ export function renderPlateMap(main: HTMLElement) {
   function openFullscreen() {
     overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)';
-    overlay.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:var(--bw) solid var(--line);background:var(--panel);flex-wrap:wrap">
-        <div class="seg-ctl" id="fs-mode" style="margin:0;flex:1 1 220px"><button data-m="sample">Samples</button><button data-m="gene">Genes</button><button data-m="done">Pipetted</button></div>
-        <div style="display:flex;gap:6px;align-items:center;flex:0 0 auto">
-          <button class="btn" id="fs-out" style="flex:0 0 44px;min-height:44px;padding:0;font-size:22px">−</button><span class="mono" id="fs-z" style="min-width:36px;text-align:center">1×</span><button class="btn" id="fs-in" style="flex:0 0 44px;min-height:44px;padding:0;font-size:22px">+</button>
-          <button class="btn" id="fs-move" style="flex:0 0 auto;min-height:44px;font-size:14px">Move</button>
-          <button class="btn orange" id="fs-close" style="flex:0 0 auto;min-height:44px;font-size:14px">Done</button></div>
-        <div id="fs-legend" class="chips" style="padding:0;flex:1 1 100%"></div></div>
+    overlay.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;padding:6px 10px;border-bottom:var(--bw) solid var(--line);background:var(--panel)">
+        <div class="seg-ctl" id="fs-mode" style="margin:0"><button data-m="sample">Samples</button><button data-m="gene">Genes</button><button data-m="done">Pipetted</button></div>
+        <div id="fs-legend" class="chips" style="padding:0;flex-wrap:nowrap;overflow-x:auto"></div></div>
       <div id="fs-scroll" style="flex:1 1 auto;overflow:auto;padding:8px;touch-action:none;user-select:none;-webkit-user-select:none"><div id="fs-grid" style="width:max-content;margin:0 auto"></div></div>
-      <div class="mono" style="padding:6px 12px;border-top:var(--bw) solid var(--line);font-size:12px;display:flex;justify-content:space-between"><span id="fs-progress"></span><span class="muted">drag to select · Move to pan when zoomed</span></div>`;
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:var(--bw) solid var(--line);background:var(--panel)">
+        <button class="btn" id="fs-out" style="flex:0 0 48px;min-height:48px;padding:0;font-size:24px">−</button><span class="mono" id="fs-z" style="min-width:34px;text-align:center;font-size:14px">1×</span><button class="btn" id="fs-in" style="flex:0 0 48px;min-height:48px;padding:0;font-size:24px">+</button>
+        <button class="btn" id="fs-move" style="flex:0 0 auto;min-height:48px;font-size:15px;padding:0 12px">Move</button>
+        <span class="mono muted" id="fs-progress" style="flex:1 1 auto;text-align:center;font-size:12px"></span>
+        <button class="btn orange" id="fs-close" style="flex:0 0 auto;min-height:48px;font-size:16px;padding:0 16px">Exit ✕</button></div>`;
     document.body.append(overlay);
     fsBox = $<HTMLElement>(overlay, '#fs-grid');
     const scroll = $<HTMLElement>(overlay, '#fs-scroll');
@@ -165,11 +165,24 @@ export function renderPlateMap(main: HTMLElement) {
     $(overlay, '#fs-in').addEventListener('click', () => { zoom = Math.min(4, +(zoom + 0.5).toFixed(1)); paintFs(); });
     $(overlay, '#fs-out').addEventListener('click', () => { zoom = Math.max(1, +(zoom - 0.5).toFixed(1)); paintFs(); });
     $(overlay, '#fs-move').addEventListener('click', () => { fsMove = !fsMove; paintFs(); });
-    const close = () => { try { if (document.fullscreenElement) document.exitFullscreen(); } catch { /* ignore */ } try { (screen.orientation as any)?.unlock?.(); } catch { /* ignore */ } overlay?.remove(); overlay = null; fsBox = null; zoom = 1; fsMove = false; dragBox = gridbox; paintGrid(); };
-    $(overlay, '#fs-close').addEventListener('click', close);
-    try { overlay.requestFullscreen?.().catch(() => undefined); } catch { /* ignore */ }
+    let closed = false;
+    const close = () => {
+      if (closed) return; closed = true;
+      try { if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined); } catch { /* ignore */ }
+      try { (screen.orientation as any)?.unlock?.(); } catch { /* ignore */ }
+      document.removeEventListener('fullscreenchange', onFsChange); window.removeEventListener('popstate', onPop); window.removeEventListener('resize', onResize); document.removeEventListener('keydown', onKey);
+      overlay?.remove(); overlay = null; fsBox = null; zoom = 1; fsMove = false; dragBox = gridbox; paintGrid();
+    };
+    // the phone's back gesture, the system's own "leave full screen", and Escape all close it
+    const onFsChange = () => { if (!document.fullscreenElement) close(); };
+    const onPop = () => close();
+    const onResize = () => { if (overlay) paintFs(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    history.pushState({ fs: 1 }, '');
+    $(overlay, '#fs-close').addEventListener('click', () => { if (history.state?.fs) history.back(); else close(); });
+    window.addEventListener('popstate', onPop); window.addEventListener('resize', onResize); document.addEventListener('keydown', onKey);
+    try { overlay.requestFullscreen?.().then(() => document.addEventListener('fullscreenchange', onFsChange)).catch(() => undefined); } catch { /* ignore */ }
     if (P().fmt === 384) try { (screen.orientation as any)?.lock?.('landscape').catch(() => undefined); } catch { /* ignore */ }
-    window.addEventListener('resize', () => { if (overlay) paintFs(); });
     paintFs();
   }
   $(main, '#fullscreen').addEventListener('click', openFullscreen);
