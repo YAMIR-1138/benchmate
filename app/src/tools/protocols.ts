@@ -1,6 +1,7 @@
 import { load, save } from '../lib/store';
 import { fmt, parseDuration, mmss, parseNum, sci } from '../lib/fmt';
 import { timerEngine } from './timerEngine';
+import { showHandoff, qrSvg } from '../lib/handoff';
 import { $, $$, esc, html, toast } from '../lib/dom';
 
 interface Amount { amount: number; unit: string }
@@ -136,13 +137,14 @@ function renderPaper(main: HTMLElement, P: Protocol) {
   main.append(html`
     ${P.formats.length ? `<div class="chips" id="formats" style="padding-top:14px">${P.formats.map((f) => `<button class="chip ${f === run.format ? 'on' : ''}" data-f="${esc(f)}">${esc(f)}</button>`).join('')}</div>` : ''}
     <div class="paper print">
-      <div class="print-only" style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;margin-bottom:8px;color:#555"><span>TGGR Bench Mate · ${esc(P.title)}</span><span>${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span></div>
-      <h2>${esc(P.title)}</h2>
+      <h2 data-date="${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}">${esc(P.title)}</h2>
       ${mixes.length ? `<div class="corner" id="corner"></div>` : ''}
       <ol id="steps"></ol>
       ${mixes.length ? `<div class="tubes" id="tubes"></div><div class="calc" id="calc"></div>` : ''}
+      <div class="print-only pfoot"><span>TGGR Bench Mate · ${esc(run.format)} · printed ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · scan to open this run in the app</span><span class="pqr" id="pqr"></span></div>
     </div>
-    <div class="actions" style="margin-top:16px"><a class="btn primary tall" href="#/protocols/${P.id}/1">Step by step</a><a class="btn" href="#/platemap">Plate map</a><button class="btn" id="print">Print A4</button></div>
+    <div class="actions" style="margin-top:16px"><a class="btn primary tall" href="#/protocols/${P.id}/1">Step by step</a><button class="btn" id="print">Print A4</button></div>
+    <div class="actions" style="margin-top:8px"><button class="btn" id="share">Send run to device</button><a class="btn" href="#/platemap">Plate map</a></div>
     ${P.materials.length ? `<div class="section"><div class="cap">Materials</div><div class="list">${P.materials.map((m) => `<div class="item" style="min-height:40px">${esc(m)}</div>`).join('')}</div></div>` : ''}
   `);
   const tw = () => totalWells(run);
@@ -194,7 +196,8 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     box.innerHTML = lines.join('') || `<span class="muted" style="font-size:13px">Add plasmid ng/µL in the corner and the DNA volumes are worked out here.</span>`;
   }
   main.querySelector('#formats')?.addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; run.format = b.dataset.f!; persist(); $$(main, '#formats .chip').forEach((x) => x.classList.toggle('on', x === b)); paintSteps(); paintTubes(); paintCalc(); });
-  $(main, '#print').addEventListener('click', () => window.print());
+  $(main, '#print').addEventListener('click', async () => { $(main, '#pqr').innerHTML = await qrSvg({ t: 'run', v: 1, id: P.id, run }); window.print(); });
+  $(main, '#share').addEventListener('click', () => showHandoff(`Send ${P.short} run`, { t: 'run', v: 1, id: P.id, run }));
   paintCorner(); paintSteps(); paintTubes(); paintCalc();
 }
 

@@ -17,5 +17,8 @@
     "vite-plugin-pwa": "^0.20.5",
     "vite-plugin-singlefile": "^2.3.3",
     "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "qrcode-generator": "^2.0.4"
   }
 }

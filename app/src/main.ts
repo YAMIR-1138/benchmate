@@ -17,6 +17,7 @@ import { renderLuciferase } from './tools/luciferase';
 import { renderPlateMap } from './tools/platemap';
 import { timerEngine } from './tools/timerEngine';
 import logo from './assets/logo.png';
+import { renderImport } from './tools/importer';
 
 export interface Tool { id: string; idx: string; name: string; sub: string; icon: keyof typeof icons; render: (main: HTMLElement) => void; soon?: boolean }
 
@@ -86,7 +87,10 @@ function route() {
   const main = el('main');
   const tool = TOOLS.find((t) => t.id === id);
   paintRail(tool?.id ?? '');
-  if (!tool) {
+  if (id === 'import') {
+    content.append(header('Import', undefined), el('div', { class: 'stripe' }));
+    renderImport(main, rest.join('/'));
+  } else if (!tool) {
     renderHome(content, main);
   } else {
     content.append(header(tool.name, tool.idx));

@@ -1,4 +1,5 @@
 import { load, save } from '../lib/store';
+import { showHandoff, qrSvg } from '../lib/handoff';
 import { $, $$, copyText, esc, html, toast, vibrate } from '../lib/dom';
 
 interface Well { s?: number; g?: number; d?: boolean }
@@ -39,13 +40,13 @@ export function renderPlateMap(main: HTMLElement) {
     <div style="display:flex;gap:8px;margin-top:8px" id="addrow"><input id="newlabel" type="text" style="flex:1 1 auto;min-width:0;min-height:44px;padding:0 12px" /><button class="btn" id="addlabel" style="flex:0 0 80px">Add</button></div>
     <div class="print" id="printblock">
       <div class="print-only" style="font-family:var(--mono);font-size:11px;margin-bottom:6px;color:#555"><span id="print-head"></span></div>
-      <div class="print-only" style="font-family:var(--display);font-weight:700;font-size:20px;margin-bottom:8px" id="print-title"></div>
+      <div class="print-only" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px"><div style="font-family:var(--display);font-weight:700;font-size:20px" id="print-title"></div><span class="pqr" id="pqr"></span></div>
       <div class="result" style="padding:6px;touch-action:none;user-select:none;-webkit-user-select:none" id="gridbox"></div>
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px" class="mono screen-only"><span id="progress" style="font-size:14px"></span><span class="muted" style="font-size:12px;text-align:right">drag across wells for a block, or across the letters and numbers for whole lines</span></div>
     <div id="keys" style="margin-top:10px;font-size:13px"></div>
     </div>
-    <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="copy">Copy map</button><button class="btn" id="print">Print A4</button></div>
-    <div class="actions" style="margin-top:8px"><button class="btn" id="resetdone">Clear ticks</button></div>
+    <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="share">Send to device</button><button class="btn" id="print">Print A4</button></div>
+    <div class="actions" style="margin-top:8px"><button class="btn" id="copy">Copy map</button><button class="btn" id="resetdone">Clear ticks</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn quiet" id="clear">Clear plate</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="newplate">+ New plate</button><button class="btn quiet" id="delplate">Delete plate</button></div>
   `);
@@ -193,7 +194,8 @@ export function renderPlateMap(main: HTMLElement) {
     paintFs();
   }
   $(main, '#fullscreen').addEventListener('click', openFullscreen);
-  $(main, '#print').addEventListener('click', () => { const p = P(); const [cc] = [fitCell(p.fmt, 700)]; gridbox.innerHTML = gridHtml(cc, GAP[p.fmt], cc >= 36 ? 12 : cc >= 20 ? 11 : 8).html; window.print(); setTimeout(paintGrid, 500); });
+  $(main, '#share').addEventListener('click', () => { const { id: _id, ...plate } = P(); void _id; showHandoff(`Send ${plate.name}`, { t: 'plate', v: 1, plate }); });
+  $(main, '#print').addEventListener('click', async () => { const p = P(); const { id: _id, ...plate } = p; void _id; $(main, '#pqr').innerHTML = await qrSvg({ t: 'plate', v: 1, plate }); const [cc] = [fitCell(p.fmt, 700)]; gridbox.innerHTML = gridHtml(cc, GAP[p.fmt], cc >= 36 ? 12 : cc >= 20 ? 11 : 8).html; window.print(); setTimeout(paintGrid, 500); });
 
   $(main, '#plates').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; st.active = b.dataset.id!; st.curS = 0; st.curG = 0; persist(); paintHeader(); paintGrid(); });
   $(main, '#fmt').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; const f = Number(b.dataset.f) as Fmt; const p = P(); if (p.fmt === f) return; if (Object.keys(p.wells).length && !confirm('Changing the format clears the wells. Continue?')) return; p.fmt = f; p.wells = {}; persist(); paintHeader(); paintGrid(); });

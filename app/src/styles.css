@@ -273,31 +273,43 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
   .print-only { display: block !important; }
   .screen-only { display: none !important; }
   .print { display: block !important; }
-  .paper { margin: 0; padding: 0; background: #fff; border: 0; box-shadow: none; font-size: 10.5pt; line-height: 1.28; color: #111; --paper: #fff; --text: #111; --pen: #1f3fbf; --line-soft: #bbb; --muted: #555; }
-  .paper h2 { font-size: 14pt; margin: 0 0 6px; }
-  .paper ol > li { margin: 0; }
-  .paper ul { margin: 0; }
-  .paper .num { height: 18px; min-width: 20px; margin-left: -26px; margin-right: 2px; font-size: 10.5pt; }
-  .paper .pen { font-size: 15px; }
-  .paper .blank { min-width: 56px; }
-  .paper .blank input { height: 18px; width: 90px; }
-  .corner { padding: 3px 8px 4px; margin: 0 0 6px; gap: 0; }
+  .paper.print { display: grid !important; }
+  .paper { margin: 0; padding: 0; background: #fff; border: 0; box-shadow: none; color: #111; --paper: #fff; --text: #111; --pen: #1f3fbf; --line-soft: #bbb; --muted: #555;
+    display: grid; grid-template-columns: minmax(0, 1fr) 62mm; grid-template-areas: "head head" "steps corner" "steps tubes" "steps calc" "steps ." "foot foot"; grid-template-rows: auto auto auto auto 1fr auto; column-gap: 9mm; row-gap: 4mm; align-items: start; min-height: 268mm;
+    font-size: 12.5pt; line-height: 1.4; }
+  .paper h2 { grid-area: head; display: flex; justify-content: space-between; align-items: baseline; gap: 12mm; font-size: 19pt; margin: 0; text-decoration: none; border-bottom: 2px solid #111; padding-bottom: 4px; }
+  .paper h2::after { content: attr(data-date); font-family: var(--mono); font-size: 10pt; font-weight: 400; color: #555; white-space: nowrap; }
+  #steps { grid-area: steps; }
+  .paper ol > li { margin: 0 0 3px; }
+  .paper ol ol > li { margin: 2px 0; }
+  .paper ul { margin: 1px 0; }
+  .paper ul > li { margin: 2px 0; }
+  .paper .num { height: 22px; min-width: 26px; margin-left: -30px; margin-right: 2px; font-size: 12.5pt; }
+  .paper .pen { font-size: 17px; }
+  .paper .blank { min-width: 60px; }
+  .paper .blank input { height: 20px; width: 96px; }
+  .corner { grid-area: corner; margin: 0; padding: 4px 8px 6px; gap: 2px; border: 1px solid #bbb; border-radius: 3px; }
   .corner .row { gap: 6px; }
-  .corner input { min-height: 22px; }
-  .corner .cap { font-size: 8px; }
-  .tubes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; margin-top: 8px; }
+  .corner input { min-height: 24px; padding: 0 3px; }
+  .corner .cap { font-size: 8px; letter-spacing: 0.12em; }
+  .corner .row.cap > span:nth-child(2) { flex-basis: 44px; } .corner .row.cap > span:nth-child(3) { flex-basis: 40px; } .corner .row.cap > span:last-child { display: none; }
+  .corner input[data-f="conc"] { flex-basis: 44px; width: 44px; } .corner input[data-f="wells"] { flex-basis: 40px; width: 40px; }
+  .tubes { grid-area: tubes; display: flex; flex-direction: column; gap: 5mm; margin: 0; }
   .tubes .cond { break-inside: avoid; }
-  .tubes .cond > .pen { font-size: 14px; margin-bottom: 0; }
-  .tubes .pair { gap: 8px; }
+  .tubes .cond > .pen { font-size: 16px; margin-bottom: 2px; border-bottom: 1px solid #ddd; }
+  .tubes .pair { display: flex; flex-direction: column; gap: 2mm; }
   .tube { gap: 4px; }
-  .tube svg { width: 18px; height: 40px; }
-  .tube .lines { gap: 2px; }
-  .tube .line { font-size: 9.5pt; }
-  .tube .line .v { min-width: 46px; }
-  .tube .line .v .pen { font-size: 13px; }
-  .calc { margin-top: 6px; padding-top: 4px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
-  .calc .pen { font-size: 13px !important; }
-  .paper .print-only { margin-bottom: 4px; font-size: 9px; }
+  .tube svg { width: 16px; height: 40px; }
+  .tube .lines { gap: 3px; }
+  .tube .line { font-size: 10pt; white-space: nowrap; align-items: baseline; }
+  .tube .line .v { min-width: 44px; }
+  .tube .line .v .pen { font-size: 14px; }
+  .calc { grid-area: calc; margin: 0; padding-top: 3mm; border-top: 1px dashed #bbb; display: flex; flex-direction: column; gap: 3px; }
+  .calc .pen { font-size: 13.5px !important; }
+  .calc a { display: none; }
+  .paper .pfoot { grid-area: foot; font-family: var(--mono); font-size: 8.5pt; color: #777; border-top: 1px solid #ddd; padding-top: 4px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8mm; }
+  .pqr { display: inline-block; width: 26mm; height: 26mm; flex: 0 0 auto; }
+  .pqr:empty { display: none; }
   .paper .num { color: #111; }
   .paper .corner { border-color: #bbb; }
   .corner input, .blank input { color: #1f3fbf; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -311,4 +323,11 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
   #printblock .hd { color: #111 !important; opacity: 1 !important; }
   #keys { display: block !important; color: #111; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  *:focus, *:focus-visible { outline: none !important; box-shadow: none !important; }
 }
+
+/* hand-off sheet */
+.sheet { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; }
+.sheet .card { width: 100%; max-width: 520px; background: var(--bg); border: var(--bw) solid var(--line); border-bottom: 0; border-radius: 16px 16px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+.sheet .qr { display: block; margin: 12px auto; width: 240px; height: 240px; image-rendering: pixelated; background: #fff; padding: 8px; border-radius: 8px; border: var(--bw) solid var(--line); }
+.sheet .link { font-family: var(--mono); font-size: 11px; word-break: break-all; color: var(--muted); max-height: 48px; overflow: hidden; }
