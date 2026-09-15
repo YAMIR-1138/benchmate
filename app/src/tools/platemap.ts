@@ -135,7 +135,7 @@ export function renderPlateMap(main: HTMLElement) {
   // ---- full screen with zoom ----
   let overlay: HTMLElement | null = null, fsBox: HTMLElement | null = null, zoom = 1, fsMove = false;
   function fsCell() {
-    const { rows, cols } = dims(P().fmt);
+    const { rows } = dims(P().fmt);
     const f = P().fmt; const byW = fitCell(f, window.innerWidth - 20), byH = Math.floor((window.innerHeight - 130 - rows * GAP[f]) / rows);
     const cell = Math.max(10, Math.round(Math.min(byW, byH, 100) * zoom));
     return { cell, gap: GAP[f], fs: cell >= 36 ? 12 : cell >= 20 ? 11 : 8 };
