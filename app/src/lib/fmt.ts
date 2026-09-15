@@ -11,11 +11,23 @@ export function fmt(n: number, sig = 4): string {
 
 export function fmtInt(n: number): string { return Math.round(n).toLocaleString('en-US'); }
 
+const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+/** Accepts 200000, 2e5, 2E5, 2×10^5, 2x10^5, 2*10^5, 2·10⁵, 10^5, 2 x 10 5 and decimal commas. */
 export function parseNum(s: string): number | undefined {
-  const t = s.trim().replace(',', '.');
+  let t = s.trim();
   if (t === '') return undefined;
+  t = t.replace(/,/g, '.').replace(/\s+/g, '');
+  t = t.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+$/, (m) => '^' + [...m].map((c) => (c === '⁻' ? '-' : String(SUP.indexOf(c)))).join(''));
+  t = t.replace(/^10\^/, '1e').replace(/[×xX*·]10\^?/, 'e').replace(/\^/, '');
   const n = Number(t);
   return Number.isFinite(n) ? n : NaN;
+}
+/** 2400000 → "2.4 × 10⁶". Below 10 000 it is plain. */
+export function sci(n: number, sig = 3): string {
+  if (!Number.isFinite(n)) return '—';
+  if (Math.abs(n) < 1e4) return fmt(n, sig);
+  const e = Math.floor(Math.log10(Math.abs(n)));
+  return `${fmt(n / 10 ** e, sig)} × 10${String(e).split('').map((d) => SUP[Number(d)]).join('')}`;
 }
 
 export function mmss(ms: number): string {

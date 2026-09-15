@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dilution, molar, rcfFromRpm, rpmFromRcf } from '../src/lib/calc';
-import { parseDuration, fmt } from '../src/lib/fmt';
+import { parseDuration, fmt, parseNum } from '../src/lib/fmt';
 import { convert, autoUnit } from '../src/lib/units';
 
 const vec = (name: string) => JSON.parse(readFileSync(new URL(`../../core/tests/vectors/${name}.json`, import.meta.url), 'utf8'));
@@ -57,5 +57,14 @@ describe('fmt', () => {
     expect(fmt(12.5)).toBe('12.5');
     expect(fmt(0.05)).toBe('0.05');
     expect(fmt(1000)).toBe('1000');
+  });
+});
+
+describe('exponent input', () => {
+  it('parses lab notation', () => {
+    for (const s of ['200000', '2e5', '2E5', '2×10^5', '2x10^5', '2*10^5', '2·10⁵', '2 x 10^5', '2×10⁵']) expect(parseNum(s)).toBe(200000);
+    expect(parseNum('10^6')).toBe(1e6);
+    expect(parseNum('0.5×10⁵')).toBe(50000);
+    expect(parseNum('1,5e3')).toBe(1500);
   });
 });

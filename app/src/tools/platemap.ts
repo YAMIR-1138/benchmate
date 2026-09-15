@@ -29,7 +29,8 @@ export function renderPlateMap(main: HTMLElement) {
     <div class="result" style="padding:6px;touch-action:none;user-select:none;-webkit-user-select:none" id="gridbox"></div>
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px" class="mono"><span id="progress" style="font-size:14px"></span><span class="muted" style="font-size:12px;text-align:right">drag across wells for a block, or across the letters and numbers for whole lines</span></div>
     <div id="keys" style="margin-top:10px;font-size:13px"></div>
-    <div class="actions"><button class="btn" id="copy">Copy map</button><button class="btn" id="resetdone">Clear ticks</button><button class="btn quiet" id="clear">Clear plate</button></div>
+    <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="copy">Copy map</button><button class="btn" id="resetdone">Clear ticks</button></div>
+    <div class="actions" style="margin-top:8px"><button class="btn quiet" id="clear">Clear plate</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="newplate">+ New plate</button><button class="btn quiet" id="delplate">Delete plate</button></div>
   `);
   const gridbox = $(main, '#gridbox'), legend = $(main, '#legend');
@@ -48,8 +49,8 @@ export function renderPlateMap(main: HTMLElement) {
     const list = st.mode === 'sample' ? p.samples : p.genes, cols = st.mode === 'sample' ? S_COL : G_COL;
     legend.innerHTML = list.map((l, i) => `<button class="chip ${cur() === i ? 'on' : ''}" data-l="${i}" style="gap:8px">${st.mode === 'sample' ? `<span style="width:16px;height:16px;border-radius:8px;background:${cols[i % cols.length]};border:1.5px solid var(--line);display:inline-block"></span>` : `<span style="width:16px;height:16px;border-radius:8px;border:4px solid ${cols[i % cols.length]};display:inline-block;box-sizing:border-box"></span>`}${esc(l)}</button>`).join('') + `<button class="chip ${cur() === -1 ? 'on' : ''}" data-l="-1">eraser</button>`;
   }
-  function paintGrid() {
-    const p = P(), { rows, cols } = dims(p.fmt); const cell = p.fmt === 96 ? 22 : 13, gap = p.fmt === 96 ? 3 : 1, fs = p.fmt === 96 ? 11 : 8;
+  function gridHtml(cell: number, gap: number, fs: number) {
+    const p = P(), { rows, cols } = dims(p.fmt);
     let h = `<div style="display:grid;grid-template-columns:${cell}px repeat(${cols}, ${cell}px);gap:${gap}px;width:max-content;margin:0 auto">`;
     h += `<div></div>` + Array.from({ length: cols }, (_, c) => `<div class="hd" data-col="${c}" style="text-align:center;font-family:var(--mono);font-size:${fs}px;line-height:${cell}px;cursor:pointer;opacity:0.8">${c + 1}</div>`).join('');
     let done = 0, used = 0;
@@ -63,7 +64,14 @@ export function renderPlateMap(main: HTMLElement) {
         h += `<div class="w" data-r="${r}" data-c="${c}" style="width:${cell}px;height:${cell}px;border-radius:50%;border:${bw}px solid ${ring};background:${fill};opacity:${hasS || hasG ? 1 : 0.35};position:relative;box-sizing:border-box">${w.d ? `<svg viewBox="0 0 24 24" style="position:absolute;inset:-1px;stroke:${hasS ? 'var(--key-ink)' : 'currentColor'};fill:none;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round"><path d="M5 13l4 4L19 7"/></svg>` : ''}</div>`;
       }
     }
-    gridbox.innerHTML = h + '</div>';
+    return { html: h + '</div>', done, used, rows, cols };
+  }
+  function paintGrid() {
+    const p = P();
+    const g = gridHtml(p.fmt === 96 ? 22 : 13, p.fmt === 96 ? 3 : 1, p.fmt === 96 ? 11 : 8);
+    gridbox.innerHTML = g.html;
+    if (fsBox) { const b = fsCell(); fsBox.innerHTML = gridHtml(b.cell, b.gap, b.fs).html; $(overlay!, '#fs-progress').textContent = `${g.done} / ${g.used || g.rows * g.cols}`; }
+    const { done, used, rows, cols } = g;
     $(main, '#progress').textContent = `${done} / ${used || rows * cols} pipetted · ${used} in use`;
     const usedS = new Set<number>(), usedG = new Set<number>();
     for (const w of Object.values(p.wells)) { if (w.s !== undefined) usedS.add(w.s); if (w.g !== undefined) usedG.add(w.g); }
@@ -95,14 +103,60 @@ export function renderPlateMap(main: HTMLElement) {
     return { r1: Math.min(a.r, b.r), r2: Math.max(a.r, b.r), c1: Math.min(a.c, b.c), c2: Math.max(a.c, b.c) };
   };
   const ids = (rc: { r1: number; r2: number; c1: number; c2: number }) => { const out: string[] = []; for (let r = rc.r1; r <= rc.r2; r++) for (let c = rc.c1; c <= rc.c2; c++) out.push(wid(r, c)); return out; };
+  let dragBox: HTMLElement = gridbox;
   const preview = () => {
     const rc = anchor && last ? rect(anchor, last) : null;
-    $$<HTMLElement>(gridbox, '.w').forEach((w) => { const r = Number(w.dataset.r), c = Number(w.dataset.c); const on = !!rc && r >= rc.r1 && r <= rc.r2 && c >= rc.c1 && c <= rc.c2; w.style.boxShadow = on ? '0 0 0 3px var(--orange)' : ''; });
+    $$<HTMLElement>(dragBox, '.w').forEach((w) => { const r = Number(w.dataset.r), c = Number(w.dataset.c); const on = !!rc && r >= rc.r1 && r <= rc.r2 && c >= rc.c1 && c <= rc.c2; w.style.boxShadow = on ? '0 0 0 3px var(--orange)' : ''; });
   };
-  gridbox.addEventListener('pointerdown', (e) => { const a = at(e.clientX, e.clientY); if (!a) return; e.preventDefault(); anchor = a; last = a; gridbox.setPointerCapture(e.pointerId); preview(); });
-  gridbox.addEventListener('pointermove', (e) => { if (!anchor) return; const a = at(e.clientX, e.clientY); if (!a) return; const b: Anchor = anchor.kind === 'w' ? (a.kind === 'w' ? a : anchor) : anchor.kind === 'row' ? { kind: 'row', r: a.r, c: 0 } : { kind: 'col', r: 0, c: a.c }; if (b.r !== last?.r || b.c !== last?.c) { last = b; preview(); } });
   const finish = () => { if (!anchor || !last) return; const rc = rect(anchor, last); anchor = null; last = null; apply(ids(rc)); };
-  gridbox.addEventListener('pointerup', finish); gridbox.addEventListener('pointercancel', () => { anchor = null; last = null; preview(); });
+  function attachDrag(box: HTMLElement, canSelect: () => boolean) {
+    box.addEventListener('pointerdown', (e) => { if (!canSelect()) return; const a = at(e.clientX, e.clientY); if (!a) return; e.preventDefault(); dragBox = box; anchor = a; last = a; box.setPointerCapture(e.pointerId); preview(); });
+    box.addEventListener('pointermove', (e) => { if (!anchor) return; const a = at(e.clientX, e.clientY); if (!a) return; const b: Anchor = anchor.kind === 'w' ? (a.kind === 'w' ? a : anchor) : anchor.kind === 'row' ? { kind: 'row', r: a.r, c: 0 } : { kind: 'col', r: 0, c: a.c }; if (b.r !== last?.r || b.c !== last?.c) { last = b; preview(); } });
+    box.addEventListener('pointerup', finish); box.addEventListener('pointercancel', () => { anchor = null; last = null; preview(); });
+  }
+  attachDrag(gridbox, () => true);
+
+  // ---- full screen with zoom ----
+  let overlay: HTMLElement | null = null, fsBox: HTMLElement | null = null, zoom = 1, fsMove = false;
+  function fsCell() {
+    const { rows, cols } = dims(P().fmt);
+    const base = Math.floor(Math.min((window.innerWidth - 24) / (cols + 1), (window.innerHeight - 110) / (rows + 1)));
+    const cell = Math.max(10, Math.round(base * zoom)) - 2;
+    return { cell, gap: cell >= 20 ? 3 : 2, fs: cell >= 20 ? 11 : 8 };
+  }
+  function openFullscreen() {
+    overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)';
+    overlay.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:var(--bw) solid var(--line);background:var(--panel);flex-wrap:wrap">
+        <div class="seg-ctl" id="fs-mode" style="margin:0;flex:1 1 220px"><button data-m="sample">Samples</button><button data-m="gene">Genes</button><button data-m="done">Pipetted</button></div>
+        <div style="display:flex;gap:6px;align-items:center;flex:0 0 auto">
+          <button class="btn" id="fs-out" style="flex:0 0 44px;min-height:44px;padding:0;font-size:22px">−</button><span class="mono" id="fs-z" style="min-width:36px;text-align:center">1×</span><button class="btn" id="fs-in" style="flex:0 0 44px;min-height:44px;padding:0;font-size:22px">+</button>
+          <button class="btn" id="fs-move" style="flex:0 0 auto;min-height:44px;font-size:14px">Move</button>
+          <button class="btn orange" id="fs-close" style="flex:0 0 auto;min-height:44px;font-size:14px">Done</button></div>
+        <div id="fs-legend" class="chips" style="padding:0;flex:1 1 100%"></div></div>
+      <div id="fs-scroll" style="flex:1 1 auto;overflow:auto;padding:8px;touch-action:none;user-select:none;-webkit-user-select:none"><div id="fs-grid" style="width:max-content;margin:0 auto"></div></div>
+      <div class="mono" style="padding:6px 12px;border-top:var(--bw) solid var(--line);font-size:12px;display:flex;justify-content:space-between"><span id="fs-progress"></span><span class="muted">drag to select · Move to pan when zoomed</span></div>`;
+    document.body.append(overlay);
+    fsBox = $<HTMLElement>(overlay, '#fs-grid');
+    const scroll = $<HTMLElement>(overlay, '#fs-scroll');
+    attachDrag(scroll, () => !fsMove);
+    const paintFs = () => { $$(overlay!, '#fs-mode button').forEach((b) => b.classList.toggle('on', (b as HTMLElement).dataset.m === st.mode)); $(overlay!, '#fs-z').textContent = `${zoom}×`; $(overlay!, '#fs-move').classList.toggle('primary', fsMove); scroll.style.touchAction = fsMove ? 'auto' : 'none';
+      const list = st.mode === 'sample' ? P().samples : P().genes, cols = st.mode === 'sample' ? S_COL : G_COL;
+      $(overlay!, '#fs-legend').innerHTML = st.mode === 'done' ? '' : list.map((l, i) => `<button class="chip ${cur() === i ? 'on' : ''}" data-l="${i}" style="min-height:34px;font-size:13px;gap:6px">${st.mode === 'sample' ? `<span style="width:12px;height:12px;border-radius:6px;background:${cols[i % cols.length]};border:1.5px solid var(--line);display:inline-block"></span>` : `<span style="width:12px;height:12px;border-radius:6px;border:3px solid ${cols[i % cols.length]};display:inline-block;box-sizing:border-box"></span>`}${esc(l)}</button>`).join('') + `<button class="chip ${cur() === -1 ? 'on' : ''}" data-l="-1" style="min-height:34px;font-size:13px">eraser</button>`;
+      paintGrid(); };
+    $(overlay, '#fs-mode').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; st.mode = b.dataset.m as Mode; persist(); paintHeader(); paintFs(); });
+    $(overlay, '#fs-legend').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; if (st.mode === 'sample') st.curS = Number(b.dataset.l); else st.curG = Number(b.dataset.l); persist(); paintHeader(); paintFs(); });
+    $(overlay, '#fs-in').addEventListener('click', () => { zoom = Math.min(4, +(zoom + 0.5).toFixed(1)); paintFs(); });
+    $(overlay, '#fs-out').addEventListener('click', () => { zoom = Math.max(1, +(zoom - 0.5).toFixed(1)); paintFs(); });
+    $(overlay, '#fs-move').addEventListener('click', () => { fsMove = !fsMove; paintFs(); });
+    const close = () => { try { if (document.fullscreenElement) document.exitFullscreen(); } catch { /* ignore */ } try { (screen.orientation as any)?.unlock?.(); } catch { /* ignore */ } overlay?.remove(); overlay = null; fsBox = null; zoom = 1; fsMove = false; dragBox = gridbox; paintGrid(); };
+    $(overlay, '#fs-close').addEventListener('click', close);
+    try { overlay.requestFullscreen?.().catch(() => undefined); } catch { /* ignore */ }
+    if (P().fmt === 384) try { (screen.orientation as any)?.lock?.('landscape').catch(() => undefined); } catch { /* ignore */ }
+    window.addEventListener('resize', () => { if (overlay) paintFs(); });
+    paintFs();
+  }
+  $(main, '#fullscreen').addEventListener('click', openFullscreen);
 
   $(main, '#plates').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; st.active = b.dataset.id!; st.curS = 0; st.curG = 0; persist(); paintHeader(); paintGrid(); });
   $(main, '#fmt').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; const f = Number(b.dataset.f) as 96 | 384; const p = P(); if (p.fmt === f) return; if (Object.keys(p.wells).length && !confirm('Changing the format clears the wells. Continue?')) return; p.fmt = f; p.wells = {}; persist(); paintHeader(); paintGrid(); });
