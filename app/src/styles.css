@@ -215,11 +215,12 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
 .corner .row { display: flex; align-items: center; gap: 8px; }
 .corner input { min-height: 40px; padding: 0 6px; border: 0; border-bottom: 1.5px solid var(--line-soft); border-radius: 0; background: transparent; }
 .tubes { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
-.tubes .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tubes .pair { display: flex; flex-direction: column; gap: 10px; }
+@media (min-width: 560px) { .tubes .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } }
 .tube { display: flex; gap: 6px; align-items: flex-start; min-width: 0; }
 .tube svg { width: 26px; height: 56px; flex: 0 0 auto; }
 .tube .lines { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; }
-.tube .line { display: flex; align-items: baseline; gap: 5px; font-size: 13px; white-space: nowrap; }
+.tube .line { display: flex; align-items: baseline; gap: 6px; font-size: 14px; white-space: nowrap; }
 .tube .line .v { flex: 0 0 auto; min-width: 54px; border-bottom: 1.5px solid var(--text); text-align: center; padding: 0 3px; }
 .tube .line .v .pen { font-size: 19px; }
 .calc { margin-top: 16px; border-top: 1px dashed var(--line-soft); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
