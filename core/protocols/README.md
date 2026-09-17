@@ -25,6 +25,6 @@ Lines starting with a keyword are parsed into UI elements; everything else is pr
 On the paper view a step's title is hidden when the step has its own sentence (body or `fmt:`), so write the sentence the way the sheet says it.
 
 A run of a protocol remembers: plate format, the conditions (name, wells, plasmid ng/µL), the
-filled-in blanks, and which steps were crossed out.
+filled-in blanks, and which steps were crossed out. "New run" files the current sheet under Previous runs (30 kept per protocol), and any previous run can be reopened.
 
 Original documents live in `source/`.

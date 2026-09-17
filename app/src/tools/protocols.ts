@@ -13,7 +13,8 @@ interface Block { title: string; body: string[]; timer?: string; icon?: string; 
 interface Step extends Block { subs: Block[] }
 interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; per: string; materials: string[]; scaling: string[]; note?: string; single: boolean; steps: Step[] }
 interface Condition { name: string; wells: string; conc: string }
-interface Run { format: string; inputs: Record<string, string>; amounts: Record<string, string>; conditions: Condition[]; skipped: number[] }
+interface Run { format: string; inputs: Record<string, string>; amounts: Record<string, string>; conditions: Condition[]; skipped: number[]; started?: number }
+interface PastRun { t: number; run: Run }
 
 const RAW = import.meta.glob('@core/protocols/*.md', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
 
@@ -99,8 +100,20 @@ function timerRange(t: string): { ms: number; label: string } | undefined {
 function runState(P: Protocol): Run {
   const r = load<Partial<Run> & { wells?: string }>(`protocol.${P.id}`, {});
   setAll(P);
-  return { format: r.format && P.formats.includes(r.format) ? r.format : (P.vessel && P.formats.includes(P.vessel) ? P.vessel : P.formats[0] ?? ''), inputs: r.inputs ?? {}, amounts: r.amounts ?? {}, conditions: r.conditions?.length ? r.conditions : [{ name: '', wells: r.wells ?? '', conc: '' }], skipped: r.skipped ?? [] };
+  return { format: r.format && P.formats.includes(r.format) ? r.format : (P.vessel && P.formats.includes(P.vessel) ? P.vessel : P.formats[0] ?? ''), inputs: r.inputs ?? {}, amounts: r.amounts ?? {}, conditions: r.conditions?.length ? r.conditions : [{ name: '', wells: r.wells ?? '', conc: '' }], skipped: r.skipped ?? [], started: r.started };
 }
+// ---- run history: previous runs of a protocol, newest first ----
+const hasContent = (run: Run) => run.conditions.some((c) => c.name || c.wells || c.conc) || Object.values(run.inputs).some(Boolean) || Object.values(run.amounts).some(Boolean) || run.skipped.length > 0;
+const history = (P: Protocol) => load<PastRun[]>(`protocol.${P.id}.history`, []);
+const saveHistory = (P: Protocol, h: PastRun[]) => save(`protocol.${P.id}.history`, h.slice(0, 30));
+const archive = (P: Protocol, run: Run) => { if (!hasContent(run)) return; saveHistory(P, [{ t: run.started ?? Date.now(), run }, ...history(P).filter((h) => h.t !== run.started)]); };
+const freshRun = (P: Protocol, format: string): Run => ({ format, inputs: {}, amounts: {}, conditions: [{ name: '', wells: '', conc: '' }], skipped: [], started: Date.now() });
+const runLabel = (P: Protocol, run: Run) => {
+  const conds = run.conditions.filter((c) => c.name || c.wells);
+  const what = P.single ? `${fmt(totalWells(run), 4)} ${P.per}s` : conds.map((c) => c.name || `${c.wells} ${P.per}s`).join(', ');
+  return [run.format, what].filter(Boolean).join(' · ');
+};
+const when = (t: number) => new Date(t).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 const totalWells = (run: Run) => run.conditions.reduce((s, c) => s + (parseNum(c.wells) ?? 0), 0);
 const stepIcon = (b: Block) => (b.icon && STEP_ICONS[b.icon]) || '';
 /** Plain-text record of a run for the log. */
@@ -151,8 +164,9 @@ function renderList(main: HTMLElement) {
 // ---- the paper edition ----
 function renderPaper(main: HTMLElement, P: Protocol) {
   const run = runState(P);
-  const persist = () => save(`protocol.${P.id}`, run);
+  const persist = () => { run.started ??= Date.now(); save(`protocol.${P.id}`, run); };
   const mixes = blocksWithMix(P);
+  const past = history(P);
   main.append(html`
     ${P.formats.length ? `<div class="chips" id="formats" style="padding-top:14px">${P.formats.map((f) => `<button class="chip ${f === run.format ? 'on' : ''}" data-f="${esc(f)}">${esc(f)}</button>`).join('')}</div>` : ''}
     <div class="paper print">
@@ -165,7 +179,8 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     </div>
     <div class="actions" style="margin-top:16px"><a class="btn primary tall" href="#/protocols/${P.id}/1">Step by step</a><button class="btn" id="print">Print A4</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="share">Send run to device</button><a class="btn" href="#/platemap">Plate map</a></div>
-    <div class="actions" style="margin-top:8px"><button class="btn" id="log">Add run to log</button></div>
+    <div class="actions" style="margin-top:8px"><button class="btn" id="log">Add run to log</button><button class="btn" id="newrun">New run</button></div>
+    ${past.length ? `<div class="section"><div class="cap">Previous runs</div><div class="list">${past.map((h, i) => `<div class="item" style="min-height:48px;gap:10px"><span class="mono muted" style="font-size:13px;flex:0 0 auto">${esc(when(h.t))}</span><span class="grow" style="font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(runLabel(P, h.run) || '—')}</span><button class="chip" data-open="${i}" style="min-height:34px;font-size:13px">Open</button><button class="x" data-drop="${i}" aria-label="remove">×</button></div>`).join('')}</div></div>` : ''}
     ${P.materials.length ? `<div class="section"><div class="cap">Materials</div><div class="list">${P.materials.map((m) => `<div class="item" style="min-height:40px">${esc(m)}</div>`).join('')}</div></div>` : ''}
   `);
   const tw = () => totalWells(run);
@@ -227,6 +242,10 @@ function renderPaper(main: HTMLElement, P: Protocol) {
   main.querySelector('#formats')?.addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; run.format = b.dataset.f!; persist(); $$(main, '#formats .chip').forEach((x) => x.classList.toggle('on', x === b)); paintSteps(); paintTubes(); paintCalc(); });
   $(main, '#print').addEventListener('click', async () => { $(main, '#pqr').innerHTML = await qrSvg({ t: 'run', v: 1, id: P.id, run }); window.print(); });
   $(main, '#log').addEventListener('click', () => addLog('protocols', P.short, runSummary(P, run)));
+  const rerender = () => { main.innerHTML = ''; renderPaper(main, P); };
+  $(main, '#newrun').addEventListener('click', () => { if (hasContent(run) && !confirm('Start a new run? The current one is kept under Previous runs.')) return; archive(P, run); save(`protocol.${P.id}`, freshRun(P, run.format)); rerender(); window.scrollTo(0, 0); });
+  $$<HTMLElement>(main, '[data-open]').forEach((b) => b.addEventListener('click', () => { const h = past[Number(b.dataset.open)]; archive(P, run); saveHistory(P, history(P).filter((x) => x.t !== h.t)); save(`protocol.${P.id}`, h.run); rerender(); window.scrollTo(0, 0); }));
+  $$<HTMLElement>(main, '[data-drop]').forEach((b) => b.addEventListener('click', () => { const h = past[Number(b.dataset.drop)]; if (!confirm(`Remove the run from ${when(h.t)}?`)) return; saveHistory(P, past.filter((x) => x !== h)); rerender(); }));
   $(main, '#share').addEventListener('click', () => showHandoff(`Send ${P.short} run`, { t: 'run', v: 1, id: P.id, run }));
   paintCorner(); paintSteps(); paintTubes(); paintCalc();
 }
