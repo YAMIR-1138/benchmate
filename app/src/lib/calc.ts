@@ -106,7 +106,7 @@ export function verdict260280(r: number, kind: NAType): Verdict {
   return { status: kind === 'RNA' ? 'warn' : 'warn', note: kind === 'RNA' ? (r > 2.2 ? 'High: possibly a blank mismatch.' : 'Slightly high: common for RNA.') : 'High: possibly RNA in the prep.' };
 }
 export function verdict260230(r: number): Verdict {
-  if (r >= 1.8 && r <= 2.3) return { status: 'good', note: 'Within range (2.0–2.2).' };
+  if (r >= 1.8 && r <= 2.3) return { status: 'good', note: 'Within range (1.8–2.2).' };
   if (r < 1.8) return { status: r < 1.5 ? 'bad' : 'warn', note: 'Low: possibly salt, phenol or a dilute sample. Check the concentration and the blank first.' };
   return { status: 'warn', note: 'High: possibly a blank mismatch.' };
 }

@@ -7,36 +7,43 @@ import { addLog } from '../lib/log';
 type State = { kind: NAType; conc: string; r280: string; r230: string };
 const light = (s: 'good' | 'warn' | 'bad') => { const c = s === 'good' ? 'var(--teal)' : s === 'warn' ? 'var(--mustard)' : 'var(--danger)'; return `<span style="display:inline-block;width:14px;height:14px;border-radius:7px;border:2px solid var(--line);background:${c};box-shadow:0 0 6px ${c};flex:0 0 auto"></span>`; };
 
-const GUIDE: { title: string; rows: [string, string][] }[] = [
+const SOURCES: Record<string, { tag: string; title: string; url: string }> = {
+  guide: { tag: 'Thermo guide', title: 'Thermo Scientific NanoDrop, Nucleic Acid Technical Guide', url: 'https://documents.thermofisher.com/TFS-Assets/CAD/Warranties/Thermo-Scientific-NanoDrop-Products-Nucleic-Acid-Technical-Guide-EN.pdf' },
+  t123: { tag: 'Thermo T123', title: 'Thermo Scientific T123, Interpretation of Nucleic Acid 260/280 Ratios', url: 'https://documents.thermofisher.com/TFS-Assets/CAD/Product-Bulletins/T123-NanoDrop-Lite-Interpretation-of-Nucleic-Acid-260-280-Ratios.pdf' },
+  faq: { tag: 'Thermo FAQ', title: 'Thermo Fisher, NanoDrop One FAQs', url: 'https://www.thermofisher.com/order/catalog/product/ND-ONE-W/faqs' },
+  neb: { tag: 'NEB', title: 'New England Biolabs, A Practical Guide to Analyzing Nucleic Acid Concentration and Purity with Microvolume Spectrophotometers', url: 'https://www.neb.com/en/-/media/nebus/files/application-notes/technote_mvs_analysis_of_nucleic_acid_concentration_and_purity.pdf' },
+};
+const GUIDE: { title: string; rows: [string, string, string?][] }[] = [
   { title: 'What each number is', rows: [
-    ['ng/µL', 'A260 × 50 (dsDNA), × 40 (RNA) or × 33 (ssDNA). Includes everything that absorbs at 260 nm: degraded fragments, free nucleotides, RNA in a DNA prep.'],
-    ['260 / 280', 'Sensitive to protein and phenol, which absorb near 280 nm. Typical: ~1.8 for DNA, ~2.0 for RNA.'],
-    ['260 / 230', 'Sensitive to salts, phenol, EDTA, carbohydrates and guanidine from lysis buffers. Typical: 2.0–2.2.'],
+    ['ng/µL', 'A260 × 50 (dsDNA), × 40 (RNA) or × 33 (ssDNA) for a 10 mm path. Everything that absorbs at 260 nm counts: degraded fragments, free nucleotides, RNA in a DNA prep.', 'guide'],
+    ['260 / 280', '“A ratio of ~1.8 is generally accepted as pure for DNA; a ratio of ~2.0 is generally accepted as pure for RNA. If the ratio is appreciably lower in either case, it may indicate the presence of protein, phenol or other contaminants that absorb strongly at or near 280 nm.”', 'guide'],
+    ['260 / 230', '“The 260/230 values for pure nucleic acid are often higher than the respective 260/280 values, commonly in the range of 1.8–2.2. If the ratio is appreciably lower, this may indicate the presence of co-purified contaminants.”', 'guide'],
   ] },
   { title: '260 / 280', rows: [
-    ['< 1.7', 'Possible causes: protein, phenol. Check: the spectrum near 270 nm (phenol), the blank, the buffer. Sensitive downstream steps: enzymatic reactions, sequencing.'],
-    ['DNA > 2.0', 'Possible causes: RNA in the prep, buffer effects. Check: a gel for an RNA smear; RNase treatment if the next step is affected.'],
-    ['RNA < 1.9', 'Possible causes: protein, genomic DNA. Check: a −RT control in qPCR; DNase treatment.'],
-    ['± 0.1', 'Within normal variation. Buffer pH and salt move the ratio by 0.2–0.3. Water reads lower than TE.'],
+    ['< 1.7', '“Abnormal 260/280 ratios usually indicate that the sample is either contaminated by protein or a reagent such as phenol or that there was an issue with the measurement.” Check: the spectrum near 270 nm, the blank, the buffer.', 't123'],
+    ['DNA > 2.0', 'RNA reads higher than DNA, so RNA in a DNA prep raises the ratio. Check: a gel for an RNA smear; RNase treatment if the next step is affected.', 't123'],
+    ['RNA < 1.9', 'Possible causes: protein, genomic DNA. Check: a −RT control in qPCR; DNase treatment.', 't123'],
+    ['± 0.1', '“Acidic solutions will under-represent the 260/280 ratio by 0.2–0.3, while a basic solution will over-represent the ratio by 0.2–0.3.” Water reads lower than TE.', 't123'],
   ] },
   { title: '260 / 230', rows: [
-    ['< 1.8', 'Possible causes: guanidine from column kits, phenol, a dilute sample. Check: concentration first, then the blank. Remedies: extra ethanol-buffer wash, dry spin of the empty column, re-precipitation. Sensitive steps: qPCR, RT, ligation.'],
-    ['< 1.8 and < 20 ng/µL', 'The 230 nm reading is mostly noise at this concentration. Re-read a more concentrated sample before drawing conclusions.'],
-    ['> 2.3', 'Possible cause: blank mismatch. Check: re-blank with the elution buffer.'],
+    ['< 1.8', '“A very high 230 nm absorbance value relative to the sample is indicative of contaminants such as carbohydrates, peptides, phenols, urea, humic acid or guanidine isothiocyanate in the sample.” Check: concentration first, then the blank. Remedies: extra ethanol-buffer wash, dry spin of the empty column, re-precipitation.', 'guide'],
+    ['< 1.8 and < 20 ng/µL', 'At low concentration the 230 nm reading is mostly noise. Re-read a more concentrated sample before drawing conclusions.', 'neb'],
+    ['> 2.3', 'Possible cause: blank mismatch. Check: re-blank with the elution buffer.', 'neb'],
   ] },
   { title: 'Spectrum', rows: [
-    ['Clean', 'Peak at 260, trough at 230, flat near zero from 320 nm.'],
-    ['Peak near 270', 'Consistent with phenol.'],
-    ['No trough at 230', 'Consistent with guanidine or other salt. The curve rises to the left.'],
-    ['Raised above 320', 'Turbidity, particles or a bubble. Re-pipette, re-read.'],
-    ['Negative', 'Blank higher than the sample. Clean the pedestal, re-blank.'],
+    ['Ratios are not enough', '“Wavelength shifts in the trough or the sample peak may identify the sample to be of poor quality even if ratios fall within the pure range.”', 'faq'],
+    ['Clean', 'Peak at 260, trough at 230, flat near zero from 320 nm.', 'neb'],
+    ['Peak near 270', 'Consistent with phenol.', 'neb'],
+    ['No trough at 230', 'Consistent with guanidine or other salt. The curve rises to the left.', 'neb'],
+    ['Raised above 320', 'Turbidity, particles or a bubble. Re-pipette, re-read.', 'neb'],
+    ['Negative', 'Blank higher than the sample. Clean the pedestal, re-blank.', 'neb'],
   ] },
   { title: 'Pedestal', rows: [
-    ['Blank', 'Same buffer the sample is in. TE and Tris absorb slightly.'],
-    ['Wipe', 'Lint-free wipe on both pedestals between samples.'],
-    ['Volume', '1–2 µL, no bubbles. Close the arm promptly.'],
-    ['Repeat', 'Two readings within 5 %.'],
-    ['Scope', 'Quantity and gross contamination only. Integrity: gel or Bioanalyzer. dsDNA in a mixed sample: Qubit.'],
+    ['Blank', 'Same buffer the sample is in. TE and Tris absorb slightly.', 'neb'],
+    ['Wipe', 'Lint-free wipe on both pedestals between samples.', 'faq'],
+    ['Volume', '1–2 µL, no bubbles. Close the arm promptly.', 'faq'],
+    ['Repeat', 'Two readings within 5 %.', 'neb'],
+    ['Scope', 'Quantity and gross contamination only. Integrity: gel or Bioanalyzer. dsDNA in a mixed sample: Qubit.', 'neb'],
   ] },
 ];
 
@@ -51,12 +58,13 @@ export function renderNanodrop(main: HTMLElement) {
       <div class="field"><label for="nd-230">260 / 230</label><input id="nd-230" name="r230" type="text" inputmode="decimal" value="${esc(st.r230)}" placeholder="—" /></div>
     </div>
     <div class="result" id="qc" hidden><div class="list" id="verdicts"></div><div class="actions"><button class="btn" id="log">Add to log</button></div></div>
-    <div class="note">Expected for ${'<b id="exp"></b>'}: 260/280 <b id="exp280"></b>, 260/230 <b>2.0–2.2</b>, factor <b id="expf"></b> ng/µL per A260.</div>
-    <div class="note" style="margin-top:18px">Ratios are indicators, not a verdict. Concentration, the full spectrum and the blank matter as much, and a good ratio does not guarantee the next step works.</div>
+    <div class="note">Expected for ${'<b id="exp"></b>'}: 260/280 <b id="exp280"></b>, 260/230 <b>1.8–2.2</b>, factor <b id="expf"></b> ng/µL per A260.</div>
+    <div class="note" style="margin-top:18px">Ratios are indicators, not a verdict. Quoted lines below are from Thermo Fisher's NanoDrop documents and NEB's technical note; each row links to its source.</div>
     <div id="guide"></div>
+    <div class="section"><div class="cap">Sources</div><div class="list">${Object.values(SOURCES).map((x) => `<a class="item" href="${x.url}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;font-size:14px;min-height:44px"><span class="cite" style="margin:0 8px 0 0">${esc(x.tag)}</span><span class="grow">${esc(x.title)}</span></a>`).join('')}</div></div>
   `);
   const guide = $(main, '#guide');
-  guide.innerHTML = GUIDE.map((g) => `<div class="section"><div class="cap">${esc(g.title)}</div><div class="list" style="margin-top:6px">${g.rows.map(([k, v]) => `<div class="item" style="align-items:flex-start;padding:10px 0;gap:10px"><div style="flex:0 0 108px;font-family:var(--display);font-weight:700;font-size:15px;line-height:1.25;padding-top:1px">${esc(k)}</div><div class="grow" style="font-size:15px;line-height:1.45">${esc(v)}</div></div>`).join('')}</div></div>`).join('');
+  guide.innerHTML = GUIDE.map((g) => `<div class="section"><div class="cap">${esc(g.title)}</div><div class="list" style="margin-top:6px">${g.rows.map(([k, v, src]) => `<div class="item" style="align-items:flex-start;padding:10px 0;gap:10px"><div style="flex:0 0 108px;font-family:var(--display);font-weight:700;font-size:15px;line-height:1.25;padding-top:1px">${esc(k)}</div><div class="grow" style="font-size:15px;line-height:1.45">${esc(v)}${src && SOURCES[src] ? ` <a class="cite" href="${SOURCES[src].url}" target="_blank" rel="noopener">${esc(SOURCES[src].tag)}</a>` : ''}</div></div>`).join('')}</div></div>`).join('');
   const persist = () => { $$<HTMLInputElement>(main, 'input[name]').forEach((i) => ((st as any)[i.name] = i.value)); save('nanodrop', st); };
   let lines: string[] = [];
   function paint() {

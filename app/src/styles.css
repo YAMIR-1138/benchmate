@@ -376,3 +376,6 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 .compose input, .compose textarea, .lbody .ltitle, .lbody .ltext { width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; font-size: 16px; font-family: inherit; border: var(--bw) solid var(--line); border-radius: 10px; background: var(--lcd); color: var(--lcd-ink); resize: vertical; }
 .lbody .ltitle { font-weight: 700; margin-bottom: 6px; }
 .lbody .ltext { font-size: 14px; }
+
+/* ---- source tags on the NanoDrop guide ---- */
+.cite { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--teal); text-decoration: none; white-space: nowrap; margin-left: 6px; border: 1px solid var(--line-soft); border-radius: 6px; padding: 1px 6px; vertical-align: 1px; }
