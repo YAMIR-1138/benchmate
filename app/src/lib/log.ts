@@ -17,8 +17,8 @@ export function moveLog(id: string, dir: -1 | 1): void {
   [es[i], es[j]] = [es[j], es[i]]; save(KEY, es);
 }
 export function setLogTime(id: string, hhmm: string): void {
-  const es = logEntries(); const e = es.find((x) => x.id === id); const m = hhmm.match(/^(\d{1,2}):(\d{2})$/);
-  if (!e || !m) return;
+  const es = logEntries(); const e = es.find((x) => x.id === id); const m = hhmm.trim().match(/^(\d{1,2})[:.]?(\d{2})$/);
+  if (!e || !m || Number(m[1]) > 23 || Number(m[2]) > 59) return;
   const d = new Date(e.t); d.setHours(Number(m[1]), Number(m[2]), 0, 0); e.t = d.getTime(); save(KEY, es);
 }
 export function clearLog(ids?: string[]): void { save(KEY, ids ? logEntries().filter((e) => !ids.includes(e.id)) : []); }
