@@ -11,14 +11,18 @@ materials:
   - Wash Buffer I, Wash Buffer II
   - Elution Buffer
   - Sterile 1.5 mL tubes
-note: For up to 1×10⁶ cultured cells. Other sample types are in the pack insert.
+note: TGGR edition of the pack-insert protocol for up to 1×10⁶ cultured cells. Changes from the insert: lysis mix can go straight onto the well, elution down to 30 µL.
 ---
 
-## 1. Resuspend
-Resuspend the cell pellet in 200 µL PBS.
+## 1. Lysis mix
+Per sample, in a tube: 200 µL PBS + 400 µL Lysis/Binding Buffer.
+hint: one master mix for all samples, + 10 %
 
 ## 2. Lyse
-Add 400 µL Lysis/Binding Buffer. Vortex 15 s.
+### a. From a pellet
+Resuspend the pellet in 600 µL of the mix. Vortex 15 s.
+### b. In the plate
+Or in the plate: aspirate the medium, drop 600 µL of the mix straight onto the cells, vortex the plate 15 s, transfer the lysate to a tube.
 timer: 15s
 
 ## 3. Load column
@@ -46,7 +50,8 @@ timer: 2m
 
 ## 8. Elute
 Discard the Collection Tube. Put the Filter Tube into a clean 1.5 mL tube.
-Add 50–100 µL Elution Buffer. Centrifuge 1 min at 8000 ×g.
+Add 30–100 µL Elution Buffer. Centrifuge 1 min at 8000 ×g.
+hint: 30 µL for concentrated RNA (lab minimum); the insert says 50–100 µL
 timer: 1m
 
 ## 9. Done
