@@ -4,6 +4,7 @@ short: RNA isolation
 duration: 25 min per sample
 tags: [RNA, extraction, spin column]
 per: sample
+conditions: no
 materials:
   - High Pure Filter Tubes and Collection Tubes
   - PBS
@@ -61,7 +62,8 @@ icon: spin
 
 ## 8. Elute
 Discard the Collection Tube. Put the Filter Tube into a clean 1.5 mL tube.
-Add 30–100 µL Elution Buffer. Centrifuge 1 min at 8000 ×g.
+Add Elution Buffer, centrifuge 1 min at 8000 ×g.
+per_well: Elution Buffer = 30 µL | editable
 hint: 30 µL for concentrated RNA (lab minimum); the insert says 50–100 µL
 timer: 1m
 icon: elute

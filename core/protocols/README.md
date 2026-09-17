@@ -11,6 +11,7 @@ Lines starting with a keyword are parsed into UI elements; everything else is pr
 | `input: label` | A blank the user fills in for this run, shown as a sub-bullet "label: ____". Remembered per run. |
 | `blank: label` | The same blank, but inline after the sentence, with no label shown. |
 | `hint: text` | Small muted text in brackets. Takes the `= format value; …` form too. |
+| `conditions: no` (front-matter) | One count for the run instead of named conditions; no per-condition tubes. For master-mix protocols counted per sample. |
 | `per: sample` (front-matter) | The word used on the sheet in place of "well", for protocols counted per sample or per tube. |
 | `per_well: 25 µL Optimem` | A quantity per well. The app multiplies by the wells of each condition and lists the tubes. |
 | `per_well: Opti-MEM = 12-well 50 µL; 24-well 25 µL` | Same, with a different amount per plate format. The sheet has a format picker; `vessel:` is the default and `formats:` lists the choices. |

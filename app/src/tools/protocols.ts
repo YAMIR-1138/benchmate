@@ -11,7 +11,7 @@ interface PerWell { name: string; all?: Amount; byFormat: Record<string, Amount>
 interface FmtLine { text: string; byFormat: Record<string, string> }
 interface Block { title: string; body: string[]; timer?: string; icon?: string; warnings: string[]; notes: string[]; inputs: string[]; blanks: string[]; hints: FmtLine[]; perWell: PerWell[]; fmtLines: FmtLine[] }
 interface Step extends Block { subs: Block[] }
-interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; per: string; materials: string[]; scaling: string[]; note?: string; steps: Step[] }
+interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; per: string; materials: string[]; scaling: string[]; note?: string; single: boolean; steps: Step[] }
 interface Condition { name: string; wells: string; conc: string }
 interface Run { format: string; inputs: Record<string, string>; amounts: Record<string, string>; conditions: Condition[]; skipped: number[] }
 
@@ -70,7 +70,7 @@ function parse(id: string, src: string): Protocol {
   const walk = (b: Block) => { b.perWell.forEach((p) => Object.keys(p.byFormat).forEach((f) => found.add(f))); b.fmtLines.forEach((f) => Object.keys(f.byFormat).forEach((x) => found.add(x))); };
   steps.forEach((s) => { walk(s); s.subs.forEach(walk); });
   const formats: string[] = Array.isArray(fm.formats) && fm.formats.length ? fm.formats : [...found];
-  return { id, title: fm.title ?? id, short: fm.short ?? fm.title ?? id, duration: fm.duration, tags: Array.isArray(fm.tags) ? fm.tags : [], vessel: fm.vessel, formats, per: typeof fm.per === 'string' && fm.per ? fm.per : 'well', materials: fm.materials ?? [], scaling: fm.scaling ?? [], note: fm.note, steps };
+  return { id, title: fm.title ?? id, short: fm.short ?? fm.title ?? id, duration: fm.duration, tags: Array.isArray(fm.tags) ? fm.tags : [], vessel: fm.vessel, formats, per: typeof fm.per === 'string' && fm.per ? fm.per : 'well', materials: fm.materials ?? [], scaling: fm.scaling ?? [], note: fm.note, single: /^(no|false)$/i.test(String(fm.conditions ?? '')), steps };
 }
 const PROTOCOLS = Object.entries(RAW).filter(([p]) => !/README\.md$/i.test(p)).map(([p, s]) => parse(p.split('/').pop()!.replace(/\.md$/, ''), s));
 
@@ -106,12 +106,13 @@ const stepIcon = (b: Block) => (b.icon && STEP_ICONS[b.icon]) || '';
 /** Plain-text record of a run for the log. */
 function runSummary(P: Protocol, run: Run): string {
   const lines = [`${P.title}${run.format ? ` · ${run.format}` : ''}`];
-  const conds = run.conditions.filter((c) => c.name || c.wells);
-  if (conds.length) lines.push(`Conditions: ${conds.map((c) => `${c.name || '?'} (${c.wells || '?'} ${P.per}s${c.conc ? `, ${c.conc} ng/µL` : ''})`).join('; ')}`);
+  const conds = P.single ? [] : run.conditions.filter((c) => c.name || c.wells);
+  if (P.single) { const n = totalWells(run); if (n) lines.push(`${n} ${P.per}${n === 1 ? '' : 's'}`); }
+  else if (conds.length) lines.push(`Conditions: ${conds.map((c) => `${c.name || '?'} (${c.wells || '?'} ${P.per}s${c.conc ? `, ${c.conc} ng/µL` : ''})`).join('; ')}`);
   for (const [k, v] of Object.entries(run.inputs)) if (v) lines.push(`${k}: ${v}`);
   for (const m of blocksWithMix(P)) {
     const per = m.perWell.map((p) => { const a = amountFor(p, run); return a ? `${p.name} ${fmt(a.amount, 3)} ${a.unit}` : ''; }).filter(Boolean);
-    if (per.length) lines.push(`${m.title}, per ${P.per}: ${per.join(', ')}`);
+    if (per.length) lines.push(`${m.title}, per ${P.per}: ${per.join(', ')}${P.single && totalWells(run) ? ` · total: ${m.perWell.map((p) => { const x = tube(p, run, run.conditions[0]); return x.text ? `${p.name} ${x.text}` : ''; }).filter(Boolean).join(', ')}` : ''}`);
     for (const c of conds) { const t = m.perWell.map((p) => { const x = tube(p, run, c); return x.text ? `${p.name} ${x.text}` : ''; }).filter(Boolean); if (t.length) lines.push(`  ${c.name || '?'}: ${t.join(', ')}`); }
   }
   if (run.skipped.length) lines.push(`Crossed out: step ${[...run.skipped].sort((a, b) => a - b).join(', ')}`);
@@ -158,7 +159,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
       <h2 data-date="${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}">${esc(P.title)}</h2>
       ${mixes.length ? `<div class="corner" id="corner"></div>` : ''}
       <ol id="steps"></ol>
-      ${mixes.length ? `<div class="tubes" id="tubes"></div><div class="calc" id="calc"></div>` : ''}
+      ${mixes.length ? `${P.single ? '' : '<div class="tubes" id="tubes"></div>'}<div class="calc" id="calc"></div>` : ''}
       <div class="print-only pqrbox"><span class="pqr" id="pqr"></span><span class="muted" style="font-size:8pt">scan to open this run in the app</span></div>
       <div class="print-only pfoot">TGGR Bench Mate · ${esc(run.format)} · printed ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
     </div>
@@ -197,6 +198,12 @@ function renderPaper(main: HTMLElement, P: Protocol) {
   }
   function paintCorner() {
     const box = main.querySelector('#corner'); if (!box) return;
+    if (P.single) {
+      const c = run.conditions[0];
+      box.innerHTML = `<div class="row" style="align-items:center;gap:10px"><span class="cap" style="font-size:10px;flex:1 1 auto">${esc(P.per)}s this run</span><input class="pen" data-c="0" data-f="wells" value="${esc(c.wells)}" placeholder="6" inputmode="decimal" style="flex:0 0 66px;width:66px;text-align:right;font-size:22px" /></div>`;
+      $$<HTMLInputElement>(box, 'input[data-c]').forEach((inp) => inp.addEventListener('input', () => { c.wells = inp.value; persist(); paintSteps(); paintCalc(); }));
+      return;
+    }
     box.innerHTML = `<div class="row cap" style="font-size:10px"><span style="flex:1 1 auto">${hasMass ? 'plasmid / condition' : 'condition'}</span>${hasMass ? `<span style="flex:0 0 66px;text-align:right">ng/µL</span>` : ''}<span style="flex:0 0 58px;text-align:right">${esc(P.per)}s</span><span style="flex:0 0 26px"></span></div>` +
       run.conditions.map((c, i) => `<div class="row"><input class="pen" data-c="${i}" data-f="name" value="${esc(c.name)}" placeholder="${hasMass ? 'EV' : 'plate A'}" style="flex:1 1 0;width:0;min-width:0" />${hasMass ? `<input class="pen" data-c="${i}" data-f="conc" value="${esc(c.conc)}" placeholder="823" inputmode="decimal" style="flex:0 0 66px;width:66px;text-align:right" />` : ''}<input class="pen" data-c="${i}" data-f="wells" value="${esc(c.wells)}" placeholder="4.5" inputmode="decimal" style="flex:0 0 58px;width:58px;text-align:right" /><button data-del="${i}" style="flex:0 0 26px;border:0;background:transparent;color:var(--muted);font-size:20px;cursor:pointer;padding:0">×</button></div>`).join('') +
       `<div class="row" style="justify-content:space-between"><button class="chip" id="addc" style="min-height:32px;font-size:12px">+ condition</button><span class="mono muted" style="font-size:12px">${fmt(tw(), 4)} ${esc(P.per)}s total</span></div>`;
