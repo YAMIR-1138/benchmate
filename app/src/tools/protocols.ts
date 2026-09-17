@@ -11,7 +11,7 @@ interface PerWell { name: string; all?: Amount; byFormat: Record<string, Amount>
 interface FmtLine { text: string; byFormat: Record<string, string> }
 interface Block { title: string; body: string[]; timer?: string; icon?: string; extra?: number; warnings: string[]; notes: string[]; inputs: string[]; blanks: string[]; hints: FmtLine[]; perWell: PerWell[]; fmtLines: FmtLine[] }
 interface Step extends Block { subs: Block[] }
-interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; per: string; materials: string[]; scaling: string[]; note?: string; single: boolean; steps: Step[] }
+interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; per: string; materials: string[]; scaling: string[]; note?: string; single: boolean; caps: [string, string][]; steps: Step[] }
 interface Condition { name: string; wells: string; conc: string }
 interface Run { format: string; inputs: Record<string, string>; amounts: Record<string, string>; conditions: Condition[]; skipped: number[]; started?: number }
 interface PastRun { t: number; run: Run }
@@ -71,7 +71,7 @@ function parse(id: string, src: string): Protocol {
   const walk = (b: Block) => { b.perWell.forEach((p) => Object.keys(p.byFormat).forEach((f) => found.add(f))); b.fmtLines.forEach((f) => Object.keys(f.byFormat).forEach((x) => found.add(x))); };
   steps.forEach((s) => { walk(s); s.subs.forEach(walk); });
   const formats: string[] = Array.isArray(fm.formats) && fm.formats.length ? fm.formats : [...found];
-  return { id, title: fm.title ?? id, short: fm.short ?? fm.title ?? id, duration: fm.duration, tags: Array.isArray(fm.tags) ? fm.tags : [], vessel: fm.vessel, formats, per: typeof fm.per === 'string' && fm.per ? fm.per : 'well', materials: fm.materials ?? [], scaling: fm.scaling ?? [], note: fm.note, single: /^(no|false)$/i.test(String(fm.conditions ?? '')), steps };
+  return { id, title: fm.title ?? id, short: fm.short ?? fm.title ?? id, duration: fm.duration, tags: Array.isArray(fm.tags) ? fm.tags : [], vessel: fm.vessel, formats, per: typeof fm.per === 'string' && fm.per ? fm.per : 'well', materials: fm.materials ?? [], scaling: fm.scaling ?? [], note: fm.note, single: /^(no|false)$/i.test(String(fm.conditions ?? '')), caps: (Array.isArray(fm.caps) ? fm.caps : []).map((x: string): [string, string] | null => { const i = x.lastIndexOf(':'); return i > 0 ? [x.slice(0, i).trim(), x.slice(i + 1).trim()] : null; }).filter((x: [string, string] | null): x is [string, string] => !!x).sort((a: [string, string], b: [string, string]) => b[0].length - a[0].length), steps };
 }
 const PROTOCOLS = Object.entries(RAW).filter(([p]) => !/README\.md$/i.test(p)).map(([p, s]) => parse(p.split('/').pop()!.replace(/\.md$/, ''), s));
 
@@ -116,6 +116,13 @@ const runLabel = (P: Protocol, run: Run) => {
 const when = (t: number) => new Date(t).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 const totalWells = (run: Run) => run.conditions.reduce((s, c) => s + (parseNum(c.wells) ?? 0), 0);
 const stepIcon = (b: Block) => (b.icon && STEP_ICONS[b.icon]) || '';
+// ---- bottle-cap colours: a dot after every mention of a reagent listed under `caps:` ----
+const CAP_COLOURS: Record<string, string> = { green: '#2f9e5a', white: '#f6f6f2', black: '#222', blue: '#2f6fd6', red: '#d13b3b', yellow: '#e8c22b', orange: '#e8912b', purple: '#7a4fbf', violet: '#7a4fbf', pink: '#e27bb0', grey: '#8a8a8a', gray: '#8a8a8a', brown: '#8a5a2b', colorless: 'transparent', colourless: 'transparent', clear: 'transparent' };
+const capDot = (colour: string) => { const c = CAP_COLOURS[colour.toLowerCase()] ?? colour; return `<span class="capdot" style="background:${c}${c === 'transparent' ? ';border-style:dashed' : ''}" title="${esc(colour)} cap"></span>`; };
+let CAP_RE: RegExp | null = null, CAP_MAP: Record<string, string> = {};
+function setCaps(P: Protocol) { CAP_MAP = Object.fromEntries(P.caps); CAP_RE = P.caps.length ? new RegExp(`(${P.caps.map(([n]) => esc(n).replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')).join('|')})(?![\\w/])`, 'g') : null; }
+/** Call on already-escaped HTML text. */
+const capify = (h: string) => (CAP_RE ? h.replace(CAP_RE, (m) => { const k = Object.keys(CAP_MAP).find((n) => esc(n) === m); return k ? m + capDot(CAP_MAP[k]) : m; }) : h);
 const factor = (b: Block) => 1 + (b.extra ?? 0);
 const extraTag = (b: Block) => (b.extra ? ` +${fmt(b.extra * 100)} %` : '');
 /** Plain-text record of a run for the log. */
@@ -165,7 +172,7 @@ function renderList(main: HTMLElement) {
 
 // ---- the paper edition ----
 function renderPaper(main: HTMLElement, P: Protocol) {
-  const run = runState(P);
+  const run = runState(P); setCaps(P);
   const persist = () => { run.started ??= Date.now(); save(`protocol.${P.id}`, run); };
   const mixes = blocksWithMix(P);
   const past = history(P);
@@ -183,7 +190,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     <div class="actions" style="margin-top:8px"><button class="btn" id="share">Send run to device</button><a class="btn" href="#/platemap">Plate map</a></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="log">Add run to log</button><button class="btn" id="newrun">New run</button></div>
     ${past.length ? `<div class="section"><div class="cap">Previous runs</div><div class="list">${past.map((h, i) => `<div class="item" style="min-height:48px;gap:10px"><span class="mono muted" style="font-size:13px;flex:0 0 auto">${esc(when(h.t))}</span><span class="grow" style="font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(runLabel(P, h.run) || '—')}</span><button class="chip" data-open="${i}" style="min-height:34px;font-size:13px">Open</button><button class="x" data-drop="${i}" aria-label="remove">×</button></div>`).join('')}</div></div>` : ''}
-    ${P.materials.length ? `<div class="section"><div class="cap">Materials</div><div class="list">${P.materials.map((m) => `<div class="item" style="min-height:40px">${esc(m)}</div>`).join('')}</div></div>` : ''}
+    ${P.materials.length ? `<div class="section"><div class="cap">Materials</div><div class="list">${P.materials.map((m) => `<div class="item" style="min-height:40px">${capify(esc(m))}</div>`).join('')}</div></div>` : ''}
   `);
   const tw = () => totalWells(run);
   const hasMass = mixes.some((m) => m.perWell.some((p) => Object.values(p.byFormat).some((a) => isMass(a.unit)) || (p.all && isMass(p.all.unit))));
@@ -191,13 +198,13 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     const parts: string[] = [];
     const fl = b.fmtLines.map((f) => `${esc(f.text)} ${f.byFormat[run.format] ? `<b>${esc(f.byFormat[run.format])}</b>` : `<span class="muted">(not set for ${esc(run.format)})</span>`}`);
     const sentence = [...fl, ...b.body.map(esc)];
-    const head = (sentence.length ? (sentence.every((x) => x.startsWith('(')) ? [esc(b.title), ...sentence] : sentence) : [esc(b.title)]).join(' ');
+    const head = capify((sentence.length ? (sentence.every((x) => x.startsWith('(')) ? [esc(b.title), ...sentence] : sentence) : [esc(b.title)]).join(' '));
     const hints = b.hints.map((h) => { const v = Object.keys(h.byFormat).length ? h.byFormat[run.format] : ''; return v || !Object.keys(h.byFormat).length ? ` <span class="muted" style="font-size:14px">(${esc(h.text)} ${esc(v)})</span>` : ''; }).join('');
     parts.push(`<span class="txt">${head}</span>${b.blanks.map((l) => ' ' + blankHtml(l, run)).join('')}${hints}`);
     if (b.inputs.length) parts.push(`<ul>${b.inputs.map((l) => `<li><span class="txt">${esc(l)}:</span> ${blankHtml(l, run)}</li>`).join('')}</ul>`);
     if (b.perWell.length) parts.push(`<ul>${b.perWell.map((p) => { const a = amountFor(p, run); const w = tw() * factor(b); const total = a && w ? (isMass(a.unit) ? `${fmt(toNg(a) * w)} ng` : `${fmt(a.amount * w, 4)} ${a.unit}`) : '';
       const lead = p.editable && a ? `<span class="blank" style="min-width:60px"><input class="pen" data-amt="${esc(p.name)}" value="${esc(run.amounts[`${run.format}:${p.name}`] ?? String(a.amount))}" inputmode="decimal" style="width:64px" /></span> ${esc(a.unit)} ` : p.ratio ? `<span class="muted" style="font-size:14px">${fmt(p.ratio.amount)} ${esc(p.ratio.unit)}/${p.ratio.per} ${esc(p.ratio.ref)} →</span> ${a ? `<b>${fmt(a.amount, 3)} ${esc(a.unit)}</b> ` : ''}` : a ? `${fmt(a.amount)} ${esc(a.unit)} ` : '';
-      return `<li><span class="txt">${lead}${esc(p.name)} per ${esc(P.per)}</span> ${total ? filled(total) : '<span class="blank">&nbsp;</span>'}${total && b.extra ? `<span class="muted" style="font-size:12px"> +${fmt(b.extra * 100)} %</span>` : ''}</li>`; }).join('')}</ul>`);
+      return `<li><span class="txt">${lead}${capify(esc(p.name))} per ${esc(P.per)}</span> ${total ? filled(total) : '<span class="blank">&nbsp;</span>'}${total && b.extra ? `<span class="muted" style="font-size:12px"> +${fmt(b.extra * 100)} %</span>` : ''}</li>`; }).join('')}</ul>`);
     if (b.warnings.length) parts.push(b.warnings.map((w) => `<div style="color:var(--orange);font-weight:700;font-size:14px">${esc(w)}</div>`).join(''));
     if (b.notes.length) parts.push(b.notes.map((w) => `<div class="muted" style="font-size:14px">${esc(w)}</div>`).join(''));
     if (b.timer) { const tr = timerRange(b.timer); if (tr) parts.push(` <button class="chip" data-timer="${idx}" style="min-height:30px;font-size:12px;padding:0 10px;vertical-align:middle">timer ${esc(tr.label)}</button>`); }
@@ -254,12 +261,12 @@ function renderPaper(main: HTMLElement, P: Protocol) {
 
 // ---- one step per screen ----
 function renderStep(main: HTMLElement, P: Protocol, n: number) {
-  const run = runState(P); const s = P.steps[n - 1]; const tw = totalWells(run); const skipped = run.skipped.includes(n);
+  const run = runState(P); setCaps(P); const s = P.steps[n - 1]; const tw = totalWells(run); const skipped = run.skipped.includes(n);
   const blocks: Block[] = [s, ...s.subs];
   const tr = s.timer ? timerRange(s.timer) : undefined;
   const mixHtml = (b: Block) => b.perWell.length ? `<div class="result" style="margin-top:12px;padding:12px 14px">
       <div style="display:flex;justify-content:space-between" class="cap"><span>${esc(b.title)}${run.format ? ` · ${esc(run.format)}` : ''}</span><span style="color:var(--orange)">${tw ? `${fmt(tw, 4)} ${esc(P.per)}s${extraTag(b)}` : '<a href="#/protocols/' + P.id + '">set conditions</a>'}</span></div>
-      <div class="list" style="margin-top:4px">${b.perWell.map((p) => { const a = amountFor(p, run); return `<div class="item"><span class="grow">${esc(p.name)}</span><span class="mono muted" style="font-size:14px">${a ? `${fmt(a.amount)} ${esc(a.unit)}` : '—'}</span>${a && tw ? `<span class="mono" style="color:var(--orange);font-size:18px;min-width:80px;text-align:right">${isMass(a.unit) ? fmt(toNg(a) * tw * factor(b)) + ' ng' : fmt(a.amount * tw * factor(b), 4) + ' ' + esc(a.unit)}</span>` : ''}</div>`; }).join('')}</div>
+      <div class="list" style="margin-top:4px">${b.perWell.map((p) => { const a = amountFor(p, run); return `<div class="item"><span class="grow">${capify(esc(p.name))}</span><span class="mono muted" style="font-size:14px">${a ? `${fmt(a.amount)} ${esc(a.unit)}` : '—'}</span>${a && tw ? `<span class="mono" style="color:var(--orange);font-size:18px;min-width:80px;text-align:right">${isMass(a.unit) ? fmt(toNg(a) * tw * factor(b)) + ' ng' : fmt(a.amount * tw * factor(b), 4) + ' ' + esc(a.unit)}</span>` : ''}</div>`; }).join('')}</div>
       ${run.conditions.length > 1 || run.conditions[0].conc ? `<div class="cap" style="margin-top:10px;color:inherit;opacity:0.8">Per tube</div>${run.conditions.map((c) => `<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:14px;margin-top:4px"><b style="min-width:60px">${esc(c.name || 'Cond.')}</b>${b.perWell.map((p) => { const t = tube(p, run, c, factor(b)); return `<span>${esc(p.name)} <b class="mono" style="color:var(--orange)">${esc(t.text)}</b></span>`; }).join('')}</div>`).join('')}` : ''}
     </div>` : '';
   main.append(html`
@@ -271,8 +278,8 @@ function renderStep(main: HTMLElement, P: Protocol, n: number) {
       ${skipped ? `<div class="cap" style="color:var(--orange)">Crossed out on this run</div>` : ''}
       <div style="display:flex;align-items:center;gap:14px"><div style="flex:1 1 auto;font-family:var(--display);font-weight:700;font-size:30px;line-height:1.12;${skipped ? 'text-decoration:line-through' : ''}">${esc(s.title)}</div>${stepIcon(s) ? `<div class="stepico">${stepIcon(s)}</div>` : ''}</div>
       ${blocks.map((b, bi) => `${bi > 0 ? `<div style="font-weight:700;font-size:20px;margin-top:16px">${String.fromCharCode(97 + bi - 1)}. ${esc(b.title)}</div>` : ''}
-        ${b.fmtLines.map((f) => `<p style="font-size:19px;line-height:1.45;margin:10px 0 0">${esc(f.text)} <b>${f.byFormat[run.format] ? esc(f.byFormat[run.format]) : `<span class="muted">(not set for ${esc(run.format)})</span>`}</b></p>`).join('')}
-        ${b.body.map((t) => `<p style="font-size:19px;line-height:1.45;margin:10px 0 0">${esc(t)}</p>`).join('')}
+        ${b.fmtLines.map((f) => `<p style="font-size:19px;line-height:1.45;margin:10px 0 0">${capify(esc(f.text))} <b>${f.byFormat[run.format] ? esc(f.byFormat[run.format]) : `<span class="muted">(not set for ${esc(run.format)})</span>`}</b></p>`).join('')}
+        ${b.body.map((t) => `<p style="font-size:19px;line-height:1.45;margin:10px 0 0">${capify(esc(t))}</p>`).join('')}
         ${b.warnings.map((w) => `<div class="note warn">${esc(w)}</div>`).join('')}
         ${mixHtml(b)}
         ${b.inputs.map((l) => `<div style="margin-top:10px;font-size:16px">${esc(l)}: ${blankHtml(l, run)}</div>`).join('')}

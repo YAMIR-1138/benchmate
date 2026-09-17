@@ -379,3 +379,7 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 
 /* ---- source tags on the NanoDrop guide ---- */
 .cite { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--teal); text-decoration: none; white-space: nowrap; margin-left: 6px; border: 1px solid var(--line-soft); border-radius: 6px; padding: 1px 6px; vertical-align: 1px; }
+
+/* ---- bottle-cap colour dots ---- */
+.capdot { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 50%; border: 1.5px solid var(--line); vertical-align: -0.08em; margin-left: 0.3em; box-shadow: inset 0 -0.18em 0 rgba(0,0,0,0.18); }
+@media print { .capdot { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

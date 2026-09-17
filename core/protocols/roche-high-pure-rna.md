@@ -5,6 +5,12 @@ duration: 25 min per sample
 tags: [RNA, extraction, spin column]
 per: sample
 conditions: no
+caps:
+  - Lysis/Binding Buffer: green
+  - DNase I Incubation Buffer: white
+  - Wash Buffer I: black
+  - Wash Buffer II: blue
+  - Elution Buffer: colorless
 materials:
   - High Pure Filter Tubes and Collection Tubes
   - PBS
