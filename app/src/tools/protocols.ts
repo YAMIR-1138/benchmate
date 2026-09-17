@@ -9,7 +9,7 @@ import { STEP_ICONS } from '../lib/stepIcons';
 interface Amount { amount: number; unit: string }
 interface PerWell { name: string; all?: Amount; byFormat: Record<string, Amount>; editable?: boolean; ratio?: { amount: number; unit: string; per: 'µg' | 'ng'; ref: string } }
 interface FmtLine { text: string; byFormat: Record<string, string> }
-interface Block { title: string; body: string[]; timer?: string; icon?: string; warnings: string[]; notes: string[]; inputs: string[]; blanks: string[]; hints: FmtLine[]; perWell: PerWell[]; fmtLines: FmtLine[] }
+interface Block { title: string; body: string[]; timer?: string; icon?: string; extra?: number; warnings: string[]; notes: string[]; inputs: string[]; blanks: string[]; hints: FmtLine[]; perWell: PerWell[]; fmtLines: FmtLine[] }
 interface Step extends Block { subs: Block[] }
 interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; per: string; materials: string[]; scaling: string[]; note?: string; single: boolean; steps: Step[] }
 interface Condition { name: string; wells: string; conc: string }
@@ -40,9 +40,9 @@ function parseFmt(s: string): FmtLine {
   return { text: (eq >= 0 ? s.slice(0, eq) : s).trim(), byFormat };
 }
 function feed(b: Block, t: string) {
-  const k = t.match(/^(timer|warning|note|input|blank|hint|per_well|fmt|icon):\s*(.*)$/);
+  const k = t.match(/^(timer|warning|note|input|blank|hint|per_well|fmt|icon|extra):\s*(.*)$/);
   if (!k) { b.body.push(t); return; }
-  if (k[1] === 'timer') b.timer = k[2]; else if (k[1] === 'icon') b.icon = k[2].trim(); else if (k[1] === 'warning') b.warnings.push(k[2]); else if (k[1] === 'note') b.notes.push(k[2]); else if (k[1] === 'input') b.inputs.push(k[2]); else if (k[1] === 'blank') b.blanks.push(k[2]); else if (k[1] === 'hint') b.hints.push(parseFmt(k[2])); else if (k[1] === 'per_well') b.perWell.push(parsePerWell(k[2])); else b.fmtLines.push(parseFmt(k[2]));
+  if (k[1] === 'timer') b.timer = k[2]; else if (k[1] === 'icon') b.icon = k[2].trim(); else if (k[1] === 'extra') { const n = parseFloat(k[2]); if (n > 0) b.extra = n / 100; } else if (k[1] === 'warning') b.warnings.push(k[2]); else if (k[1] === 'note') b.notes.push(k[2]); else if (k[1] === 'input') b.inputs.push(k[2]); else if (k[1] === 'blank') b.blanks.push(k[2]); else if (k[1] === 'hint') b.hints.push(parseFmt(k[2])); else if (k[1] === 'per_well') b.perWell.push(parsePerWell(k[2])); else b.fmtLines.push(parseFmt(k[2]));
 }
 function parse(id: string, src: string): Protocol {
   const m = src.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
@@ -116,6 +116,8 @@ const runLabel = (P: Protocol, run: Run) => {
 const when = (t: number) => new Date(t).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 const totalWells = (run: Run) => run.conditions.reduce((s, c) => s + (parseNum(c.wells) ?? 0), 0);
 const stepIcon = (b: Block) => (b.icon && STEP_ICONS[b.icon]) || '';
+const factor = (b: Block) => 1 + (b.extra ?? 0);
+const extraTag = (b: Block) => (b.extra ? ` +${fmt(b.extra * 100)} %` : '');
 /** Plain-text record of a run for the log. */
 function runSummary(P: Protocol, run: Run): string {
   const lines = [`${P.title}${run.format ? ` · ${run.format}` : ''}`];
@@ -125,15 +127,15 @@ function runSummary(P: Protocol, run: Run): string {
   for (const [k, v] of Object.entries(run.inputs)) if (v) lines.push(`${k}: ${v}`);
   for (const m of blocksWithMix(P)) {
     const per = m.perWell.map((p) => { const a = amountFor(p, run); return a ? `${p.name} ${fmt(a.amount, 3)} ${a.unit}` : ''; }).filter(Boolean);
-    if (per.length) lines.push(`${m.title}, per ${P.per}: ${per.join(', ')}${P.single && totalWells(run) ? ` · total: ${m.perWell.map((p) => { const x = tube(p, run, run.conditions[0]); return x.text ? `${p.name} ${x.text}` : ''; }).filter(Boolean).join(', ')}` : ''}`);
-    for (const c of conds) { const t = m.perWell.map((p) => { const x = tube(p, run, c); return x.text ? `${p.name} ${x.text}` : ''; }).filter(Boolean); if (t.length) lines.push(`  ${c.name || '?'}: ${t.join(', ')}`); }
+    if (per.length) lines.push(`${m.title}, per ${P.per}: ${per.join(', ')}${P.single && totalWells(run) ? ` · total${extraTag(m)}: ${m.perWell.map((p) => { const x = tube(p, run, run.conditions[0], factor(m)); return x.text ? `${p.name} ${x.text}` : ''; }).filter(Boolean).join(', ')}` : ''}`);
+    for (const c of conds) { const t = m.perWell.map((p) => { const x = tube(p, run, c, factor(m)); return x.text ? `${p.name} ${x.text}` : ''; }).filter(Boolean); if (t.length) lines.push(`  ${c.name || '?'}${extraTag(m)}: ${t.join(', ')}`); }
   }
   if (run.skipped.length) lines.push(`Crossed out: step ${[...run.skipped].sort((a, b) => a - b).join(', ')}`);
   return lines.join('\n');
 }
 /** What goes in one tube for one reagent. DNA in ng becomes µL when the plasmid concentration is known. */
-function tube(p: PerWell, run: Run, c: Condition): { text: string; calc?: string; tiny?: string } {
-  const a = amountFor(p, run); const w = parseNum(c.wells) ?? 0;
+function tube(p: PerWell, run: Run, c: Condition, f = 1): { text: string; calc?: string; tiny?: string } {
+  const a = amountFor(p, run); const w = (parseNum(c.wells) ?? 0) * f;
   if (!a || !w) return { text: '' };
   if (isMass(a.unit)) {
     const ng = toNg(a) * w, conc = parseNum(c.conc);
@@ -193,9 +195,9 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     const hints = b.hints.map((h) => { const v = Object.keys(h.byFormat).length ? h.byFormat[run.format] : ''; return v || !Object.keys(h.byFormat).length ? ` <span class="muted" style="font-size:14px">(${esc(h.text)} ${esc(v)})</span>` : ''; }).join('');
     parts.push(`<span class="txt">${head}</span>${b.blanks.map((l) => ' ' + blankHtml(l, run)).join('')}${hints}`);
     if (b.inputs.length) parts.push(`<ul>${b.inputs.map((l) => `<li><span class="txt">${esc(l)}:</span> ${blankHtml(l, run)}</li>`).join('')}</ul>`);
-    if (b.perWell.length) parts.push(`<ul>${b.perWell.map((p) => { const a = amountFor(p, run); const w = tw(); const total = a && w ? (isMass(a.unit) ? `${fmt(toNg(a) * w)} ng` : `${fmt(a.amount * w, 4)} ${a.unit}`) : '';
+    if (b.perWell.length) parts.push(`<ul>${b.perWell.map((p) => { const a = amountFor(p, run); const w = tw() * factor(b); const total = a && w ? (isMass(a.unit) ? `${fmt(toNg(a) * w)} ng` : `${fmt(a.amount * w, 4)} ${a.unit}`) : '';
       const lead = p.editable && a ? `<span class="blank" style="min-width:60px"><input class="pen" data-amt="${esc(p.name)}" value="${esc(run.amounts[`${run.format}:${p.name}`] ?? String(a.amount))}" inputmode="decimal" style="width:64px" /></span> ${esc(a.unit)} ` : p.ratio ? `<span class="muted" style="font-size:14px">${fmt(p.ratio.amount)} ${esc(p.ratio.unit)}/${p.ratio.per} ${esc(p.ratio.ref)} →</span> ${a ? `<b>${fmt(a.amount, 3)} ${esc(a.unit)}</b> ` : ''}` : a ? `${fmt(a.amount)} ${esc(a.unit)} ` : '';
-      return `<li><span class="txt">${lead}${esc(p.name)} per ${esc(P.per)}</span> ${total ? filled(total) : '<span class="blank">&nbsp;</span>'}</li>`; }).join('')}</ul>`);
+      return `<li><span class="txt">${lead}${esc(p.name)} per ${esc(P.per)}</span> ${total ? filled(total) : '<span class="blank">&nbsp;</span>'}${total && b.extra ? `<span class="muted" style="font-size:12px"> +${fmt(b.extra * 100)} %</span>` : ''}</li>`; }).join('')}</ul>`);
     if (b.warnings.length) parts.push(b.warnings.map((w) => `<div style="color:var(--orange);font-weight:700;font-size:14px">${esc(w)}</div>`).join(''));
     if (b.notes.length) parts.push(b.notes.map((w) => `<div class="muted" style="font-size:14px">${esc(w)}</div>`).join(''));
     if (b.timer) { const tr = timerRange(b.timer); if (tr) parts.push(` <button class="chip" data-timer="${idx}" style="min-height:30px;font-size:12px;padding:0 10px;vertical-align:middle">timer ${esc(tr.label)}</button>`); }
@@ -228,7 +230,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
   }
   function paintTubes() {
     const box = main.querySelector('#tubes'); if (!box) return;
-    box.innerHTML = run.conditions.map((c) => `<div class="cond"><div class="pen" style="font-size:20px;margin-bottom:2px">${esc(c.name || '')}${c.wells ? ` <span style="font-size:15px;opacity:0.8">${esc(c.wells)} ${esc(P.per)}s</span>` : ''}</div><div class="pair">${mixes.map((m) => `<div class="tube">${TUBE_SVG}<div class="lines">${m.perWell.map((p) => { const t = tube(p, run, c); return `<div class="line"><span class="v"><span class="pen">${esc(t.text)}</span>&nbsp;</span><span>${esc(p.name)}</span></div>`; }).join('')}</div></div>`).join('')}</div></div>`).join('');
+    box.innerHTML = run.conditions.map((c) => `<div class="cond"><div class="pen" style="font-size:20px;margin-bottom:2px">${esc(c.name || '')}${c.wells ? ` <span style="font-size:15px;opacity:0.8">${esc(c.wells)} ${esc(P.per)}s</span>` : ''}</div><div class="pair">${mixes.map((m) => `<div class="tube">${TUBE_SVG}<div class="lines">${m.perWell.map((p) => { const t = tube(p, run, c, factor(m)); return `<div class="line"><span class="v"><span class="pen">${esc(t.text)}</span>&nbsp;</span><span>${esc(p.name)}</span></div>`; }).join('')}</div></div>`).join('')}</div></div>`).join('');
   }
   function paintCalc() {
     const box = main.querySelector('#calc'); if (!box) return;
@@ -256,9 +258,9 @@ function renderStep(main: HTMLElement, P: Protocol, n: number) {
   const blocks: Block[] = [s, ...s.subs];
   const tr = s.timer ? timerRange(s.timer) : undefined;
   const mixHtml = (b: Block) => b.perWell.length ? `<div class="result" style="margin-top:12px;padding:12px 14px">
-      <div style="display:flex;justify-content:space-between" class="cap"><span>${esc(b.title)}${run.format ? ` · ${esc(run.format)}` : ''}</span><span style="color:var(--orange)">${tw ? `${fmt(tw, 4)} ${esc(P.per)}s` : '<a href="#/protocols/' + P.id + '">set conditions</a>'}</span></div>
-      <div class="list" style="margin-top:4px">${b.perWell.map((p) => { const a = amountFor(p, run); return `<div class="item"><span class="grow">${esc(p.name)}</span><span class="mono muted" style="font-size:14px">${a ? `${fmt(a.amount)} ${esc(a.unit)}` : '—'}</span>${a && tw ? `<span class="mono" style="color:var(--orange);font-size:18px;min-width:80px;text-align:right">${isMass(a.unit) ? fmt(toNg(a) * tw) + ' ng' : fmt(a.amount * tw, 4) + ' ' + esc(a.unit)}</span>` : ''}</div>`; }).join('')}</div>
-      ${run.conditions.length > 1 || run.conditions[0].conc ? `<div class="cap" style="margin-top:10px;color:inherit;opacity:0.8">Per tube</div>${run.conditions.map((c) => `<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:14px;margin-top:4px"><b style="min-width:60px">${esc(c.name || 'Cond.')}</b>${b.perWell.map((p) => { const t = tube(p, run, c); return `<span>${esc(p.name)} <b class="mono" style="color:var(--orange)">${esc(t.text)}</b></span>`; }).join('')}</div>`).join('')}` : ''}
+      <div style="display:flex;justify-content:space-between" class="cap"><span>${esc(b.title)}${run.format ? ` · ${esc(run.format)}` : ''}</span><span style="color:var(--orange)">${tw ? `${fmt(tw, 4)} ${esc(P.per)}s${extraTag(b)}` : '<a href="#/protocols/' + P.id + '">set conditions</a>'}</span></div>
+      <div class="list" style="margin-top:4px">${b.perWell.map((p) => { const a = amountFor(p, run); return `<div class="item"><span class="grow">${esc(p.name)}</span><span class="mono muted" style="font-size:14px">${a ? `${fmt(a.amount)} ${esc(a.unit)}` : '—'}</span>${a && tw ? `<span class="mono" style="color:var(--orange);font-size:18px;min-width:80px;text-align:right">${isMass(a.unit) ? fmt(toNg(a) * tw * factor(b)) + ' ng' : fmt(a.amount * tw * factor(b), 4) + ' ' + esc(a.unit)}</span>` : ''}</div>`; }).join('')}</div>
+      ${run.conditions.length > 1 || run.conditions[0].conc ? `<div class="cap" style="margin-top:10px;color:inherit;opacity:0.8">Per tube</div>${run.conditions.map((c) => `<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:14px;margin-top:4px"><b style="min-width:60px">${esc(c.name || 'Cond.')}</b>${b.perWell.map((p) => { const t = tube(p, run, c, factor(b)); return `<span>${esc(p.name)} <b class="mono" style="color:var(--orange)">${esc(t.text)}</b></span>`; }).join('')}</div>`).join('')}` : ''}
     </div>` : '';
   main.append(html`
     <div style="padding-top:14px">

@@ -20,7 +20,7 @@ note: TGGR edition of the pack-insert protocol for up to 1×10⁶ cultured cells
 Master mix in one tube, 600 µL per sample:
 per_well: PBS = 200 µL
 per_well: Lysis/Binding Buffer = 400 µL
-hint: make 10 % extra
+extra: 10 %
 icon: mix
 
 ## 2. Lyse
@@ -65,6 +65,7 @@ Discard the Collection Tube. Put the Filter Tube into a clean 1.5 mL tube.
 Add Elution Buffer, centrifuge 1 min at 8000 ×g.
 per_well: Elution Buffer = 30 µL | editable
 hint: 30 µL for concentrated RNA (lab minimum); the insert says 50–100 µL
+note: With 30 µL, elute twice: pipet the eluate back onto the column and spin again. Same volume, more RNA.
 timer: 1m
 icon: elute
 
