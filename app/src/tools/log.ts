@@ -1,4 +1,4 @@
-import { addLog, clearLog, dayKey, exportLog, hhmm, logEntries, removeLog, type LogEntry } from '../lib/log';
+import { addLog, clearLog, dayKey, exportLog, hhmm, logEntries, moveLog, removeLog, setLogTime, type LogEntry } from '../lib/log';
 import { TOOLS } from '../main';
 import { $, $$, copyText, esc, html, toast } from '../lib/dom';
 
@@ -20,8 +20,10 @@ export function renderLog(main: HTMLElement) {
     if (!es.length) { box.innerHTML = `<div class="muted" style="padding:24px 0;text-align:center;font-size:15px">${scope === 'today' ? 'Nothing logged today.' : 'Nothing logged yet.'}</div>`; return; }
     const days = new Map<string, LogEntry[]>();
     for (const e of es) days.set(dayKey(e.t), [...(days.get(dayKey(e.t)) ?? []), e]);
-    box.innerHTML = [...days.entries()].map(([day, list]) => `<div class="section"><div class="cap">${esc(day)}</div><div class="list">${list.map((e) => `<div class="item" style="align-items:flex-start;padding:10px 0;gap:10px"><span class="mono muted" style="font-size:13px;padding-top:2px;flex:0 0 auto">${hhmm(e.t)}</span><div class="grow" style="min-width:0"><div style="font-weight:700">${esc(e.title)}${e.tool !== 'note' ? ` <span class="mono muted" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase">${esc(toolName(e.tool))}</span>` : ''}</div><div style="font-size:14px;white-space:pre-wrap;word-break:break-word;margin-top:2px">${esc(e.text)}</div></div><button class="x" data-x="${e.id}" aria-label="remove" style="flex:0 0 auto">×</button></div>`).join('')}</div></div>`).join('');
+    box.innerHTML = [...days.entries()].map(([day, list]) => `<div class="section"><div class="cap">${esc(day)}</div><div class="list">${list.map((e) => `<div class="item" style="align-items:flex-start;padding:10px 0;gap:8px"><input type="time" class="ltime" data-t="${e.id}" value="${hhmm(e.t)}" aria-label="time" /><div class="grow" style="min-width:0"><div style="font-weight:700">${esc(e.title)}${e.tool !== 'note' ? ` <span class="mono muted" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase">${esc(toolName(e.tool))}</span>` : ''}</div><div style="font-size:14px;white-space:pre-wrap;word-break:break-word;margin-top:2px">${esc(e.text)}</div></div><span class="lmove"><button data-mv="-1" data-id="${e.id}" aria-label="move up">▲</button><button data-mv="1" data-id="${e.id}" aria-label="move down">▼</button></span><button class="x" data-x="${e.id}" aria-label="remove" style="flex:0 0 auto">×</button></div>`).join('')}</div></div>`).join('');
     $$<HTMLElement>(box, '[data-x]').forEach((b) => b.addEventListener('click', () => { removeLog(b.dataset.x!); paint(); }));
+    $$<HTMLElement>(box, '[data-mv]').forEach((b) => b.addEventListener('click', () => { moveLog(b.dataset.id!, Number(b.dataset.mv) as -1 | 1); paint(); }));
+    $$<HTMLInputElement>(box, '.ltime').forEach((i) => i.addEventListener('change', () => { setLogTime(i.dataset.t!, i.value); paint(); }));
   }
   $(main, '#addnote').addEventListener('click', () => { const i = $<HTMLInputElement>(main, '#note'); const v = i.value.trim(); if (!v) return; addLog('note', 'Note', v); i.value = ''; paint(); });
   $<HTMLInputElement>(main, '#note').addEventListener('keydown', (e) => { if (e.key === 'Enter') $(main, '#addnote').dispatchEvent(new Event('click')); });
