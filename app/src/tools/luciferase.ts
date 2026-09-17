@@ -1,6 +1,7 @@
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { $, $$, copyText, esc, html, toast } from '../lib/dom';
+import { addLog } from '../lib/log';
 
 interface Row { name: string; ff: string; rl: string; ctrl: boolean }
 type State = { rows: Row[] };
@@ -17,7 +18,7 @@ export function renderLuciferase(main: HTMLElement) {
     <div class="result" id="out" hidden>
       <div class="cap" style="color:inherit;opacity:0.8">Fold over control</div>
       <div class="list" id="groups" style="margin-top:6px"></div>
-      <div class="actions"><button class="btn" id="copy">Copy results</button></div>
+      <div class="actions"><button class="btn" id="copy">Copy results</button><button class="btn" id="log">Add to log</button></div>
     </div>
   `);
   const tbl = $(main, '#tbl');
@@ -58,5 +59,6 @@ export function renderLuciferase(main: HTMLElement) {
     if (!n) { toast('Nothing to add'); return; } save('luciferase', st); $<HTMLTextAreaElement>(main, '#pastetxt').value = ''; $(main, '#pastebox').hidden = true; paintRows(); paintOut(); toast(`${n} rows added`);
   });
   $(main, '#copy').addEventListener('click', async () => { if (await copyText(summary)) toast('Copied'); });
+  $(main, '#log').addEventListener('click', () => addLog('luciferase', 'Luciferase · fold over control', summary));
   paintRows(); paintOut();
 }

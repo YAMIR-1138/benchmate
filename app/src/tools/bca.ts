@@ -2,6 +2,7 @@ import { fitCurve, curveInvert, mean, type Fit } from '../lib/calc';
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { $, $$, copyText, esc, html, toast } from '../lib/dom';
+import { addLog } from '../lib/log';
 import { sevenSeg } from '../lib/sevenseg';
 
 interface Std { conc: string; a: string[] }
@@ -32,7 +33,7 @@ export function renderBca(main: HTMLElement) {
       <div class="result" id="guide" style="margin-top:10px;padding:8px;overflow-x:auto"></div>
       <div class="actions"><button class="btn primary" id="toplate">Open in Plate Map</button></div>
     </div>
-    <div class="section" id="out" hidden><div class="cap">Results · µg/µL</div><div id="res"></div><div class="actions"><button class="btn" id="copy">Copy table</button></div>
+    <div class="section" id="out" hidden><div class="cap">Results · µg/µL</div><div id="res"></div><div class="actions"><button class="btn" id="copy">Copy table</button><button class="btn" id="log">Add to log</button></div>
       <div class="note">Final = mean of the dilutions that fall inside the standard range. Red = above the top standard.</div></div>
   `);
   const persist = () => save('bca', st);
@@ -135,6 +136,7 @@ export function renderBca(main: HTMLElement) {
   $(main, '#add').addEventListener('click', () => { st.samples.push({ name: `S${st.samples.length + 1}`, und: ['', ''], dil: ['', ''] }); persist(); paintSamples(); compute(); });
   $(main, '#clear').addEventListener('click', () => { if (!confirm('Clear all readings?')) return; Object.assign(st, JSON.parse(JSON.stringify(DEFAULT))); persist(); paintStds(); paintSamples(); compute(); });
   $(main, '#copy').addEventListener('click', async () => { if (await copyText(summary)) toast('Copied'); });
+  $(main, '#log').addEventListener('click', () => addLog('bca', 'BCA', `${$(main, '#eq').textContent}\n${summary}`));
   $(main, '#toplate').addEventListener('click', () => {
     const wells = layout(); const dil = parseNum(st.dilution) || 5;
     const samples = ['Standards', 'Blank', 'Lysis buffer', ...st.samples.map((x) => x.name || '?')], genes = ['undiluted', `1:${dil}`];

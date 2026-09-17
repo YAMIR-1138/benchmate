@@ -8,7 +8,7 @@ Bench tools for molecular biology, as an installable web app. Works offline. No 
 
 ## Tools
 
-Dilution · molar · unit converter (×g ↔ rpm, DNA amount, A260) · timers · counter · DNA, RNA and protein ladders · cell count to seeding · protocols as interactive worksheets · [ΣpinZero](https://github.com/YAMIR-1138/SpinZero) rotor balancing · NanoDrop reading guide · luciferase fold change · plate maps for qPCR and cell culture · BCA standard curve and plate guide.
+Dilution · molar · unit converter (×g ↔ rpm, DNA amount, A260) · timers · counter · DNA, RNA and protein ladders · cell count to seeding · protocols as interactive worksheets · [ΣpinZero](https://github.com/YAMIR-1138/SpinZero) rotor balancing · NanoDrop reading guide · luciferase fold change · plate maps for qPCR and cell culture · BCA standard curve and plate guide · a bench log with "Add to log" on every tool and a text export for a notebook or a chat model.
 
 ## Repository
 

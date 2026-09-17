@@ -17,6 +17,7 @@ import { renderNanodrop } from './tools/nanodrop';
 import { renderLuciferase } from './tools/luciferase';
 import { renderPlateMap } from './tools/platemap';
 import { renderBca } from './tools/bca';
+import { renderLog } from './tools/log';
 import { timerEngine } from './tools/timerEngine';
 import logo from './assets/logo.png';
 import { renderImport } from './tools/importer';
@@ -38,6 +39,7 @@ export const TOOLS: Tool[] = [
   { id: 'bca', idx: '11', name: 'BCA', sub: 'standard curve → µg/µL', icon: 'curve', render: renderBca },
   { id: 'luciferase', idx: '12', name: 'Luciferase', sub: 'firefly / Renilla, fold', icon: 'flame', render: renderLuciferase },
   { id: 'protocols', idx: '13', name: 'Protocols', sub: 'interactive worksheets, print, hand-off', icon: 'list', render: renderProtocols },
+  { id: 'log', idx: '14', name: 'Log', sub: 'the day at the bench, export', icon: 'book', render: renderLog },
 ];
 
 // ---- theme ----

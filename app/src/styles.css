@@ -359,3 +359,9 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 @media (min-width: 760px) and (min-height: 500px) { .tstrip { left: calc(50% + 118px); } }
 @media (prefers-reduced-motion: reduce) { .tstrip.done .dot { animation: none; } }
 @media print { .tstrip { display: none !important; } }
+
+/* ---- protocol step pictograms ---- */
+.paper .sico { float: right; width: 38px; height: 38px; margin: 0 0 4px 10px; opacity: 0.75; }
+.stepico { flex: 0 0 auto; width: 76px; height: 76px; color: var(--teal); }
+.stepico .sico { width: 100%; height: 100%; }
+@media print { .paper .sico { width: 9mm; height: 9mm; opacity: 0.8; } }

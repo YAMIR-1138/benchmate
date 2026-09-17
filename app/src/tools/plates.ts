@@ -3,6 +3,7 @@ import { hemocytometer, seedPlan } from '../lib/calc';
 import { fmt, parseNum, sci } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { $, $$, esc, html } from '../lib/dom';
+import { addLog } from '../lib/log';
 import { sevenSeg } from '../lib/sevenseg';
 
 type Vessel = { id: string; name: string; wells: number; area_cm2: number; working_volume_ml: [number, number] };
@@ -45,6 +46,7 @@ export function renderPlates(main: HTMLElement) {
       <div class="cap" style="color:inherit;opacity:0.8;margin-top:14px">Master mix · + 10 %</div>
       <p id="pl-mix" style="margin-top:6px;font-size:18px"></p>
       <p id="pl-check" style="font-size:15px"></p>
+      <div class="actions"><button class="btn" id="log">Add to log</button></div>
     </div>
     <div class="section"><div class="cap">Growth areas</div>
       <table class="data"><tr><th>Vessel</th><th style="text-align:right">cm²</th><th style="text-align:right">Volume</th></tr>
@@ -86,6 +88,7 @@ export function renderPlates(main: HTMLElement) {
       : p.available !== undefined ? (p.enough ? `Need ${sci(p.totalCells)} of ${sci(p.available)} available. <span style="color:var(--teal)">Enough</span>, ${sci(p.available - p.totalCells)} spare.` : `<span style="color:var(--danger)">Short: need ${sci(p.totalCells)}, have ${sci(p.available)}.</span> Enough for ${Math.floor(p.available / perWell)} wells.`)
       : `${sci(p.totalCells)} cells in total (${sci(perWell)} per well${st.by === 'cm2' ? `, ${v.area_cm2} cm²` : ''}).`;
   }
+  $(main, '#log').addEventListener('click', () => addLog('plates', `Seeding · ${V.find((x) => x.id === st.id)?.name ?? st.id}`, `${$(main, '#count-note').textContent}\n${$(main, '#pl-mix').textContent}\n${$(main, '#pl-check').textContent}`));
   $$(main, 'input[name], select[name]').forEach((i) => i.addEventListener('input', paint));
   $(main, '#cmode').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; st.countMode = b.dataset.m as State['countMode']; $$(main, '#cmode button').forEach((x) => x.classList.toggle('on', x === b)); paint(); });
   $(main, '#by').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; st.by = b.dataset.b as State['by']; $$(main, '#by button').forEach((x) => x.classList.toggle('on', x === b)); paint(); });

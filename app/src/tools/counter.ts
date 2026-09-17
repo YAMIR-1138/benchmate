@@ -1,5 +1,6 @@
 import { load, save } from '../lib/store';
 import { $, esc, html, vibrate } from '../lib/dom';
+import { addLog } from '../lib/log';
 import { sevenSeg } from '../lib/sevenseg';
 
 interface Counter { id: string; name: string; n: number }
@@ -12,6 +13,7 @@ export function renderCounter(main: HTMLElement) {
     <div class="tapzone" id="tap"><div class="big">tap anywhere</div><div class="cap">+1</div></div>
     <div class="actions"><button class="btn tall" id="minus">−1</button><button class="btn tall quiet" id="reset">Reset</button><button class="btn tall orange" id="next" style="flex:1.4">Next</button></div>
     <div class="chips" id="chips" style="padding-top:14px"></div>
+    <div class="actions"><button class="btn" id="log">Add to log</button></div>
   `);
   const cur = () => st.counters.find((c) => c.id === st.active) ?? st.counters[0];
   const nEl = $(main, '#n'), name = $<HTMLInputElement>(main, '#name'), chips = $(main, '#chips'), others = $(main, '#others');
@@ -29,6 +31,7 @@ export function renderCounter(main: HTMLElement) {
     const nm = m ? `${m[1]}${Number(m[2]) + 1}` : `${cur().name} 2`;
     const c = { id: Math.random().toString(36).slice(2, 8), name: nm, n: 0 }; st.counters.push(c); st.active = c.id; paint();
   });
+  $(main, '#log').addEventListener('click', () => addLog('counter', 'Counter', st.counters.map((c) => `${c.name}: ${c.n}`).join('\n')));
   name.addEventListener('input', () => { cur().name = name.value; save('counter', st); });
   name.addEventListener('change', paint);
   chips.addEventListener('click', (e) => {

@@ -1,6 +1,7 @@
 import { load, save } from '../lib/store';
 import { showHandoff, qrSvg } from '../lib/handoff';
 import { $, $$, copyText, esc, html, toast, vibrate } from '../lib/dom';
+import { addLog } from '../lib/log';
 
 interface Well { s?: number; g?: number; d?: boolean }
 type Fmt = 6 | 12 | 24 | 48 | 96 | 384;
@@ -46,7 +47,7 @@ export function renderPlateMap(main: HTMLElement) {
     <div id="keys" style="margin-top:10px;font-size:13px"></div>
     </div>
     <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="share">Send to device</button><button class="btn" id="print">Print A4</button></div>
-    <div class="actions" style="margin-top:8px"><button class="btn" id="copy">Copy map</button><button class="btn" id="resetdone">Clear ticks</button></div>
+    <div class="actions" style="margin-top:8px"><button class="btn" id="copy">Copy map</button><button class="btn" id="log">Add to log</button><button class="btn" id="resetdone">Clear ticks</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn quiet" id="clear">Clear plate</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="newplate">+ New plate</button><button class="btn quiet" id="delplate">Delete plate</button></div>
   `);
@@ -212,12 +213,14 @@ export function renderPlateMap(main: HTMLElement) {
   $(main, '#clear').addEventListener('click', () => { if (confirm('Clear all wells on this plate?')) { P().wells = {}; persist(); paintGrid(); } });
   $(main, '#newplate').addEventListener('click', () => { const p = newPlate(P().fmt, kindOf(P())); st.plates.push(p); st.active = p.id; st.curS = 0; st.curG = 0; persist(); paintHeader(); paintGrid(); });
   $(main, '#delplate').addEventListener('click', () => { if (st.plates.length === 1) { toast('Keep at least one plate'); return; } if (!confirm(`Delete ${P().name}?`)) return; st.plates = st.plates.filter((p) => p.id !== st.active); st.active = st.plates[0].id; persist(); paintHeader(); paintGrid(); });
-  $(main, '#copy').addEventListener('click', async () => {
+  const mapText = () => {
     const p = P(), { rows, cols } = dims(p.fmt);
     const lines = [`${p.name} (${p.fmt}-well${p.note ? `, ${p.note}` : ''})`, '\t' + Array.from({ length: cols }, (_, c) => c + 1).join('\t')];
     for (let r = 0; r < rows; r++) lines.push(rn(r) + '\t' + Array.from({ length: cols }, (_, c) => { const w = p.wells[wid(r, c)]; if (!w) return ''; return [w.s !== undefined ? p.samples[w.s] : '', w.g !== undefined ? p.genes[w.g] : ''].filter(Boolean).join(' / ') + (w.d ? ' ✓' : ''); }).join('\t'));
-    if (await copyText(lines.join('\n'))) toast('Copied as a table');
-  });
+    return lines.join('\n');
+  };
+  $(main, '#copy').addEventListener('click', async () => { if (await copyText(mapText())) toast('Copied as a table'); });
+  $(main, '#log').addEventListener('click', () => { const p = P(); const g = gridHtml(20, 2, 8); addLog('platemap', `Plate · ${p.name}`, `${g.done} / ${g.used || g.rows * g.cols} ${kindOf(p) === 'culture' ? 'done' : 'pipetted'}\n${mapText()}`); });
   paintHeader(); paintGrid();
   let rz: number | undefined;
   const onWinResize = () => { if (overlay) return; clearTimeout(rz); rz = window.setTimeout(paintGrid, 120); };

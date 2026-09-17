@@ -3,6 +3,7 @@ import { UNITS, familyOf, toBase, autoUnit, type Family } from '../lib/units';
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { $, $$, copyText, esc, html, toast, unitSelect } from '../lib/dom';
+import { addLog } from '../lib/log';
 
 const CONC_UNITS = [...Object.keys(UNITS.molar), ...Object.keys(UNITS.massconc), 'X'];
 const VOL_UNITS = Object.keys(UNITS.volume);
@@ -33,7 +34,7 @@ export function renderDilution(main: HTMLElement) {
       <div class="big t" style="margin-top:6px"><span class="n" id="r-dil"></span><span class="u" id="r-dilu"></span></div>
       <p id="r-text"></p>
       <div class="note warn" id="r-min" hidden style="color:var(--text)"></div>
-      <div class="actions"><button class="btn" id="copy">Copy</button><button class="btn quiet" id="clear">Clear</button></div>
+      <div class="actions"><button class="btn" id="copy">Copy</button><button class="btn" id="log">Add to log</button><button class="btn quiet" id="clear">Clear</button></div>
     </div>
     <div class="section" id="recent" hidden><div class="cap">Recent</div><div class="list"></div></div>
   `);
@@ -100,6 +101,7 @@ export function renderDilution(main: HTMLElement) {
     recents.unshift({ text, result: `${$(main, '#r-v1').textContent} ${$(main, '#r-v1u').textContent!.split(' ')[0]}` });
     recents.splice(5); save('dilution.recent', recents); renderRecent();
   });
+  $(main, '#log').addEventListener('click', () => addLog('dilution', `Dilution · ${st.c1} ${st.uc1} → ${st.c2} ${st.uc2}`, sentence));
   $(main, '#clear').addEventListener('click', () => { inputs.forEach((i) => { if (i.name !== 'minVol') i.value = ''; }); compute(); inputs[0].focus(); });
   renderRecent(); compute();
 }

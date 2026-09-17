@@ -3,6 +3,7 @@ title: Total RNA isolation, High Pure RNA Isolation Kit (Roche)
 short: RNA isolation
 duration: 25 min per sample
 tags: [RNA, extraction, spin column]
+per: sample
 materials:
   - High Pure Filter Tubes and Collection Tubes
   - PBS
@@ -15,10 +16,14 @@ note: TGGR edition of the pack-insert protocol for up to 1×10⁶ cultured cells
 ---
 
 ## 1. Lysis mix
-Per sample, in a tube: 200 µL PBS + 400 µL Lysis/Binding Buffer.
-hint: one master mix for all samples, + 10 %
+Master mix in one tube, 600 µL per sample:
+per_well: PBS = 200 µL
+per_well: Lysis/Binding Buffer = 400 µL
+hint: make 10 % extra
+icon: mix
 
 ## 2. Lyse
+icon: vortex
 ### a. From a pellet
 Resuspend the pellet in 600 µL of the mix. Vortex 15 s.
 ### b. In the plate
@@ -29,30 +34,38 @@ timer: 15s
 Insert a Filter Tube into a Collection Tube. Pipet the whole sample (max 700 µL) into the upper reservoir.
 Centrifuge 15 s at 8000 ×g. Discard the flow-through, reassemble.
 timer: 15s
+icon: column
 
-## 4. DNase treatment
-Per sample: 90 µL DNase I Incubation Buffer + 10 µL DNase I. Mix, pipet onto the glass fibre fleece.
-Incubate at 15–25 °C.
+## 4. DNase mix
+Mix, then pipet 100 µL onto the glass fibre fleece of each column. Incubate at 15–25 °C.
+per_well: DNase I Incubation Buffer = 90 µL
+per_well: DNase I = 10 µL
 timer: 15m
+icon: drop
 
 ## 5. Wash I
 Add 500 µL Wash Buffer I. Centrifuge 15 s at 8000 ×g. Discard flow-through, reassemble.
 timer: 15s
+icon: wash
 
 ## 6. Wash II
 Add 500 µL Wash Buffer II. Centrifuge 15 s at 8000 ×g. Discard flow-through, reassemble.
 timer: 15s
+icon: wash
 
 ## 7. Dry spin
 Add 200 µL Wash Buffer II. Centrifuge 2 min at max speed (about 13 000 ×g).
 note: The long spin removes residual wash buffer.
 timer: 2m
+icon: spin
 
 ## 8. Elute
 Discard the Collection Tube. Put the Filter Tube into a clean 1.5 mL tube.
 Add 30–100 µL Elution Buffer. Centrifuge 1 min at 8000 ×g.
 hint: 30 µL for concentrated RNA (lab minimum); the insert says 50–100 µL
 timer: 1m
+icon: elute
 
 ## 9. Done
 Use the RNA directly in RT-PCR or store at −80 °C.
+icon: freeze

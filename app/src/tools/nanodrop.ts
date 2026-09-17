@@ -2,6 +2,7 @@ import { A260_FACTOR, verdict260230, verdict260280, verdictConc, type NAType } f
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { $, $$, esc, html } from '../lib/dom';
+import { addLog } from '../lib/log';
 
 type State = { kind: NAType; conc: string; r280: string; r230: string };
 const light = (s: 'good' | 'warn' | 'bad') => { const c = s === 'good' ? 'var(--teal)' : s === 'warn' ? 'var(--mustard)' : 'var(--danger)'; return `<span style="display:inline-block;width:14px;height:14px;border-radius:7px;border:2px solid var(--line);background:${c};box-shadow:0 0 6px ${c};flex:0 0 auto"></span>`; };
@@ -49,7 +50,7 @@ export function renderNanodrop(main: HTMLElement) {
       <div class="field"><label for="nd-280">260 / 280</label><input id="nd-280" name="r280" type="text" inputmode="decimal" value="${esc(st.r280)}" placeholder="—" /></div>
       <div class="field"><label for="nd-230">260 / 230</label><input id="nd-230" name="r230" type="text" inputmode="decimal" value="${esc(st.r230)}" placeholder="—" /></div>
     </div>
-    <div class="result" id="qc" hidden><div class="list" id="verdicts"></div></div>
+    <div class="result" id="qc" hidden><div class="list" id="verdicts"></div><div class="actions"><button class="btn" id="log">Add to log</button></div></div>
     <div class="note">Expected for ${'<b id="exp"></b>'}: 260/280 <b id="exp280"></b>, 260/230 <b>2.0–2.2</b>, factor <b id="expf"></b> ng/µL per A260.</div>
     <div class="note" style="margin-top:18px">Ratios are indicators, not a verdict. Concentration, the full spectrum and the blank matter as much, and a good ratio does not guarantee the next step works.</div>
     <div id="guide"></div>
@@ -57,18 +58,20 @@ export function renderNanodrop(main: HTMLElement) {
   const guide = $(main, '#guide');
   guide.innerHTML = GUIDE.map((g) => `<div class="section"><div class="cap">${esc(g.title)}</div><div class="list" style="margin-top:6px">${g.rows.map(([k, v]) => `<div class="item" style="align-items:flex-start;padding:10px 0;gap:10px"><div style="flex:0 0 108px;font-family:var(--display);font-weight:700;font-size:15px;line-height:1.25;padding-top:1px">${esc(k)}</div><div class="grow" style="font-size:15px;line-height:1.45">${esc(v)}</div></div>`).join('')}</div></div>`).join('');
   const persist = () => { $$<HTMLInputElement>(main, 'input[name]').forEach((i) => ((st as any)[i.name] = i.value)); save('nanodrop', st); };
+  let lines: string[] = [];
   function paint() {
     persist();
     $(main, '#exp').textContent = st.kind; $(main, '#exp280').textContent = st.kind === 'RNA' ? '~2.0' : '~1.8'; $(main, '#expf').textContent = String(A260_FACTOR[st.kind]);
     const c = parseNum(st.conc), r280 = parseNum(st.r280), r230 = parseNum(st.r230);
-    const rows: string[] = [];
-    const row = (s: 'good' | 'warn' | 'bad', head: string, note: string) => `<div class="item" style="align-items:flex-start;padding:8px 0">${light(s)}<div class="grow"><b>${head}</b><div style="font-size:14px;opacity:0.85">${esc(note)}</div></div></div>`;
+    const rows: string[] = []; lines = [];
+    const row = (s: 'good' | 'warn' | 'bad', head: string, note: string) => { lines.push(`${head}: ${note}`); return `<div class="item" style="align-items:flex-start;padding:8px 0">${light(s)}<div class="grow"><b>${head}</b><div style="font-size:14px;opacity:0.85">${esc(note)}</div></div></div>`; };
     if (c) { const v = verdictConc(c); rows.push(row(v.status, `${fmt(c, 4)} ng/µL`, v.note || 'Within range.')); }
     if (r280) { const v = verdict260280(r280, st.kind); rows.push(row(v.status, `260/280 = ${fmt(r280, 3)}`, v.note)); }
     if (r230) { const v = verdict260230(r230); rows.push(row(v.status, `260/230 = ${fmt(r230, 3)}`, v.note)); }
     if (c && c < 20 && r230 && r230 < 1.8) rows.push(row('warn', 'Low 260/230 at low concentration', 'Possibly noise rather than contamination.'));
     $(main, '#qc').hidden = rows.length === 0; $(main, '#verdicts').innerHTML = rows.join('');
   }
+  $(main, '#log').addEventListener('click', () => addLog('nanodrop', `NanoDrop · ${st.kind}`, [st.conc && `${st.conc} ng/µL`, st.r280 && `260/280 ${st.r280}`, st.r230 && `260/230 ${st.r230}`].filter(Boolean).join(', ') + '\n' + lines.join('\n')));
   $$(main, 'input[name]').forEach((i) => i.addEventListener('input', paint));
   $(main, '#kind').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; st.kind = b.dataset.k as NAType; $$(main, '#kind button').forEach((x) => x.classList.toggle('on', x === b)); paint(); });
   paint();

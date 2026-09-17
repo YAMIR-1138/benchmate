@@ -15,5 +15,6 @@ export const icons = {
   curve: w('<path d="M4 20 V4"/><path d="M4 20 H20"/><path d="M5 17 C9 16 12 12 14 8 c1 -2 2 -3 5 -3"/><circle cx="9" cy="15" r="1.3"/><circle cx="13" cy="10" r="1.3"/><circle cx="17" cy="6" r="1.3"/>'),
   back: w('<path d="M15 5 l-7 7 7 7"/>'),
   sun: w('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  book: w('<path d="M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/>'),
   moon: w('<path d="M20 14.5 A8 8 0 1 1 9.5 4 a6.5 6.5 0 0 0 10.5 10.5 Z"/>'),
 };

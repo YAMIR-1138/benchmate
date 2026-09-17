@@ -3,11 +3,13 @@ import { fmt, parseDuration, mmss, parseNum, sci } from '../lib/fmt';
 import { timerEngine } from './timerEngine';
 import { showHandoff, qrSvg } from '../lib/handoff';
 import { $, $$, esc, html, toast } from '../lib/dom';
+import { addLog } from '../lib/log';
+import { STEP_ICONS } from '../lib/stepIcons';
 
 interface Amount { amount: number; unit: string }
 interface PerWell { name: string; all?: Amount; byFormat: Record<string, Amount>; editable?: boolean; ratio?: { amount: number; unit: string; per: 'µg' | 'ng'; ref: string } }
 interface FmtLine { text: string; byFormat: Record<string, string> }
-interface Block { title: string; body: string[]; timer?: string; warnings: string[]; notes: string[]; inputs: string[]; blanks: string[]; hints: FmtLine[]; perWell: PerWell[]; fmtLines: FmtLine[] }
+interface Block { title: string; body: string[]; timer?: string; icon?: string; warnings: string[]; notes: string[]; inputs: string[]; blanks: string[]; hints: FmtLine[]; perWell: PerWell[]; fmtLines: FmtLine[] }
 interface Step extends Block { subs: Block[] }
 interface Protocol { id: string; title: string; short: string; duration?: string; tags: string[]; vessel?: string; formats: string[]; per: string; materials: string[]; scaling: string[]; note?: string; steps: Step[] }
 interface Condition { name: string; wells: string; conc: string }
@@ -37,9 +39,9 @@ function parseFmt(s: string): FmtLine {
   return { text: (eq >= 0 ? s.slice(0, eq) : s).trim(), byFormat };
 }
 function feed(b: Block, t: string) {
-  const k = t.match(/^(timer|warning|note|input|blank|hint|per_well|fmt):\s*(.*)$/);
+  const k = t.match(/^(timer|warning|note|input|blank|hint|per_well|fmt|icon):\s*(.*)$/);
   if (!k) { b.body.push(t); return; }
-  if (k[1] === 'timer') b.timer = k[2]; else if (k[1] === 'warning') b.warnings.push(k[2]); else if (k[1] === 'note') b.notes.push(k[2]); else if (k[1] === 'input') b.inputs.push(k[2]); else if (k[1] === 'blank') b.blanks.push(k[2]); else if (k[1] === 'hint') b.hints.push(parseFmt(k[2])); else if (k[1] === 'per_well') b.perWell.push(parsePerWell(k[2])); else b.fmtLines.push(parseFmt(k[2]));
+  if (k[1] === 'timer') b.timer = k[2]; else if (k[1] === 'icon') b.icon = k[2].trim(); else if (k[1] === 'warning') b.warnings.push(k[2]); else if (k[1] === 'note') b.notes.push(k[2]); else if (k[1] === 'input') b.inputs.push(k[2]); else if (k[1] === 'blank') b.blanks.push(k[2]); else if (k[1] === 'hint') b.hints.push(parseFmt(k[2])); else if (k[1] === 'per_well') b.perWell.push(parsePerWell(k[2])); else b.fmtLines.push(parseFmt(k[2]));
 }
 function parse(id: string, src: string): Protocol {
   const m = src.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
@@ -100,6 +102,21 @@ function runState(P: Protocol): Run {
   return { format: r.format && P.formats.includes(r.format) ? r.format : (P.vessel && P.formats.includes(P.vessel) ? P.vessel : P.formats[0] ?? ''), inputs: r.inputs ?? {}, amounts: r.amounts ?? {}, conditions: r.conditions?.length ? r.conditions : [{ name: '', wells: r.wells ?? '', conc: '' }], skipped: r.skipped ?? [] };
 }
 const totalWells = (run: Run) => run.conditions.reduce((s, c) => s + (parseNum(c.wells) ?? 0), 0);
+const stepIcon = (b: Block) => (b.icon && STEP_ICONS[b.icon]) || '';
+/** Plain-text record of a run for the log. */
+function runSummary(P: Protocol, run: Run): string {
+  const lines = [`${P.title}${run.format ? ` · ${run.format}` : ''}`];
+  const conds = run.conditions.filter((c) => c.name || c.wells);
+  if (conds.length) lines.push(`Conditions: ${conds.map((c) => `${c.name || '?'} (${c.wells || '?'} ${P.per}s${c.conc ? `, ${c.conc} ng/µL` : ''})`).join('; ')}`);
+  for (const [k, v] of Object.entries(run.inputs)) if (v) lines.push(`${k}: ${v}`);
+  for (const m of blocksWithMix(P)) {
+    const per = m.perWell.map((p) => { const a = amountFor(p, run); return a ? `${p.name} ${fmt(a.amount, 3)} ${a.unit}` : ''; }).filter(Boolean);
+    if (per.length) lines.push(`${m.title}, per ${P.per}: ${per.join(', ')}`);
+    for (const c of conds) { const t = m.perWell.map((p) => { const x = tube(p, run, c); return x.text ? `${p.name} ${x.text}` : ''; }).filter(Boolean); if (t.length) lines.push(`  ${c.name || '?'}: ${t.join(', ')}`); }
+  }
+  if (run.skipped.length) lines.push(`Crossed out: step ${[...run.skipped].sort((a, b) => a - b).join(', ')}`);
+  return lines.join('\n');
+}
 /** What goes in one tube for one reagent. DNA in ng becomes µL when the plasmid concentration is known. */
 function tube(p: PerWell, run: Run, c: Condition): { text: string; calc?: string; tiny?: string } {
   const a = amountFor(p, run); const w = parseNum(c.wells) ?? 0;
@@ -147,6 +164,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
     </div>
     <div class="actions" style="margin-top:16px"><a class="btn primary tall" href="#/protocols/${P.id}/1">Step by step</a><button class="btn" id="print">Print A4</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="share">Send run to device</button><a class="btn" href="#/platemap">Plate map</a></div>
+    <div class="actions" style="margin-top:8px"><button class="btn" id="log">Add run to log</button></div>
     ${P.materials.length ? `<div class="section"><div class="cap">Materials</div><div class="list">${P.materials.map((m) => `<div class="item" style="min-height:40px">${esc(m)}</div>`).join('')}</div></div>` : ''}
   `);
   const tw = () => totalWells(run);
@@ -170,7 +188,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
   function paintSteps() {
     $(main, '#steps').innerHTML = P.steps.map((s, i) => {
       const n = i + 1, struck = run.skipped.includes(n);
-      return `<li class="${struck ? 'struck' : ''}" style="list-style:none"><button class="num" data-skip="${n}" title="cross out">${n}.</button>${blockHtml(s, String(i))}${s.subs.length ? `<ol>${s.subs.map((b, j) => `<li>${blockHtml(b, `${i}.${j}`)}</li>`).join('')}</ol>` : ''}</li>`;
+      return `<li class="${struck ? 'struck' : ''}" style="list-style:none">${stepIcon(s)}<button class="num" data-skip="${n}" title="cross out">${n}.</button>${blockHtml(s, String(i))}${s.subs.length ? `<ol>${s.subs.map((b, j) => `<li>${blockHtml(b, `${i}.${j}`)}</li>`).join('')}</ol>` : ''}</li>`;
     }).join('');
     $$<HTMLElement>(main, '[data-skip]').forEach((b) => b.addEventListener('click', () => { const n = Number(b.dataset.skip); run.skipped = run.skipped.includes(n) ? run.skipped.filter((x) => x !== n) : [...run.skipped, n]; persist(); paintSteps(); }));
     $$<HTMLInputElement>(main, '#steps input[data-inp]').forEach((i) => i.addEventListener('input', () => { run.inputs[i.dataset.inp!] = i.value; persist(); paintCalc(); }));
@@ -201,6 +219,7 @@ function renderPaper(main: HTMLElement, P: Protocol) {
   }
   main.querySelector('#formats')?.addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; run.format = b.dataset.f!; persist(); $$(main, '#formats .chip').forEach((x) => x.classList.toggle('on', x === b)); paintSteps(); paintTubes(); paintCalc(); });
   $(main, '#print').addEventListener('click', async () => { $(main, '#pqr').innerHTML = await qrSvg({ t: 'run', v: 1, id: P.id, run }); window.print(); });
+  $(main, '#log').addEventListener('click', () => addLog('protocols', P.short, runSummary(P, run)));
   $(main, '#share').addEventListener('click', () => showHandoff(`Send ${P.short} run`, { t: 'run', v: 1, id: P.id, run }));
   paintCorner(); paintSteps(); paintTubes(); paintCalc();
 }
@@ -222,7 +241,7 @@ function renderStep(main: HTMLElement, P: Protocol, n: number) {
     </div>
     <div style="padding-top:18px;${skipped ? 'opacity:0.5' : ''}">
       ${skipped ? `<div class="cap" style="color:var(--orange)">Crossed out on this run</div>` : ''}
-      <div style="font-family:var(--display);font-weight:700;font-size:30px;line-height:1.12;${skipped ? 'text-decoration:line-through' : ''}">${esc(s.title)}</div>
+      <div style="display:flex;align-items:center;gap:14px"><div style="flex:1 1 auto;font-family:var(--display);font-weight:700;font-size:30px;line-height:1.12;${skipped ? 'text-decoration:line-through' : ''}">${esc(s.title)}</div>${stepIcon(s) ? `<div class="stepico">${stepIcon(s)}</div>` : ''}</div>
       ${blocks.map((b, bi) => `${bi > 0 ? `<div style="font-weight:700;font-size:20px;margin-top:16px">${String.fromCharCode(97 + bi - 1)}. ${esc(b.title)}</div>` : ''}
         ${b.fmtLines.map((f) => `<p style="font-size:19px;line-height:1.45;margin:10px 0 0">${esc(f.text)} <b>${f.byFormat[run.format] ? esc(f.byFormat[run.format]) : `<span class="muted">(not set for ${esc(run.format)})</span>`}</b></p>`).join('')}
         ${b.body.map((t) => `<p style="font-size:19px;line-height:1.45;margin:10px 0 0">${esc(t)}</p>`).join('')}
