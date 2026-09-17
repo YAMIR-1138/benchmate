@@ -100,7 +100,7 @@ function timerRange(t: string): { ms: number; label: string } | undefined {
 function runState(P: Protocol): Run {
   const r = load<Partial<Run> & { wells?: string }>(`protocol.${P.id}`, {});
   setAll(P);
-  return { format: r.format && P.formats.includes(r.format) ? r.format : (P.vessel && P.formats.includes(P.vessel) ? P.vessel : P.formats[0] ?? ''), inputs: r.inputs ?? {}, amounts: r.amounts ?? {}, conditions: r.conditions?.length ? r.conditions : [{ name: '', wells: r.wells ?? '', conc: '' }], skipped: r.skipped ?? [], started: r.started };
+  return { format: r.format && P.formats.includes(r.format) ? r.format : (P.vessel && P.formats.includes(P.vessel) ? P.vessel : P.formats[0] ?? ''), inputs: r.inputs ?? {}, amounts: r.amounts ?? {}, conditions: r.conditions?.length ? (P.single ? r.conditions.slice(0, 1) : r.conditions) : [{ name: '', wells: r.wells ?? '', conc: '' }], skipped: r.skipped ?? [], started: r.started };
 }
 // ---- run history: previous runs of a protocol, newest first ----
 const hasContent = (run: Run) => run.conditions.some((c) => c.name || c.wells || c.conc) || Object.values(run.inputs).some(Boolean) || Object.values(run.amounts).some(Boolean) || run.skipped.length > 0;
