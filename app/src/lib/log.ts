@@ -9,6 +9,10 @@ export function addLog(tool: string, title: string, text: string): void {
   entries.unshift({ id: Math.random().toString(36).slice(2, 9), t: Date.now(), tool, title, text: text.trim() });
   save(KEY, entries.slice(0, 500)); vibrate(10); toast('Added to log');
 }
+export function updateLog(id: string, patch: { title?: string; text?: string }): void {
+  const es = logEntries(); const e = es.find((x) => x.id === id); if (!e) return;
+  if (patch.title !== undefined) e.title = patch.title.trim() || e.title; if (patch.text !== undefined) e.text = patch.text.trim(); save(KEY, es);
+}
 export function removeLog(id: string): void { save(KEY, logEntries().filter((e) => e.id !== id)); }
 /** Move an entry one place up or down within its day. The list is newest first, so "up" means later in the day. */
 export function moveLog(id: string, dir: -1 | 1): void {

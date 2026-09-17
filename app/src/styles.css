@@ -370,3 +370,9 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 .ltime { flex: 0 0 auto; width: 58px; text-align: center; min-height: 30px; padding: 0 4px; font-family: var(--mono); font-size: 13px; color: var(--muted); background: transparent; border: 1px dashed var(--line-soft); border-radius: 6px; margin-top: -3px; }
 .lmove { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
 .lmove button { width: 30px; height: 22px; padding: 0; font-size: 10px; line-height: 1; border: 1px solid var(--line-soft); border-radius: 6px; background: var(--panel); color: var(--muted); cursor: pointer; }
+
+/* ---- log composer and in-place edit ---- */
+.compose { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; }
+.compose input, .compose textarea, .lbody .ltitle, .lbody .ltext { width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; font-size: 16px; font-family: inherit; border: var(--bw) solid var(--line); border-radius: 10px; background: var(--lcd); color: var(--lcd-ink); resize: vertical; }
+.lbody .ltitle { font-weight: 700; margin-bottom: 6px; }
+.lbody .ltext { font-size: 14px; }
