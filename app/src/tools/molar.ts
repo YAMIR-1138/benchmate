@@ -3,7 +3,7 @@ import { UNITS, toBase, fromBase, autoUnit } from '../lib/units';
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { $, $$, copyText, esc, html, toast, unitSelect } from '../lib/dom';
-import { addLog } from '../lib/log';
+import { addLogWithNote } from '../lib/log';
 
 const REAGENTS: [string, number][] = [
   ['NaCl', 58.44], ['KCl', 74.55], ['Tris base', 121.14], ['Tris·HCl', 157.60], ['EDTA·2Na·2H₂O', 372.24],
@@ -81,7 +81,7 @@ export function renderMolar(main: HTMLElement) {
     $$<HTMLInputElement>(main, 'input[name=mw]')[0].value = b.dataset.mw!; compute();
   });
   $(main, '#copy').addEventListener('click', async () => { if (await copyText(sentence)) toast('Copied'); });
-  $(main, '#log').addEventListener('click', () => addLog('molar', 'Molar', sentence));
+  $(main, '#log').addEventListener('click', () => addLogWithNote('molar', 'Molar', sentence));
   $(main, '#clear').addEventListener('click', () => { inputs.forEach((i) => (i.value = '')); compute(); inputs[0].focus(); });
   compute();
 }

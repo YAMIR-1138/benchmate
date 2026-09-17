@@ -2,7 +2,7 @@ import { A260_FACTOR, verdict260230, verdict260280, verdictConc, type NAType } f
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { $, $$, esc, html } from '../lib/dom';
-import { addLog } from '../lib/log';
+import { addLogWithNote } from '../lib/log';
 
 type State = { kind: NAType; conc: string; r280: string; r230: string };
 const light = (s: 'good' | 'warn' | 'bad') => { const c = s === 'good' ? 'var(--teal)' : s === 'warn' ? 'var(--mustard)' : 'var(--danger)'; return `<span style="display:inline-block;width:14px;height:14px;border-radius:7px;border:2px solid var(--line);background:${c};box-shadow:0 0 6px ${c};flex:0 0 auto"></span>`; };
@@ -79,7 +79,7 @@ export function renderNanodrop(main: HTMLElement) {
     if (c && c < 20 && r230 && r230 < 1.8) rows.push(row('warn', 'Low 260/230 at low concentration', 'Possibly noise rather than contamination.'));
     $(main, '#qc').hidden = rows.length === 0; $(main, '#verdicts').innerHTML = rows.join('');
   }
-  $(main, '#log').addEventListener('click', () => addLog('nanodrop', `NanoDrop · ${st.kind}`, [st.conc && `${st.conc} ng/µL`, st.r280 && `260/280 ${st.r280}`, st.r230 && `260/230 ${st.r230}`].filter(Boolean).join(', ') + '\n' + lines.join('\n')));
+  $(main, '#log').addEventListener('click', () => addLogWithNote('nanodrop', `NanoDrop ${st.kind}`, [st.conc && `${st.conc} ng/µL`, st.r280 && `260/280 ${st.r280}`, st.r230 && `260/230 ${st.r230}`].filter(Boolean).join(', ') + '\n' + lines.join('\n')));
   $$(main, 'input[name]').forEach((i) => i.addEventListener('input', paint));
   $(main, '#kind').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; st.kind = b.dataset.k as NAType; $$(main, '#kind button').forEach((x) => x.classList.toggle('on', x === b)); paint(); });
   paint();

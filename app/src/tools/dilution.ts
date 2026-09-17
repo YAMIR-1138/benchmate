@@ -3,7 +3,7 @@ import { UNITS, familyOf, toBase, autoUnit, type Family } from '../lib/units';
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { $, $$, copyText, esc, html, toast, unitSelect } from '../lib/dom';
-import { addLog } from '../lib/log';
+import { addLogWithNote } from '../lib/log';
 
 const CONC_UNITS = [...Object.keys(UNITS.molar), ...Object.keys(UNITS.massconc), 'X'];
 const VOL_UNITS = Object.keys(UNITS.volume);
@@ -101,7 +101,7 @@ export function renderDilution(main: HTMLElement) {
     recents.unshift({ text, result: `${$(main, '#r-v1').textContent} ${$(main, '#r-v1u').textContent!.split(' ')[0]}` });
     recents.splice(5); save('dilution.recent', recents); renderRecent();
   });
-  $(main, '#log').addEventListener('click', () => addLog('dilution', `Dilution · ${st.c1} ${st.uc1} → ${st.c2} ${st.uc2}`, sentence));
+  $(main, '#log').addEventListener('click', () => addLogWithNote('dilution', `Dilution ${st.c1} ${st.uc1} → ${st.c2} ${st.uc2}`, sentence));
   $(main, '#clear').addEventListener('click', () => { inputs.forEach((i) => { if (i.name !== 'minVol') i.value = ''; }); compute(); inputs[0].focus(); });
   renderRecent(); compute();
 }
