@@ -367,7 +367,7 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 @media print { .paper .sico { width: 9mm; height: 9mm; opacity: 0.8; } }
 
 /* ---- log entries: editable time, reorder ---- */
-.ltime { flex: 0 0 auto; width: 64px; min-height: 30px; padding: 0 4px; font-family: var(--mono); font-size: 13px; color: var(--muted); background: transparent; border: 1px dashed var(--line-soft); border-radius: 6px; margin-top: -3px; }
+.ltime { flex: 0 0 auto; width: 70px; min-height: 30px; padding: 0 4px; font-family: var(--mono); font-size: 13px; color: var(--muted); background: transparent; border: 1px dashed var(--line-soft); border-radius: 6px; margin-top: -3px; }
 .ltime::-webkit-calendar-picker-indicator { display: none; }
 .lmove { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
 .lmove button { width: 30px; height: 22px; padding: 0; font-size: 10px; line-height: 1; border: 1px solid var(--line-soft); border-radius: 6px; background: var(--panel); color: var(--muted); cursor: pointer; }
