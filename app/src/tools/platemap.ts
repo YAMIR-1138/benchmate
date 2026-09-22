@@ -1,4 +1,5 @@
 import { load, save } from '../lib/store';
+import { fmt, parseNum } from '../lib/fmt';
 import { showHandoff, qrSvg } from '../lib/handoff';
 import { $, $$, copyText, esc, html, toast, vibrate } from '../lib/dom';
 import { addLog } from '../lib/log';
@@ -6,7 +7,10 @@ import { addLog } from '../lib/log';
 interface Well { s?: number; g?: number; d?: boolean }
 type Fmt = 6 | 12 | 24 | 48 | 96 | 384;
 type Kind = 'qpcr' | 'culture';
-interface Plate { id: string; name: string; fmt: Fmt; kind?: Kind; note?: string; samples: string[]; genes: string[]; wells: Record<string, Well> }
+interface Plate { id: string; name: string; fmt: Fmt; kind?: Kind; note?: string; samples: string[]; genes: string[]; wells: Record<string, Well>; rx?: Record<string, string> }
+// qPCR master mix per gene: per-reaction recipe (µL), shared by all plates; reaction counts come from the plate.
+interface Recipe { parts: { name: string; ul: string }[]; cdna: { name: string; ul: string }; extra: string }
+const DEFAULT_RECIPE: Recipe = { parts: [{ name: 'SYBR ×2', ul: '5' }, { name: 'F primer (50 µM)', ul: '0.1' }, { name: 'R primer (50 µM)', ul: '0.1' }, { name: 'nfw', ul: '2.8' }], cdna: { name: 'cDNA (10 ng/µL)', ul: '2' }, extra: '10' }
 const FMTS: Fmt[] = [6, 12, 24, 48, 96, 384];
 const LAYERS: Record<Kind, [string, string]> = { qpcr: ['Samples', 'Genes'], culture: ['Cell line', 'Treatment'] };
 type Mode = 'sample' | 'gene' | 'done';
@@ -49,11 +53,15 @@ export function renderPlateMap(main: HTMLElement) {
       <div class="result" style="padding:6px;overflow-x:auto;touch-action:pinch-zoom;user-select:none;-webkit-user-select:none" id="gridbox"></div>
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px" class="mono screen-only"><span id="progress" style="font-size:14px"></span><span class="muted" style="font-size:12px;text-align:right">drag across wells for a block, or across the letters and numbers for whole lines</span></div>
     <div id="keys" style="margin-top:10px;font-size:13px"></div>
+    <div id="mix" style="margin-top:12px"></div>
     </div>
     <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="share">Send to device</button><button class="btn" id="print">Print A4</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="copy">Copy map</button><button class="btn" id="log">Add to log</button><button class="btn" id="resetdone">Clear ticks</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn quiet" id="clear">Clear plate</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="newplate">+ New plate</button><button class="btn quiet" id="delplate">Delete plate</button></div>
+    <div class="section" id="recipe" hidden><div class="cap">qPCR mix · per reaction</div><div id="recipe-rows"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px"><span class="grow">Extra for pipetting</span><input id="rc-extra" type="text" inputmode="decimal" style="width:56px;min-height:38px;text-align:right;font-family:var(--mono)" /><span>%</span></div>
+      <div class="actions" style="padding-top:8px"><button class="btn" id="rc-add">+ Component</button><button class="btn quiet" id="rc-reset">Reset to sheet</button></div></div>
   `);
   const gridbox = $(main, '#gridbox'), legend = $(main, '#legend');
   const persist = () => save('platemap2', st);
@@ -107,7 +115,37 @@ export function renderPlateMap(main: HTMLElement) {
     for (const w of Object.values(p.wells)) { if (w.s !== undefined) usedS.add(w.s); if (w.g !== undefined) usedG.add(w.g); }
     $(main, '#keys').innerHTML = [...usedS].sort((a, b) => a - b).map((i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0"><span style="width:12px;height:12px;border-radius:6px;background:${S_COL[i % S_COL.length]};border:1.5px solid var(--line)"></span>${codeBadge(sCode(i))}${esc(p.samples[i] ?? '?')}</span>`).join('')
       + [...usedG].sort((a, b) => a - b).map((i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0"><span style="width:12px;height:12px;border-radius:6px;border:3px solid ${G_COL[i % G_COL.length]};box-sizing:border-box"></span>${codeBadge(gCode(i))}${esc(p.genes[i] ?? '?')}</span>`).join('');
+    paintMix();
   }
+  // ---- master mix per gene ----
+  const recipe = () => load<Recipe>('qpcrmix', DEFAULT_RECIPE);
+  const num = (s: string) => parseNum(s) ?? 0;
+  function mixRows(p: Plate) {
+    const R = recipe(); const counts = new Map<number, number>();
+    for (const w of Object.values(p.wells)) if (w.g !== undefined) counts.set(w.g, (counts.get(w.g) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => a[0] - b[0]).map(([g, wells]) => {
+      const auto = Math.ceil(wells * (1 + num(R.extra) / 100)); const over = p.rx?.[p.genes[g] ?? String(g)]; const n = over !== undefined && over !== '' ? num(over) : auto;
+      const parts = R.parts.map((c) => ({ name: c.name, ul: num(c.ul) * n })); const per = R.parts.reduce((s, c) => s + num(c.ul), 0);
+      return { g, name: p.genes[g] ?? '?', wells, auto, n, override: over ?? '', parts, mixPer: per, mixTotal: per * n };
+    });
+  }
+  function paintMix() {
+    const p = P(); const box = $(main, '#mix'); const rec = $(main, '#recipe'); const R = recipe();
+    if (kindOf(p) !== 'qpcr') { box.innerHTML = ''; rec.hidden = true; return; }
+    rec.hidden = false; const rows = mixRows(p);
+    box.innerHTML = rows.length ? `<div class="cap" style="font-size:10px;text-transform:none;letter-spacing:0.08em">Master mix per gene · ${esc(R.cdna.name)} ${fmt(num(R.cdna.ul))} µL per reaction added separately</div>
+      <div style="overflow-x:auto"><table class="data" style="margin-top:4px"><tr><th>Gene</th><th style="text-align:right">wells</th><th style="text-align:right">×</th><th style="text-align:right">mix</th>${R.parts.map((c) => `<th style="text-align:right;text-transform:none">${esc(c.name)}</th>`).join('')}</tr>
+      ${rows.map((r) => `<tr><td>${codeBadge(gCode(r.g))}${esc(r.name)}</td><td class="num">${r.wells}</td><td class="num"><input type="text" inputmode="numeric" class="rxn" data-g="${esc(r.name)}" value="${esc(r.override)}" placeholder="${r.auto}" style="width:44px;min-height:34px;padding:0 4px;font-family:var(--mono);text-align:right" /></td><td class="num" style="color:var(--orange);font-weight:700;white-space:nowrap">${fmt(r.mixTotal, 4)} µL</td>${r.parts.map((c) => `<td class="num">${fmt(c.ul, 4)}</td>`).join('')}</tr>`).join('')}</table></div>
+      <div class="muted" style="font-size:12px;margin-top:4px">× = wells + ${fmt(num(R.extra))} % rounded up; type a number to override. Per reaction: ${fmt(rows[0].mixPer, 4)} µL mix + ${fmt(num(R.cdna.ul))} µL ${esc(R.cdna.name)} = ${fmt(rows[0].mixPer + num(R.cdna.ul), 4)} µL.</div>` : '';
+    $$<HTMLInputElement>(box, '.rxn').forEach((i) => i.addEventListener('change', () => { const pp = P(); pp.rx = { ...(pp.rx ?? {}), [i.dataset.g!]: i.value.trim() }; persist(); paintMix(); }));
+    $(main, '#recipe-rows').innerHTML = [...R.parts.map((c, i) => `<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="text" class="rc-name" data-i="${i}" value="${esc(c.name)}" style="flex:1 1 auto;min-width:0;min-height:38px;padding:0 10px" /><input type="text" inputmode="decimal" class="rc-ul" data-i="${i}" value="${esc(c.ul)}" style="width:64px;min-height:38px;text-align:right;font-family:var(--mono)" /><span class="muted" style="font-size:13px">µL</span><button class="x" data-rm="${i}" aria-label="remove">×</button></div>`),
+      `<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="text" id="rc-cdna" value="${esc(R.cdna.name)}" style="flex:1 1 auto;min-width:0;min-height:38px;padding:0 10px" /><input type="text" inputmode="decimal" id="rc-cdna-ul" value="${esc(R.cdna.ul)}" style="width:64px;min-height:38px;text-align:right;font-family:var(--mono)" /><span class="muted" style="font-size:13px">µL</span><span style="width:30px"></span></div>`].join('');
+    $<HTMLInputElement>(main, '#rc-extra').value = R.extra;
+    const saveR = () => { const parts = $$<HTMLInputElement>(main, '.rc-name').map((n, i) => ({ name: n.value, ul: $$<HTMLInputElement>(main, '.rc-ul')[i].value })); save('qpcrmix', { parts, cdna: { name: $<HTMLInputElement>(main, '#rc-cdna').value, ul: $<HTMLInputElement>(main, '#rc-cdna-ul').value }, extra: $<HTMLInputElement>(main, '#rc-extra').value }); paintMix(); };
+    $$<HTMLInputElement>(main, '#recipe input').forEach((i) => i.addEventListener('change', saveR));
+    $$<HTMLElement>(main, '[data-rm]').forEach((b) => b.addEventListener('click', () => { const r = recipe(); r.parts.splice(Number(b.dataset.rm), 1); save('qpcrmix', r); paintMix(); }));
+  }
+  const mixText = (p: Plate) => { const R = recipe(); return mixRows(p).map((r) => `${r.name}: ${r.wells} wells → ×${r.n}: ${r.parts.map((c) => `${c.name} ${fmt(c.ul, 4)}`).join(', ')} = ${fmt(r.mixTotal, 4)} µL mix; + ${fmt(num(R.cdna.ul))} µL ${R.cdna.name} per reaction`).join('\n'); };
   function apply(ids: string[]) {
     const p = P(); const k = st.mode === 'sample' ? 's' : 'g';
     const tidy = (id: string) => { const w = p.wells[id]; if (w && w.s === undefined && w.g === undefined && !w.d) delete p.wells[id]; };
@@ -237,7 +275,9 @@ export function renderPlateMap(main: HTMLElement) {
     return lines.join('\n');
   };
   $(main, '#copy').addEventListener('click', async () => { if (await copyText(mapText())) toast('Copied as a table'); });
-  $(main, '#log').addEventListener('click', () => { const p = P(); const g = gridHtml(20, 2, 8); addLog('platemap', `Plate · ${p.name}`, `${g.done} / ${g.used || g.rows * g.cols} ${kindOf(p) === 'culture' ? 'done' : 'pipetted'}\n${mapText()}`); });
+  $(main, '#log').addEventListener('click', () => { const p = P(); const g = gridHtml(20, 2, 8); const mt = kindOf(p) === 'qpcr' ? mixText(p) : ''; addLog('platemap', `Plate · ${p.name}`, `${g.done} / ${g.used || g.rows * g.cols} ${kindOf(p) === 'culture' ? 'done' : 'pipetted'}\n${mapText()}${mt ? `\nMaster mix per gene\n${mt}` : ''}`); });
+  $(main, '#rc-add').addEventListener('click', () => { const r = recipe(); r.parts.push({ name: '', ul: '' }); save('qpcrmix', r); paintMix(); });
+  $(main, '#rc-reset').addEventListener('click', () => { save('qpcrmix', DEFAULT_RECIPE); paintMix(); });
   paintHeader(); paintGrid();
   let rz: number | undefined;
   const onWinResize = () => { if (overlay) return; clearTimeout(rz); rz = window.setTimeout(paintGrid, 120); };
