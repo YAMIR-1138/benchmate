@@ -385,3 +385,8 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 @media print { .capdot { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 .tag { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--key-ink); background: var(--mustard); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; vertical-align: 1px; margin-left: 4px; }
 .lbody .ldate, .lbody .lexp { min-height: 40px; padding: 0 10px; font-size: 14px; font-family: inherit; border: var(--bw) solid var(--line); border-radius: 10px; background: var(--lcd); color: var(--lcd-ink); }
+
+/* ---- plate-map short codes ---- */
+.wcode { display: inline-block; min-width: 1.4em; padding: 0 4px; font-family: var(--mono); font-weight: 700; font-size: 12px; line-height: 1.5; text-align: center; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); color: var(--text); margin-right: 6px; }
+.chip .wcode { margin-right: 2px; }
+@media print { .wcode { border-color: #111; color: #111; background: #fff; } }

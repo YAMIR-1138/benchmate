@@ -119,6 +119,7 @@ function route() {
     content.append(header(tool.name, tool.idx));
     content.append(el('div', { class: 'stripe' }));
     (main as any).dataset.sub = rest.join('/');
+    content.append(main); // attach first so tools can measure their width on the first paint
     tool.render(main);
     cleanup = (main as any).__cleanup;
   }
