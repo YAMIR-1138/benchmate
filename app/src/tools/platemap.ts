@@ -46,7 +46,7 @@ export function renderPlateMap(main: HTMLElement) {
     <div class="print" id="printblock">
       <div class="print-only" style="font-family:var(--mono);font-size:11px;margin-bottom:6px;color:#555"><span id="print-head"></span></div>
       <div class="print-flex" style="justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px"><div style="font-family:var(--display);font-weight:700;font-size:20px" id="print-title"></div><span class="pqr" id="pqr"></span></div>
-      <div class="result" style="padding:6px;overflow-x:auto;touch-action:none;user-select:none;-webkit-user-select:none" id="gridbox"></div>
+      <div class="result" style="padding:6px;overflow-x:auto;touch-action:pinch-zoom;user-select:none;-webkit-user-select:none" id="gridbox"></div>
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px" class="mono screen-only"><span id="progress" style="font-size:14px"></span><span class="muted" style="font-size:12px;text-align:right">drag across wells for a block, or across the letters and numbers for whole lines</span></div>
     <div id="keys" style="margin-top:10px;font-size:13px"></div>
     </div>
@@ -140,7 +140,7 @@ export function renderPlateMap(main: HTMLElement) {
   };
   const finish = () => { if (!anchor || !last) return; const rc = rect(anchor, last); anchor = null; last = null; apply(ids(rc)); };
   function attachDrag(box: HTMLElement, canSelect: () => boolean) {
-    box.addEventListener('pointerdown', (e) => { if (!canSelect()) return; const a = at(e.clientX, e.clientY); if (!a) return; e.preventDefault(); dragBox = box; anchor = a; last = a; box.setPointerCapture(e.pointerId); preview(); });
+    box.addEventListener('pointerdown', (e) => { if (!canSelect()) return; const a = at(e.clientX, e.clientY); if (!a) return; e.preventDefault(); dragBox = box; anchor = a; last = a; try { box.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ } preview(); });
     box.addEventListener('pointermove', (e) => { if (!anchor) return; const a = at(e.clientX, e.clientY); if (!a) return; const b: Anchor = anchor.kind === 'w' ? (a.kind === 'w' ? a : anchor) : anchor.kind === 'row' ? { kind: 'row', r: a.r, c: 0 } : { kind: 'col', r: 0, c: a.c }; if (b.r !== last?.r || b.c !== last?.c) { last = b; preview(); } });
     box.addEventListener('pointerup', finish); box.addEventListener('pointercancel', () => { anchor = null; last = null; preview(); });
   }
@@ -170,6 +170,18 @@ export function renderPlateMap(main: HTMLElement) {
     fsBox = $<HTMLElement>(overlay, '#fs-grid');
     const scroll = $<HTMLElement>(overlay, '#fs-scroll');
     attachDrag(scroll, () => !fsMove);
+    // pinch: two pointers change the zoom around their midpoint; a second finger cancels any selection in progress
+    const ptrs = new Map<number, { x: number; y: number }>(); let pinch: { d: number; z: number } | null = null, raf = 0;
+    const dist = () => { const [a, b] = [...ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    scroll.addEventListener('pointerdown', (e) => { ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 2) { anchor = null; last = null; preview(); pinch = { d: dist(), z: zoom }; } });
+    scroll.addEventListener('pointermove', (e) => {
+      if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!pinch || ptrs.size !== 2) return;
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; if (!pinch || ptrs.size !== 2) return; const z = Math.max(1, Math.min(4, +(pinch.z * (dist() / pinch.d)).toFixed(1))); if (z === zoom) return; const [a, b] = [...ptrs.values()]; const box = scroll.getBoundingClientRect(); const mx = (a.x + b.x) / 2 - box.left, my = (a.y + b.y) / 2 - box.top; const k = z / zoom; const sl = scroll.scrollLeft, stp = scroll.scrollTop; zoom = z; paintFs(); scroll.scrollLeft = (sl + mx) * k - mx; scroll.scrollTop = (stp + my) * k - my; });
+    });
+    const lift = (e: PointerEvent) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; };
+    scroll.addEventListener('pointerup', lift); scroll.addEventListener('pointercancel', lift); scroll.addEventListener('lostpointercapture', lift);
     const paintFs = () => { const [L1, L2] = LAYERS[kindOf(P())]; $$(overlay!, '#fs-mode button').forEach((b) => { const m = (b as HTMLElement).dataset.m; b.classList.toggle('on', m === st.mode); b.textContent = m === 'sample' ? L1 : m === 'gene' ? L2 : 'Done'; }); $(overlay!, '#fs-z').textContent = `${zoom}×`; $(overlay!, '#fs-move').classList.toggle('primary', fsMove); scroll.style.touchAction = fsMove ? 'auto' : 'none';
       const list = st.mode === 'sample' ? P().samples : P().genes, cols = st.mode === 'sample' ? S_COL : G_COL;
       $(overlay!, '#fs-legend').innerHTML = st.mode === 'done' ? '' : list.map((l, i) => `<button class="chip ${cur() === i ? 'on' : ''}" data-l="${i}" style="min-height:34px;font-size:13px;gap:6px">${st.mode === 'sample' ? `<span style="width:12px;height:12px;border-radius:6px;background:${cols[i % cols.length]};border:1.5px solid var(--line);display:inline-block"></span>` : `<span style="width:12px;height:12px;border-radius:6px;border:3px solid ${cols[i % cols.length]};display:inline-block;box-sizing:border-box"></span>`}${esc(l)}</button>`).join('') + `<button class="chip ${cur() === -1 ? 'on' : ''}" data-l="-1" style="min-height:34px;font-size:13px">eraser</button>`;
