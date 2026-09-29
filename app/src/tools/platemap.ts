@@ -3,6 +3,7 @@ import { fmt, parseNum } from '../lib/fmt';
 import { showHandoff, qrSvg } from '../lib/handoff';
 import { $, $$, copyText, esc, html, toast, vibrate } from '../lib/dom';
 import { addLog } from '../lib/log';
+import { quantStudioSetup } from '../lib/quantstudio';
 
 interface Well { s?: number; g?: number; d?: boolean }
 type Fmt = 6 | 12 | 24 | 48 | 96 | 384;
@@ -57,6 +58,7 @@ export function renderPlateMap(main: HTMLElement) {
     </div>
     <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="share">Send to device</button><button class="btn" id="print">Print A4</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="printzoom">Print used wells, large</button></div>
+    <div class="actions" style="margin-top:8px" id="qsrow"><button class="btn orange" id="qs">Export for QuantStudio</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="copy">Copy map</button><button class="btn" id="log">Add to log</button><button class="btn" id="resetdone">Clear ticks</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn quiet" id="clear">Clear plate</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="newplate">+ New plate</button><button class="btn quiet" id="delplate">Delete plate</button></div>
@@ -77,6 +79,7 @@ export function renderPlateMap(main: HTMLElement) {
     const [L1, L2] = LAYERS[kindOf(p)];
     $$(main, '#mode button').forEach((b) => { const m = (b as HTMLElement).dataset.m; b.classList.toggle('on', m === st.mode); b.textContent = m === 'sample' ? L1 : m === 'gene' ? L2 : kindOf(p) === 'culture' ? 'Done' : 'Pipetted'; });
     $(main, '#addrow').hidden = st.mode === 'done';
+    $(main, '#qsrow').hidden = kindOf(p) !== 'qpcr';
     $<HTMLInputElement>(main, '#newlabel').placeholder = st.mode === 'sample' ? `new ${L1.toLowerCase()}` : `new ${L2.toLowerCase()}`;
     if (st.mode === 'done') { legend.innerHTML = `<span class="muted" style="font-size:14px;padding:6px 0">${kindOf(p) === 'culture' ? 'Tap or drag wells you have fed, treated or passaged. Tap again to untick.' : 'Tap or drag wells you have pipetted. Tap again to untick.'}</span>`; return; }
     const list = st.mode === 'sample' ? p.samples : p.genes, cols = st.mode === 'sample' ? S_COL : G_COL;
@@ -287,6 +290,16 @@ export function renderPlateMap(main: HTMLElement) {
     window.addEventListener('afterprint', () => paintGrid(), { once: true });
     window.print();
   };
+  $(main, '#qs').addEventListener('click', async () => {
+    const p = P(); const r = quantStudioSetup(p);
+    if (!r.wells) { toast('No wells with a gene yet'); return; }
+    const fname = `${p.name.replace(/[^\w .-]+/g, '_').trim() || 'plate'}_QuantStudio.txt`;
+    const file = new File([r.text], fname, { type: 'text/plain' });
+    // phones: offer the share sheet (email, Drive, WhatsApp…); otherwise save the file
+    if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: fname }); toast(`${r.wells} wells exported`); return; } catch (e) { if ((e as Error).name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = fname; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(r.skipped ? `${r.wells} wells saved · ${r.skipped} without a gene left out` : `${r.wells} wells saved`);
+  });
   $(main, '#print').addEventListener('click', () => doPrint(false));
   $(main, '#printzoom').addEventListener('click', () => doPrint(true));
 

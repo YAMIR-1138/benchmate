@@ -115,6 +115,7 @@ function toQpcr(st: State) {
   const recipeName = load<{ cdna?: { name?: string } }>('qpcrmix', {}).cdna?.name ?? '';
   const target0 = parseNum(recipeName.match(/([\d.]+)\s*ng\s*\/\s*[µu]l/i)?.[1] ?? '') ?? 10;
   const tube = num(st.vol) + num(st.mix) + num(st.rt);
+  const lastReps = load<number>('qpcr.reps', 2);
   const sheet = document.createElement('div'); sheet.className = 'sheet';
   sheet.innerHTML = `<div class="card" style="max-height:92vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">qPCR plate from ${samples.length} cDNA</b><button class="iconbtn" id="q-close" aria-label="close" style="font-size:20px">✕</button></div>
@@ -122,7 +123,7 @@ function toQpcr(st: State) {
     <div class="fields" style="padding-top:10px">
       <div class="field"><label for="q-genes">Genes</label><input id="q-genes" type="text" value="${esc(lastGenes.join(', '))}" style="flex:1 1 auto;min-width:0" /></div>
       <div class="field"><label>Plate</label><div class="seg-ctl" id="q-fmt" style="margin:0;flex:0 0 auto"><button data-f="384" class="on">384</button><button data-f="96">96</button></div></div>
-      <div class="field"><label>Replicates</label><div class="seg-ctl" id="q-reps" style="margin:0;flex:0 0 auto"><button data-r="1">1</button><button data-r="2" class="on">2</button><button data-r="3">3</button></div></div>
+      <div class="field"><label>Replicates</label><div class="seg-ctl" id="q-reps" style="margin:0;flex:0 0 auto">${[1, 2, 3].map((r) => `<button data-r="${r}" class="${r === lastReps ? 'on' : ''}">${r}</button>`).join('')}</div></div>
       <div class="field"><label for="q-ntc">No-template control per gene</label><input id="q-ntc" type="checkbox" checked style="width:24px;height:24px" /></div>
       <div class="field"><label for="q-target">cDNA for qPCR</label><input id="q-target" type="text" inputmode="decimal" value="${target0}" /><span class="unit" style="border:0;background:transparent;box-shadow:none">ng/µL</span></div>
     </div>
@@ -130,7 +131,7 @@ function toQpcr(st: State) {
     <div class="actions"><button class="btn primary" id="q-go">Create plate</button><button class="btn quiet" id="q-cancel">Cancel</button></div>
   </div>`;
   document.body.append(sheet);
-  let reps = 2, plateFmt: QFmt = 384;
+  let reps = lastReps, plateFmt: QFmt = 384;
   const read = () => { const genes = $<HTMLInputElement>(sheet, '#q-genes').value.split(/[,;\n]/).map((g) => g.trim()).filter(Boolean); const ntc = $<HTMLInputElement>(sheet, '#q-ntc').checked; const names = ntc ? [...samples, 'NTC'] : samples; const g = Math.max(1, genes.length); const fits = qpcrRows(names.length, g, reps, plateFmt) <= (plateFmt === 96 ? 8 : 16); return { genes, names, fmt: fits ? plateFmt : undefined, alt: fits ? undefined : pickFormat(names.length, g, reps), target: num($<HTMLInputElement>(sheet, '#q-target').value) }; };
   const paintQ = () => {
     const { genes, names, fmt, target } = read(); const d = cdnaDilution(num(st.ng), tube, target);
@@ -152,7 +153,7 @@ function toQpcr(st: State) {
     const plate = { id: Math.random().toString(36).slice(2, 8), name: `qPCR ${date}`, fmt: f as QFmt, kind: 'qpcr', samples: names, genes,
       note: `cDNA ${fmt2(num(st.ng))} ng / ${f2(tube)} µL${d && d.factor > 1 ? `, diluted 1:${fmt2(d.factor)} to ${fmt2(target)} ng/µL` : ''} · ${reps}× replicates`,
       wells: qpcrLayout(names.length, genes.length, reps, f as QFmt) };
-    pm.plates.push(plate); pm.active = plate.id; pm.mode = 'done'; save('platemap2', pm); close(); location.hash = '#/platemap';
+    save('qpcr.reps', reps); pm.plates.push(plate); pm.active = plate.id; pm.mode = 'done'; save('platemap2', pm); close(); location.hash = '#/platemap';
   });
   paintQ();
 }

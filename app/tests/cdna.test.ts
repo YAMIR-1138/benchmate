@@ -56,3 +56,27 @@ describe('qPCR plate from cDNA samples', () => {
     expect(cdnaDilution(1000, 20, 10)).toEqual({ conc: 50, factor: 5, water: 80 });
   });
 });
+
+import { quantStudioSetup } from '../src/lib/quantstudio';
+describe('QuantStudio plate setup export', () => {
+  const samples = [...Array.from({ length: 12 }, (_, i) => `S${i + 1}`), 'NTC'];
+  const plate = { name: 'qPCR 29 Sept', fmt: 384, samples, genes: ['hprt', 'f2rl1', 'cox2'], wells: qpcrLayout(13, 3, 3, 384) };
+  const { text, wells, skipped } = quantStudioSetup(plate);
+  const lines = text.split('\r\n');
+  const table = lines.slice(lines.indexOf('[Sample Setup]') + 1).filter(Boolean).map((l) => l.split('\t'));
+  it('has the software\'s header and 13 columns', () => {
+    expect(lines[0]).toBe('* Block Type = 384-Well Block');
+    expect(table[0]).toEqual(['Well', 'Well Position', 'Sample Name', 'Sample Color', 'Biogroup Name', 'Biogroup Color', 'Target Name', 'Target Color', 'Task', 'Reporter', 'Quencher', 'Quantity', 'Comments']);
+    expect(table.every((r) => r.length === 13)).toBe(true);
+  });
+  it('matches the lab run: 117 wells, NTC in column 13 with no sample name, wells numbered from A1 = 1', () => {
+    expect(wells).toBe(117); expect(skipped).toBe(0);
+    const byPos = Object.fromEntries(table.slice(1).map((r) => [r[1], r]));
+    expect(byPos.A1.slice(0, 3)).toEqual(['1', 'A1', 'S1']);
+    expect(byPos.A1[6]).toBe('hprt'); expect(byPos.A1[8]).toBe('UNKNOWN'); expect(byPos.A1[9]).toBe('SYBR');
+    expect(byPos.A13[2]).toBe(''); expect(byPos.A13[8]).toBe('NTC');
+    expect(byPos.D1[6]).toBe('f2rl1'); expect(byPos.I13).toBeDefined(); expect(byPos.J1).toBeUndefined();
+    expect(byPos.B1[0]).toBe('25');
+    expect(byPos.A1[3]).toMatch(/^"RGB\(\d+,\d+,\d+\)"$/);
+  });
+});
