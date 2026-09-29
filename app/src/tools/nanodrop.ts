@@ -59,6 +59,7 @@ export function renderNanodrop(main: HTMLElement) {
     </div>
     <div class="result" id="qc" hidden><div class="list" id="verdicts"></div><div class="actions"><button class="btn" id="log">Add to log</button></div></div>
     <div class="note">Expected for ${'<b id="exp"></b>'}: 260/280 <b id="exp280"></b>, 260/230 <b>1.8–2.2</b>, factor <b id="expf"></b> ng/µL per A260.</div>
+    <div class="note" style="margin-top:12px">Have the NanoDrop export? <a href="#/cdna">Import it in cDNA</a> for RNA and water volumes per sample.</div>
     <div class="note" style="margin-top:18px">Ratios are indicators, not a verdict. Quoted lines below are from Thermo Fisher's NanoDrop documents and NEB's technical note; each row links to its source.</div>
     <div id="guide"></div>
     <div class="section"><div class="cap">Sources</div><div class="list">${Object.values(SOURCES).map((x) => `<a class="item" href="${x.url}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;font-size:14px;min-height:44px"><span class="cite" style="margin:0 8px 0 0">${esc(x.tag)}</span><span class="grow">${esc(x.title)}</span></a>`).join('')}</div></div>

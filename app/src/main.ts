@@ -18,6 +18,7 @@ import { renderLuciferase } from './tools/luciferase';
 import { renderPlateMap } from './tools/platemap';
 import { renderBca } from './tools/bca';
 import { renderLog } from './tools/log';
+import { renderCdna } from './tools/cdna';
 import { timerEngine } from './tools/timerEngine';
 import logo from './assets/logo.png';
 import { renderImport } from './tools/importer';
@@ -36,10 +37,11 @@ export const TOOLS: Tool[] = [
   { id: 'spinzero', idx: '08', name: 'ΣpinZero', sub: 'balance the rotor', icon: 'rotor', render: renderSpinZero },
   { id: 'ladders', idx: '09', name: 'Ladders', sub: 'DNA · RNA · protein', icon: 'lanes', render: renderLadders },
   { id: 'nanodrop', idx: '10', name: 'NanoDrop', sub: 'ratios and concentration', icon: 'drop2', render: renderNanodrop },
-  { id: 'bca', idx: '11', name: 'BCA', sub: 'standard curve → µg/µL', icon: 'curve', render: renderBca },
-  { id: 'luciferase', idx: '12', name: 'Luciferase', sub: 'firefly / Renilla, fold', icon: 'flame', render: renderLuciferase },
-  { id: 'protocols', idx: '13', name: 'Protocols', sub: 'interactive worksheets, print, hand-off', icon: 'list', render: renderProtocols },
-  { id: 'log', idx: '14', name: 'Log', sub: 'the day at the bench, export', icon: 'book', render: renderLog },
+  { id: 'cdna', idx: '11', name: 'cDNA', sub: 'NanoDrop CSV → RNA, water, RT mix', icon: 'rt', render: renderCdna },
+  { id: 'bca', idx: '12', name: 'BCA', sub: 'standard curve → µg/µL', icon: 'curve', render: renderBca },
+  { id: 'luciferase', idx: '13', name: 'Luciferase', sub: 'firefly / Renilla, fold', icon: 'flame', render: renderLuciferase },
+  { id: 'log', idx: '14', name: 'Log', sub: 'experiments, export', icon: 'book', render: renderLog },
+  { id: 'protocols', idx: '15', name: 'Protocols', sub: 'interactive worksheets, print, hand-off', icon: 'list', render: renderProtocols },
 ];
 
 // ---- theme ----

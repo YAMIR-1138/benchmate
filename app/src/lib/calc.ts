@@ -169,3 +169,18 @@ export function curveInvert(f: Fit, y: number): number | undefined {
   return (rising.length ? rising : cands).sort((p, q) => p - q)[0];
 }
 export const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : NaN);
+
+// ---- cDNA synthesis: RNA to a fixed volume, then a master mix of reaction mix + RT per tube ----
+export const round2 = (x: number) => Math.round((x + Number.EPSILON) * 100) / 100;
+export interface CdnaSample { rna: number; water: number; fits: boolean; maxNg: number }
+/** RNA volume for `ng` at `conc` ng/µL, water to bring it to `vol` µL. Both rounded to 0.01 µL so they add up exactly. */
+export function cdnaSample(conc: number, ng: number, vol: number): CdnaSample | undefined {
+  if (!(conc > 0) || !(ng > 0) || !(vol > 0)) return undefined;
+  const rna = round2(ng / conc), fits = rna <= vol;
+  return { rna, water: fits ? round2(vol - rna) : 0, fits, maxNg: conc * vol };
+}
+/** Master mix for `n` tubes: reactions = n plus `extraPct` %, rounded up to whole reactions, unless overridden. */
+export function rtMaster(n: number, extraPct: number, mixUl: number, rtUl: number, override?: number) {
+  const rx = override && override > 0 ? override : Math.ceil(n * (1 + (extraPct || 0) / 100) - 1e-9);
+  return { rx, mix: round2(rx * mixUl), rt: round2(rx * rtUl), total: round2(rx * (mixUl + rtUl)) };
+}
