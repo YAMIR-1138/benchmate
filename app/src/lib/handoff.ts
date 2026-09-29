@@ -2,7 +2,7 @@
 import qrcode from 'qrcode-generator';
 import { $, el, esc, copyText, toast } from './dom';
 
-export type Payload = { t: 'plate'; v: 1; plate: unknown } | { t: 'run'; v: 1; id: string; run: unknown };
+export type Payload = { t: 'plate'; v: 1; plate: unknown } | { t: 'run'; v: 1; id: string; run: unknown } | { t: 'cdna'; v: 1; cdna: unknown };
 
 const b64u = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64u = (s: string) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(s.length / 4) * 4, '=')), (c) => c.charCodeAt(0));
@@ -25,7 +25,7 @@ export async function decode(s: string): Promise<Payload> {
   const kind = s[0], body = unb64u(s.slice(1));
   const raw = kind === 'z' ? await inflate(body) : body;
   const p = JSON.parse(new TextDecoder().decode(raw));
-  if (!p || (p.t !== 'plate' && p.t !== 'run')) throw new Error('Not a Bench Mate hand-off.');
+  if (!p || (p.t !== 'plate' && p.t !== 'run' && p.t !== 'cdna')) throw new Error('Not a Bench Mate hand-off.');
   return p as Payload;
 }
 

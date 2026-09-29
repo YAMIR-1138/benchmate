@@ -17,6 +17,13 @@ export function renderImport(main: HTMLElement, code: string) {
         const copy = { ...plate, id: Math.random().toString(36).slice(2, 8) };
         st.plates.push(copy); st.active = copy.id; save('platemap2', st); location.hash = '#/platemap';
       });
+    } else if (p.t === 'cdna') {
+      const c = p.cdna as { ng?: string; rows?: { name: string }[] };
+      const existing = load<{ rows?: unknown[] } | null>('cdna', null);
+      box.innerHTML = `<b style="font-size:17px">cDNA sheet</b><div style="margin-top:6px">${c.rows?.length ?? 0} samples · ${esc(c.ng ?? '')} ng each${c.rows?.length ? ` · ${c.rows.slice(0, 6).map((r) => esc(r.name)).join(', ')}${c.rows.length > 6 ? ' …' : ''}` : ''}</div>
+        ${existing?.rows?.length ? `<div style="margin-top:6px;color:var(--orange)">This replaces the cDNA sheet on this device.</div>` : ''}
+        <div class="actions"><button class="btn primary" id="go">${existing?.rows?.length ? 'Replace' : 'Import'}</button><a class="btn" href="#/">Cancel</a></div>`;
+      $(box, '#go').addEventListener('click', () => { save('cdna', p.cdna); location.hash = '#/cdna'; });
     } else {
       const run = p.run as { format?: string; conditions?: { name: string }[] };
       const existing = load<Record<string, unknown> | null>(`protocol.${p.id}`, null);

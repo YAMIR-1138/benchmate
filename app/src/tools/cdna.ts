@@ -3,6 +3,7 @@ import { parseNanodropCsv } from '../lib/nanodropCsv';
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { addLogWithNote } from '../lib/log';
+import { qrSvg, showHandoff } from '../lib/handoff';
 import { $, $$, copyText, esc, html, toast, vibrate } from '../lib/dom';
 
 interface Row { name: string; conc: string; r280?: number; r230?: number; on: boolean; w?: boolean; r?: boolean }
@@ -35,7 +36,7 @@ export function renderCdna(main: HTMLElement) {
     <div id="cd-warn"></div>
     <div class="result" id="cd-master" hidden></div>
     <div class="actions" id="cd-acts" hidden><button class="btn primary" id="cd-print">Print A4</button><button class="btn" id="cd-copy">Copy table</button><button class="btn" id="cd-log">Add to log</button></div>
-    <div class="actions" id="cd-acts2" hidden style="margin-top:8px"><button class="btn quiet" id="cd-clear">Clear samples</button></div>
+    <div class="actions" id="cd-acts2" hidden style="margin-top:8px"><button class="btn" id="cd-send">Send to device</button><button class="btn quiet" id="cd-clear">Clear samples</button></div>
     <div class="print print-only cdsheet" id="cd-sheet"></div>
   `);
   const persist = () => save('cdna', st);
@@ -83,7 +84,7 @@ export function renderCdna(main: HTMLElement) {
       <table class="ptab"><tr><th>#</th><th>sample</th><th class="r">ng/µL</th><th class="r">water µL</th><th></th><th class="r">RNA µL</th><th></th></tr>
       ${on.map((x, k) => { const p = x.p as CdnaSample; return `<tr><td class="r">${k + 1}</td><td>${esc(x.r.name)}</td><td class="r">${esc(x.r.conc)}</td>${p.fits ? `<td class="r b">${f2(p.water)}</td><td>${box(!!x.r.w)}</td><td class="r b">${f2(p.rna)}</td><td>${box(!!x.r.r)}</td>` : `<td colspan="4" class="r">too dilute (max ${Math.floor(p.maxNg)} ng)</td>`}</tr>`; }).join('')}</table>
       ${on.length ? `<div class="pmix"><b>Master mix × ${m.rx}</b> (${on.length} samples + ${fmt(n(st.extra))} %)<div class="pmrow"><span>Reaction mix</span><span>${f2(mix)} × ${m.rx}</span><b>${f2(m.mix)} µL</b>${box(false)}</div><div class="pmrow"><span>Reverse transcriptase</span><span>${f2(rt)} × ${m.rx}</span><b>${f2(m.rt)} µL</b>${box(false)}</div><div style="margin-top:4px">Add ${f2(mix + rt)} µL to each tube.</div></div>` : ''}
-      <div class="pfoot">TGGR Bench Mate · cDNA</div>`;
+      <div class="pfoot"><span>TGGR Bench Mate · cDNA</span><span class="pqrwrap"><span class="pqr" id="cd-qr"></span><span>scan to open this sheet in the app</span></span></div>`;
     summary = `cDNA · ${fmt(ng)} ng RNA per sample in ${f2(vol)} µL + ${f2(mix)} µL mix + ${f2(rt)} µL RT\nSample\tng/µL\tRNA µL\twater µL\n${lines.join('\n')}${on.length ? `\nMaster mix ×${m.rx}: reaction mix ${f2(m.mix)} µL, RT ${f2(m.rt)} µL` : ''}`;
   }
   const addRows = (list: { name: string; conc: number; r280?: number; r230?: number }[]) => { if (!list.length) { toast('No samples found'); return; } st.rows.push(...list.map((s) => ({ name: s.name, conc: String(s.conc), r280: s.r280, r230: s.r230, on: true }))); persist(); paint(); toast(`${list.length} samples added`); };
@@ -92,7 +93,8 @@ export function renderCdna(main: HTMLElement) {
   $(main, '#cd-paste').addEventListener('click', () => { const b = $(main, '#cd-pastebox'); b.hidden = !b.hidden; });
   $(main, '#cd-paste-go').addEventListener('click', () => { const t = $<HTMLTextAreaElement>(main, '#cd-pastetxt'); addRows(parseNanodropCsv(t.value)); t.value = ''; $(main, '#cd-pastebox').hidden = true; });
   $(main, '#cd-add').addEventListener('click', () => { st.rows.push({ name: `S${st.rows.length + 1}`, conc: '', on: true }); persist(); paint(); });
-  $(main, '#cd-print').addEventListener('click', () => window.print());
+  $(main, '#cd-print').addEventListener('click', async () => { const q = main.querySelector('#cd-qr'); if (q) q.innerHTML = await qrSvg({ t: 'cdna', v: 1, cdna: st }); window.print(); });
+  $(main, '#cd-send').addEventListener('click', () => showHandoff('Send cDNA sheet', { t: 'cdna', v: 1, cdna: st }));
   $(main, '#cd-copy').addEventListener('click', async () => { if (await copyText(summary)) toast('Copied'); });
   $(main, '#cd-log').addEventListener('click', () => addLogWithNote('cdna', 'cDNA synthesis', summary));
   $(main, '#cd-clear').addEventListener('click', () => { if (confirm('Clear all samples?')) { st.rows = []; st.rx = ''; persist(); paint(); } });
