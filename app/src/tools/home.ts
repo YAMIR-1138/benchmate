@@ -10,7 +10,7 @@ export function renderHome(app: HTMLElement, main: HTMLElement) {
   brand.innerHTML = `
     <img src="${logo}" alt="TGGR Lab" />
     <div style="flex:1 1 auto"><div class="lab">TGGR</div><div class="word">Bench <b>Mate</b></div></div>
-    <button class="iconbtn themebtn" aria-label="Toggle light/dark"></button>`;
+    <a class="iconbtn" href="#/scan" aria-label="Scan a QR code" title="Scan a QR code" style="margin-right:8px">${icons.qr}</a><button class="iconbtn themebtn" aria-label="Toggle light/dark"></button>`;
   const tb = brand.querySelector<HTMLButtonElement>('.themebtn')!;
   const dark = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
   tb.innerHTML = dark ? icons.sun : icons.moon;

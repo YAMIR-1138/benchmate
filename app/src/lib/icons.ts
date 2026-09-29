@@ -16,6 +16,7 @@ export const icons = {
   back: w('<path d="M15 5 l-7 7 7 7"/>'),
   sun: w('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
   rt: w('<path d="M8 3h8"/><path d="M9 3v13a3 3 0 0 0 6 0V3"/><path d="M9 10h6"/><path d="M4 20c2-2 4 2 6 0s4 2 6 0 4 2 4 0"/>'),
+  qr: w('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v0M14 21h3M21 18v3M17 21h0"/>'),
   book: w('<path d="M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/>'),
   moon: w('<path d="M20 14.5 A8 8 0 1 1 9.5 4 a6.5 6.5 0 0 0 10.5 10.5 Z"/>'),
 };

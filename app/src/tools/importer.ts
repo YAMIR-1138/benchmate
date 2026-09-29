@@ -6,7 +6,7 @@ import { $, esc, html } from '../lib/dom';
 export function renderImport(main: HTMLElement, code: string) {
   main.append(html`<div class="note" id="box" style="margin-top:16px">Reading…</div>`);
   const box = $(main, '#box');
-  if (!code) { box.textContent = 'Nothing to import. Open a link or scan a QR code made by Bench Mate on another device.'; return; }
+  if (!code) { box.innerHTML = 'Nothing to import. <a href="#/scan">Scan a Bench Mate QR code</a> or open a link.'; return; }
   decode(code).then((p) => {
     if (p.t === 'plate') {
       const plate = p.plate as { name: string; fmt: number; wells: Record<string, unknown>; note?: string };
