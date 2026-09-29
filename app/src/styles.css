@@ -390,3 +390,40 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 .wcode { display: inline-block; min-width: 1.4em; padding: 0 4px; font-family: var(--mono); font-weight: 700; font-size: 12px; line-height: 1.5; text-align: center; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); color: var(--text); margin-right: 6px; }
 .chip .wcode { margin-right: 2px; }
 @media print { .wcode { border-color: #111; color: #111; background: #fff; } }
+
+/* ---- cDNA: tap-to-tick volumes and the A4 sheet ---- */
+.cdlist { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.cdrow { border: var(--bw) solid var(--line-soft); border-radius: var(--radius); padding: 8px; background: var(--panel); }
+.cdtop { display: flex; align-items: center; gap: 8px; }
+.cdtop input[type=checkbox] { width: 22px; height: 22px; flex: 0 0 auto; }
+.cdtop .cdname { flex: 1 1 auto; min-width: 0; min-height: 38px; padding: 0 8px; font-weight: 700; }
+.cdtop .cdconc { flex: 0 0 84px; width: 84px; min-height: 38px; padding: 0 6px; font-family: var(--mono); font-size: 14px; text-align: right; }
+.cddot { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 6px; border: 1.5px solid var(--line); }
+.cdbot { display: flex; gap: 8px; margin-top: 8px; }
+.cdbot .cdtick { flex: 1 1 0; justify-content: space-between; }
+.cdtick .lb { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--muted); }
+.cdtick .u { font-size: 12px; opacity: 0.7; margin-left: -4px; }
+.cdtick.on .lb { color: var(--key-ink); }
+.cdtick { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 10px; border: 1.5px solid var(--line-soft); border-radius: 10px; background: transparent; color: var(--c); font-family: var(--mono); font-size: 17px; cursor: pointer; }
+.cdtick .bx { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border: 2px solid var(--line); border-radius: 4px; color: var(--key-ink); }
+.cdtick.on { background: var(--teal); border-color: var(--line); color: var(--key-ink); }
+.cdtick.on .bx { background: var(--panel); color: var(--teal); }
+.cdtick.on .v { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+@media print {
+  .cdsheet { font-family: var(--body); color: #111; font-size: 12pt; }
+  .cdsheet .phead { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #111; padding-bottom: 4px; }
+  .cdsheet .phead b { font-family: var(--display); font-size: 20pt; }
+  .cdsheet .phead span { font-family: var(--mono); font-size: 10pt; color: #555; }
+  .cdsheet .pset { margin: 3mm 0 4mm; font-size: 11pt; }
+  .cdsheet .ptab { width: 100%; border-collapse: collapse; }
+  .cdsheet .ptab th { font-family: var(--mono); font-size: 9pt; font-weight: 400; text-align: left; color: #555; border-bottom: 1px solid #111; padding: 2px 4px; }
+  .cdsheet .ptab td { border-bottom: 1px solid #ccc; padding: 2.2mm 4px; font-size: 12.5pt; }
+  .cdsheet .r { text-align: right; } .cdsheet .b { font-family: var(--mono); font-weight: 700; font-size: 14pt !important; }
+  .cdsheet .pbox { display: inline-flex; align-items: center; justify-content: center; width: 5mm; height: 5mm; border: 1.5px solid #111; border-radius: 1mm; vertical-align: middle; }
+  .cdsheet .pbox svg { width: 4mm; height: 4mm; }
+  .cdsheet .pmix { margin-top: 6mm; padding: 3mm 4mm; border: 1.5px solid #111; border-radius: 2mm; break-inside: avoid; }
+  .cdsheet .pmrow { display: grid; grid-template-columns: 1fr auto 28mm 7mm; gap: 3mm; align-items: center; margin-top: 2mm; font-size: 12.5pt; }
+  .cdsheet .pmrow span:nth-child(2) { font-family: var(--mono); color: #555; }
+  .cdsheet .pmrow b { font-family: var(--mono); font-size: 14pt; text-align: right; }
+  .cdsheet .pfoot { margin-top: 6mm; font-family: var(--mono); font-size: 8pt; color: #777; }
+}
