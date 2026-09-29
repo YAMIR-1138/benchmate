@@ -22,7 +22,6 @@ import { renderCdna } from './tools/cdna';
 import { timerEngine } from './tools/timerEngine';
 import logo from './assets/logo.png';
 import { renderImport } from './tools/importer';
-import { renderScan } from './tools/scan';
 import { setupUpdates } from './update';
 
 export interface Tool { id: string; idx: string; name: string; sub: string; icon: keyof typeof icons; render: (main: HTMLElement) => void; soon?: boolean }
@@ -84,7 +83,7 @@ function paintRail(active: string) {
   const dark = isDark();
   rail.innerHTML = `<a class="rbrand" href="#/"><img src="${logo}" alt="" /><span><span class="rlab">TGGR</span><span class="rword">Bench <b>Mate</b></span></span></a>
     <nav>${TOOLS.map((t) => `<a class="navk ${t.id === active ? 'on' : ''}" href="#/${t.id}">${icons[t.icon]}<span>${t.name}</span><span class="idx">${t.idx}</span></a>`).join('')}</nav>
-    <div class="rfoot"><a class="iconbtn" href="#/scan" aria-label="Scan a QR code" title="Scan a QR code">${icons.qr}</a><button class="iconbtn themebtn" aria-label="Toggle light/dark">${dark ? icons.sun : icons.moon}</button><span class="mono" title="build ${__BUILD__}">model BM-1 · v${__APP_VERSION__} · ${__BUILD__.slice(5, 10)}</span></div>`;
+    <div class="rfoot"><button class="iconbtn themebtn" aria-label="Toggle light/dark">${dark ? icons.sun : icons.moon}</button><span class="mono" title="build ${__BUILD__}">model BM-1 · v${__APP_VERSION__} · ${__BUILD__.slice(5, 10)}</span></div>`;
   rail.querySelector<HTMLButtonElement>('.themebtn')!.onclick = toggleTheme;
 }
 
@@ -116,9 +115,6 @@ function route() {
   if (id === 'import') {
     content.append(header('Import', undefined), el('div', { class: 'stripe' }));
     renderImport(main, rest.join('/'));
-  } else if (id === 'scan') {
-    content.append(header('Scan', undefined), el('div', { class: 'stripe' }), main);
-    renderScan(main); cleanup = (main as any).__cleanup;
   } else if (!tool) {
     renderHome(content, main);
   } else {
