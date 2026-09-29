@@ -90,7 +90,7 @@ export function renderPlateMap(main: HTMLElement) {
     for (let c = c0; c <= c1; c++) { const ws = Array.from({ length: r1 - r0 + 1 }, (_, i) => p.wells[wid(r0 + i, c)]).filter(Boolean) as Well[]; const s1 = uniq(ws.map((w) => w.s)), g = uniq(ws.map((w) => w.g)); colL[c] = s1 !== undefined ? p.samples[s1] ?? '' : g !== undefined ? p.genes[g] ?? '' : ''; }
     return { rowL, colL };
   }
-  function gridHtml(cell: number, gap: number, fs: number, o: { r0?: number; r1?: number; c0?: number; c1?: number; labels?: boolean } = {}) {
+  function gridHtml(cell: number, gap: number, fs: number, o: { r0?: number; r1?: number; c0?: number; c1?: number; labels?: boolean; mono?: boolean } = {}) {
     const p = P(), full = dims(p.fmt);
     const r0 = o.r0 ?? 0, r1 = o.r1 ?? full.rows - 1, c0 = o.c0 ?? 0, c1 = o.c1 ?? full.cols - 1, rows = full.rows, cols = full.cols;
     const L = o.labels ? headerLabels(p, r0, r1, c0, c1) : { rowL: [] as string[], colL: [] as string[] };
@@ -103,14 +103,15 @@ export function renderPlateMap(main: HTMLElement) {
       h += `<div class="hd" data-row="${r}" style="font-family:var(--mono);font-size:${fs}px;line-height:${cell}px;cursor:pointer;opacity:0.8;display:flex;justify-content:${L.rowL[r] ? 'space-between' : 'center'};gap:4px;white-space:nowrap;overflow:hidden">${L.rowL[r] ? `<span class="hdl">${esc(L.rowL[r])}</span>` : ''}<span>${rn(r)}</span></div>`;
       for (let c = c0; c <= c1; c++) {
         const w = p.wells[wid(r, c)] ?? {}; const hasS = w.s !== undefined, hasG = w.g !== undefined; if (hasS || hasG) used++; if (w.d) done++;
-        const fill = hasS ? S_COL[(w.s as number) % S_COL.length] : 'transparent';
-        const ring = hasG ? G_COL[(w.g as number) % G_COL.length] : hasS ? 'var(--line)' : 'currentColor';
-        const bw = hasG ? (p.fmt === 96 ? 4 : 3) : 2;
+        // print is monochrome: black outline, white and light grey alternating from one sample to the next
+        const fill = o.mono ? (hasS ? ((w.s as number) % 2 ? '#d9d9d9' : '#fff') : '#fff') : hasS ? S_COL[(w.s as number) % S_COL.length] : 'transparent';
+        const ring = o.mono ? (hasS || hasG ? '#111' : '#bbb') : hasG ? G_COL[(w.g as number) % G_COL.length] : hasS ? 'var(--line)' : 'currentColor';
+        const bw = o.mono ? (hasS || hasG ? 1.5 : 1) : hasG ? (p.fmt === 96 ? 4 : 3) : 2;
         const big = cell >= 36;
-        const code = !big && cell >= 18 && (hasS || hasG) ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:${cell >= 30 ? 11 : cell >= 24 ? 10 : 8}px;letter-spacing:-0.02em;line-height:1;color:${hasS ? 'var(--key-ink)' : 'currentColor'}">${hasS ? sCode(w.s as number) : ''}${hasG ? gCode(w.g as number) : ''}</div>` : '';
-        const label = big && (hasS || hasG) ? `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;overflow:hidden;text-align:center;line-height:1.1;color:${hasS ? 'var(--key-ink)' : 'currentColor'}"><span style="font-family:var(--mono);font-weight:700;font-size:${cell >= 50 ? 11 : 9}px;opacity:0.9">${hasS ? sCode(w.s as number) : ''}${hasG ? gCode(w.g as number) : ''}</span>${hasS && cell >= 50 ? `<span style="font-weight:700;font-size:${cell >= 70 ? 13 : 11}px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.samples[w.s as number] ?? '')}</span>` : ''}${hasG && cell >= 50 ? `<span style="font-size:${cell >= 70 ? 11 : 9}px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0.85">${esc(p.genes[w.g as number] ?? '')}</span>` : ''}</div>` : '';
-        const tick = w.d ? (big ? `<svg viewBox="0 0 24 24" style="position:absolute;right:2px;top:2px;width:${Math.max(14, cell / 4)}px;height:${Math.max(14, cell / 4)}px;stroke:${hasS ? 'var(--key-ink)' : 'currentColor'};fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round"><path d="M5 13l4 4L19 7"/></svg>` : (cell >= 18 ? `<svg viewBox="0 0 24 24" style="position:absolute;right:-3px;top:-4px;width:${Math.round(cell * 0.5)}px;height:${Math.round(cell * 0.5)}px;stroke:${hasS ? 'var(--key-ink)' : 'currentColor'};fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round"><path d="M5 13l4 4L19 7"/></svg>` : `<svg viewBox="0 0 24 24" style="position:absolute;inset:-1px;stroke:${hasS ? 'var(--key-ink)' : 'currentColor'};fill:none;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round"><path d="M5 13l4 4L19 7"/></svg>`)) : '';
-        h += `<div class="w" data-r="${r}" data-c="${c}" style="width:${cell}px;height:${cell}px;border-radius:50%;border:${bw}px solid ${ring};background:${fill};opacity:${hasS || hasG ? 1 : 0.35};position:relative;box-sizing:border-box">${label}${code}${tick}</div>`;
+        const code = !big && cell >= 18 && (hasS || hasG) ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:${cell >= 30 ? 11 : cell >= 24 ? 10 : 8}px;letter-spacing:-0.02em;line-height:1;color:${o.mono ? '#111' : hasS ? 'var(--key-ink)' : 'currentColor'}">${hasS ? sCode(w.s as number) : ''}${hasG ? gCode(w.g as number) : ''}</div>` : '';
+        const label = big && (hasS || hasG) ? `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;overflow:hidden;text-align:center;line-height:1.1;color:${o.mono ? '#111' : hasS ? 'var(--key-ink)' : 'currentColor'}"><span style="font-family:var(--mono);font-weight:700;font-size:${cell >= 50 ? 11 : 9}px;opacity:0.9">${hasS ? sCode(w.s as number) : ''}${hasG ? gCode(w.g as number) : ''}</span>${hasS && cell >= 50 ? `<span style="font-weight:700;font-size:${cell >= 70 ? 13 : 11}px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.samples[w.s as number] ?? '')}</span>` : ''}${hasG && cell >= 50 ? `<span style="font-size:${cell >= 70 ? 11 : 9}px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0.85">${esc(p.genes[w.g as number] ?? '')}</span>` : ''}</div>` : '';
+        const tick = w.d ? (big ? `<svg viewBox="0 0 24 24" style="position:absolute;right:2px;top:2px;width:${Math.max(14, cell / 4)}px;height:${Math.max(14, cell / 4)}px;stroke:${o.mono ? '#111' : hasS ? 'var(--key-ink)' : 'currentColor'};fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round"><path d="M5 13l4 4L19 7"/></svg>` : (cell >= 18 ? `<svg viewBox="0 0 24 24" style="position:absolute;right:-3px;top:-4px;width:${Math.round(cell * 0.5)}px;height:${Math.round(cell * 0.5)}px;stroke:${o.mono ? '#111' : hasS ? 'var(--key-ink)' : 'currentColor'};fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round"><path d="M5 13l4 4L19 7"/></svg>` : `<svg viewBox="0 0 24 24" style="position:absolute;inset:-1px;stroke:${o.mono ? '#111' : hasS ? 'var(--key-ink)' : 'currentColor'};fill:none;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round"><path d="M5 13l4 4L19 7"/></svg>`)) : '';
+        h += `<div class="w" data-r="${r}" data-c="${c}" style="width:${cell}px;height:${cell}px;border-radius:50%;border:${bw}px solid ${ring};background:${fill};opacity:${o.mono || hasS || hasG ? 1 : 0.35};position:relative;box-sizing:border-box">${label}${code}${tick}</div>`;
       }
     }
     return { html: h + '</div>', done, used, rows, cols };
@@ -126,8 +127,8 @@ export function renderPlateMap(main: HTMLElement) {
     $(main, '#print-title').textContent = `${p.name} · ${p.fmt}-well${p.note ? ` · ${p.note}` : ''}`;
     const usedS = new Set<number>(), usedG = new Set<number>();
     for (const w of Object.values(p.wells)) { if (w.s !== undefined) usedS.add(w.s); if (w.g !== undefined) usedG.add(w.g); }
-    $(main, '#keys').innerHTML = [...usedS].sort((a, b) => a - b).map((i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0"><span style="width:12px;height:12px;border-radius:6px;background:${S_COL[i % S_COL.length]};border:1.5px solid var(--line)"></span>${codeBadge(sCode(i))}${esc(p.samples[i] ?? '?')}</span>`).join('')
-      + [...usedG].sort((a, b) => a - b).map((i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0"><span style="width:12px;height:12px;border-radius:6px;border:3px solid ${G_COL[i % G_COL.length]};box-sizing:border-box"></span>${codeBadge(gCode(i))}${esc(p.genes[i] ?? '?')}</span>`).join('');
+    $(main, '#keys').innerHTML = [...usedS].sort((a, b) => a - b).map((i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0"><span class="sw" style="width:12px;height:12px;border-radius:6px;background:${S_COL[i % S_COL.length]};border:1.5px solid var(--line)"></span>${codeBadge(sCode(i))}${esc(p.samples[i] ?? '?')}</span>`).join('')
+      + [...usedG].sort((a, b) => a - b).map((i) => `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0"><span class="sw" style="width:12px;height:12px;border-radius:6px;border:3px solid ${G_COL[i % G_COL.length]};box-sizing:border-box"></span>${codeBadge(gCode(i))}${esc(p.genes[i] ?? '?')}</span>`).join('');
     paintMix();
   }
   // ---- master mix per gene ----
@@ -274,15 +275,17 @@ export function renderPlateMap(main: HTMLElement) {
       const nC = c1 - c0 + 1, nR = r1 - r0 + 1, gap = 4;
       const rowL = headerLabels(p, r0, r1, c0, c1).rowL.filter(Boolean); const hdr = rowL.length ? Math.min(130, HDR + 8 + Math.max(...rowL.map((x) => x.length)) * 6.6) : HDR;
       const cell = Math.max(18, Math.min(100, Math.floor((700 - hdr - nC * gap) / nC), Math.floor((720 - nR * gap) / nR)));
-      gridbox.innerHTML = gridHtml(cell, gap, cell >= 36 ? 12 : 11, { r0, r1, c0, c1, labels: true }).html;
+      gridbox.innerHTML = gridHtml(cell, gap, cell >= 36 ? 12 : 11, { r0, r1, c0, c1, labels: true, mono: true }).html;
       title.textContent = `${baseTitle} · wells ${rn(r0)}${c0 + 1}–${rn(r1)}${c1 + 1}`;
     } else {
       const { rows: R, cols: C } = dims(p.fmt); const rowL = headerLabels(p, 0, R - 1, 0, C - 1).rowL.filter(Boolean);
       const hdr = rowL.length ? Math.min(130, HDR + 8 + Math.max(...rowL.map((x) => x.length)) * 6.6) : HDR;
       const cc = Math.max(10, Math.min(100, Math.floor((700 - hdr - C * GAP[p.fmt]) / C)));
-      gridbox.innerHTML = gridHtml(cc, GAP[p.fmt], cc >= 36 ? 12 : cc >= 20 ? 11 : 8, { labels: true }).html; title.textContent = baseTitle;
+      gridbox.innerHTML = gridHtml(cc, GAP[p.fmt], cc >= 36 ? 12 : cc >= 20 ? 11 : 8, { labels: true, mono: true }).html; title.textContent = baseTitle;
     }
-    window.print(); setTimeout(paintGrid, 500);
+    // restore the screen grid only once printing is over (a timer can fire while a phone's print dialog is still capturing)
+    window.addEventListener('afterprint', () => paintGrid(), { once: true });
+    window.print();
   };
   $(main, '#print').addEventListener('click', () => doPrint(false));
   $(main, '#printzoom').addEventListener('click', () => doPrint(true));

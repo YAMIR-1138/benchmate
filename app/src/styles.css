@@ -432,3 +432,14 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 /* ---- plate header labels (print) ---- */
 .hdl { font-family: var(--body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .hdl-c { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 90px; line-height: 1.1; margin-bottom: 3px; white-space: nowrap; }
+
+/* ---- plate print is monochrome ---- */
+@media print {
+  #printblock .sw { display: none !important; }
+  #printblock .wcode, #mix .wcode { border-color: #111; color: #111; background: #fff; }
+  #printblock .hdl, #printblock .hd { color: #111 !important; }
+  #mix, #mix td, #mix th { color: #111 !important; }
+  #mix .rxn { border: 0; background: none; box-shadow: none; padding: 0; width: auto; color: #111; font-weight: 700; }
+  #mix .rxn::placeholder { color: #111; opacity: 1; }
+  #mix .muted { color: #444 !important; }
+}
