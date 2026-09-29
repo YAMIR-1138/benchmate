@@ -428,3 +428,7 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
   .cdsheet .pfoot { margin-top: 6mm; font-family: var(--mono); font-size: 8pt; color: #777; display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm; break-inside: avoid; }
   .cdsheet .pqrwrap { display: flex; flex-direction: column; align-items: flex-end; gap: 1mm; }
 }
+
+/* ---- plate header labels (print) ---- */
+.hdl { font-family: var(--body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.hdl-c { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 90px; line-height: 1.1; margin-bottom: 3px; white-space: nowrap; }

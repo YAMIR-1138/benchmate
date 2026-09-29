@@ -56,6 +56,7 @@ export function renderPlateMap(main: HTMLElement) {
     <div id="mix" style="margin-top:12px"></div>
     </div>
     <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="share">Send to device</button><button class="btn" id="print">Print A4</button></div>
+    <div class="actions" style="margin-top:8px"><button class="btn" id="printzoom">Print used wells, large</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="copy">Copy map</button><button class="btn" id="log">Add to log</button><button class="btn" id="resetdone">Clear ticks</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn quiet" id="clear">Clear plate</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="newplate">+ New plate</button><button class="btn quiet" id="delplate">Delete plate</button></div>
@@ -81,14 +82,26 @@ export function renderPlateMap(main: HTMLElement) {
     const list = st.mode === 'sample' ? p.samples : p.genes, cols = st.mode === 'sample' ? S_COL : G_COL;
     legend.innerHTML = list.map((l, i) => `<button class="chip ${cur() === i ? 'on' : ''}" data-l="${i}" style="gap:8px">${st.mode === 'sample' ? `<span style="width:16px;height:16px;border-radius:8px;background:${cols[i % cols.length]};border:1.5px solid var(--line);display:inline-block"></span>` : `<span style="width:16px;height:16px;border-radius:8px;border:4px solid ${cols[i % cols.length]};display:inline-block;box-sizing:border-box"></span>`}${codeBadge(st.mode === 'sample' ? sCode(i) : gCode(i))}${esc(l)}</button>`).join('') + `<button class="chip ${cur() === -1 ? 'on' : ''}" data-l="-1">eraser</button>`;
   }
-  function gridHtml(cell: number, gap: number, fs: number) {
-    const p = P(), { rows, cols } = dims(p.fmt);
-    let h = `<div style="display:grid;grid-template-columns:${HDR}px repeat(${cols}, ${cell}px);gap:${gap}px;width:max-content;margin:0 auto">`;
-    h += `<div></div>` + Array.from({ length: cols }, (_, c) => `<div class="hd" data-col="${c}" style="text-align:center;font-family:var(--mono);font-size:${fs}px;line-height:${cell}px;cursor:pointer;opacity:0.8">${c + 1}</div>`).join('');
+  /** Rows/columns that hold a single gene or sample get that name in the header (print only). */
+  function headerLabels(p: Plate, r0: number, r1: number, c0: number, c1: number) {
+    const rowL: string[] = [], colL: string[] = [];
+    const uniq = (xs: (number | undefined)[]) => { const u = [...new Set(xs.filter((x): x is number => x !== undefined))]; return u.length === 1 ? u[0] : undefined; };
+    for (let r = r0; r <= r1; r++) { const ws = Array.from({ length: c1 - c0 + 1 }, (_, i) => p.wells[wid(r, c0 + i)]).filter(Boolean) as Well[]; const g = uniq(ws.map((w) => w.g)), s1 = uniq(ws.map((w) => w.s)); rowL[r] = g !== undefined ? p.genes[g] ?? '' : s1 !== undefined ? p.samples[s1] ?? '' : ''; }
+    for (let c = c0; c <= c1; c++) { const ws = Array.from({ length: r1 - r0 + 1 }, (_, i) => p.wells[wid(r0 + i, c)]).filter(Boolean) as Well[]; const s1 = uniq(ws.map((w) => w.s)), g = uniq(ws.map((w) => w.g)); colL[c] = s1 !== undefined ? p.samples[s1] ?? '' : g !== undefined ? p.genes[g] ?? '' : ''; }
+    return { rowL, colL };
+  }
+  function gridHtml(cell: number, gap: number, fs: number, o: { r0?: number; r1?: number; c0?: number; c1?: number; labels?: boolean } = {}) {
+    const p = P(), full = dims(p.fmt);
+    const r0 = o.r0 ?? 0, r1 = o.r1 ?? full.rows - 1, c0 = o.c0 ?? 0, c1 = o.c1 ?? full.cols - 1, rows = full.rows, cols = full.cols;
+    const L = o.labels ? headerLabels(p, r0, r1, c0, c1) : { rowL: [] as string[], colL: [] as string[] };
+    const longest = Math.max(0, ...L.rowL.filter(Boolean).map((x) => x.length)), anyCol = L.colL.some(Boolean);
+    const hdr = o.labels && longest ? Math.min(130, HDR + 8 + longest * 6.6) : HDR;
+    let h = `<div style="display:grid;grid-template-columns:${hdr}px repeat(${c1 - c0 + 1}, ${cell}px);gap:${gap}px;width:max-content;margin:0 auto">`;
+    h += `<div></div>` + Array.from({ length: c1 - c0 + 1 }, (_, i) => { const c = c0 + i; return `<div class="hd" data-col="${c}" style="text-align:center;font-family:var(--mono);font-size:${fs}px;cursor:pointer;opacity:0.8;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-height:${cell}px">${anyCol ? `<span class="hdl hdl-c">${esc(L.colL[c] ?? '')}</span>` : ''}<span style="line-height:${Math.min(cell, 24)}px">${c + 1}</span></div>`; }).join('');
     let done = 0, used = 0;
-    for (let r = 0; r < rows; r++) {
-      h += `<div class="hd" data-row="${r}" style="text-align:center;font-family:var(--mono);font-size:${fs}px;line-height:${cell}px;cursor:pointer;opacity:0.8">${rn(r)}</div>`;
-      for (let c = 0; c < cols; c++) {
+    for (let r = r0; r <= r1; r++) {
+      h += `<div class="hd" data-row="${r}" style="font-family:var(--mono);font-size:${fs}px;line-height:${cell}px;cursor:pointer;opacity:0.8;display:flex;justify-content:${L.rowL[r] ? 'space-between' : 'center'};gap:4px;white-space:nowrap;overflow:hidden">${L.rowL[r] ? `<span class="hdl">${esc(L.rowL[r])}</span>` : ''}<span>${rn(r)}</span></div>`;
+      for (let c = c0; c <= c1; c++) {
         const w = p.wells[wid(r, c)] ?? {}; const hasS = w.s !== undefined, hasG = w.g !== undefined; if (hasS || hasG) used++; if (w.d) done++;
         const fill = hasS ? S_COL[(w.s as number) % S_COL.length] : 'transparent';
         const ring = hasG ? G_COL[(w.g as number) % G_COL.length] : hasS ? 'var(--line)' : 'currentColor';
@@ -251,7 +264,28 @@ export function renderPlateMap(main: HTMLElement) {
   }
   $(main, '#fullscreen').addEventListener('click', openFullscreen);
   $(main, '#share').addEventListener('click', () => { const { id: _id, ...plate } = P(); void _id; showHandoff(`Send ${plate.name}`, { t: 'plate', v: 1, plate }); });
-  $(main, '#print').addEventListener('click', async () => { const p = P(); const { id: _id, ...plate } = p; void _id; $(main, '#pqr').innerHTML = await qrSvg({ t: 'plate', v: 1, plate }); const [cc] = [fitCell(p.fmt, 700)]; gridbox.innerHTML = gridHtml(cc, GAP[p.fmt], cc >= 36 ? 12 : cc >= 20 ? 11 : 8).html; window.print(); setTimeout(paintGrid, 500); });
+  const doPrint = async (zoom: boolean) => {
+    const p = P(); const { id: _id, ...plate } = p; void _id; $(main, '#pqr').innerHTML = await qrSvg({ t: 'plate', v: 1, plate });
+    const ids = Object.keys(p.wells).filter((k) => p.wells[k].s !== undefined || p.wells[k].g !== undefined);
+    const title = $(main, '#print-title'); const baseTitle = `${p.name} · ${p.fmt}-well${p.note ? ` · ${p.note}` : ''}`;
+    if (zoom && ids.length) {
+      const rc = ids.map((k) => ({ r: k.charCodeAt(0) - 65, c: Number(k.slice(1)) - 1 }));
+      const r0 = Math.min(...rc.map((x) => x.r)), r1 = Math.max(...rc.map((x) => x.r)), c0 = Math.min(...rc.map((x) => x.c)), c1 = Math.max(...rc.map((x) => x.c));
+      const nC = c1 - c0 + 1, nR = r1 - r0 + 1, gap = 4;
+      const rowL = headerLabels(p, r0, r1, c0, c1).rowL.filter(Boolean); const hdr = rowL.length ? Math.min(130, HDR + 8 + Math.max(...rowL.map((x) => x.length)) * 6.6) : HDR;
+      const cell = Math.max(18, Math.min(100, Math.floor((700 - hdr - nC * gap) / nC), Math.floor((720 - nR * gap) / nR)));
+      gridbox.innerHTML = gridHtml(cell, gap, cell >= 36 ? 12 : 11, { r0, r1, c0, c1, labels: true }).html;
+      title.textContent = `${baseTitle} · wells ${rn(r0)}${c0 + 1}–${rn(r1)}${c1 + 1}`;
+    } else {
+      const { rows: R, cols: C } = dims(p.fmt); const rowL = headerLabels(p, 0, R - 1, 0, C - 1).rowL.filter(Boolean);
+      const hdr = rowL.length ? Math.min(130, HDR + 8 + Math.max(...rowL.map((x) => x.length)) * 6.6) : HDR;
+      const cc = Math.max(10, Math.min(100, Math.floor((700 - hdr - C * GAP[p.fmt]) / C)));
+      gridbox.innerHTML = gridHtml(cc, GAP[p.fmt], cc >= 36 ? 12 : cc >= 20 ? 11 : 8, { labels: true }).html; title.textContent = baseTitle;
+    }
+    window.print(); setTimeout(paintGrid, 500);
+  };
+  $(main, '#print').addEventListener('click', () => doPrint(false));
+  $(main, '#printzoom').addEventListener('click', () => doPrint(true));
 
   $(main, '#plates').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; st.active = b.dataset.id!; st.curS = 0; st.curG = 0; persist(); paintHeader(); paintGrid(); });
   $(main, '#fmt').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; const f = Number(b.dataset.f) as Fmt; const p = P(); if (p.fmt === f) return; if (Object.keys(p.wells).length && !confirm('Changing the format clears the wells. Continue?')) return; p.fmt = f; p.wells = {}; persist(); paintHeader(); paintGrid(); });
