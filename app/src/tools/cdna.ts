@@ -4,6 +4,7 @@ import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
 import { addLogWithNote } from '../lib/log';
 import { qrSvg, showHandoff } from '../lib/handoff';
+import { cdnaDilution, pickFormat, qpcrLayout, qpcrRows, type QFmt } from '../lib/qpcrLayout';
 import { $, $$, copyText, esc, html, toast, vibrate } from '../lib/dom';
 
 interface Row { name: string; conc: string; r280?: number; r230?: number; on: boolean; w?: boolean; r?: boolean }
@@ -35,7 +36,8 @@ export function renderCdna(main: HTMLElement) {
     <div id="cd-table"></div>
     <div id="cd-warn"></div>
     <div class="result" id="cd-master" hidden></div>
-    <div class="actions" id="cd-acts" hidden><button class="btn primary" id="cd-print">Print A4</button><button class="btn" id="cd-copy">Copy table</button><button class="btn" id="cd-log">Add to log</button></div>
+    <div class="actions" id="cd-acts" hidden><button class="btn orange" id="cd-qpcr" style="flex:1 1 100%">Next: qPCR plate →</button></div>
+    <div class="actions" id="cd-acts1" hidden style="margin-top:8px"><button class="btn primary" id="cd-print">Print A4</button><button class="btn" id="cd-copy">Copy table</button><button class="btn" id="cd-log">Add to log</button></div>
     <div class="actions" id="cd-acts2" hidden style="margin-top:8px"><button class="btn" id="cd-send">Send to device</button><button class="btn quiet" id="cd-clear">Clear samples</button></div>
     <div class="print print-only cdsheet" id="cd-sheet"></div>
   `);
@@ -65,7 +67,7 @@ export function renderCdna(main: HTMLElement) {
     ].join('');
     function x0(list: typeof short) { return Math.min(...list.map((x) => x.p!.maxNg)); }
     const m = rtMaster(on.length, n(st.extra), mix, rt, n(st.rx) || undefined);
-    const mb = $(main, '#cd-master'); mb.hidden = on.length === 0; $(main, '#cd-acts').hidden = st.rows.length === 0; $(main, '#cd-acts2').hidden = st.rows.length === 0;
+    const mb = $(main, '#cd-master'); mb.hidden = on.length === 0; $(main, '#cd-acts').hidden = st.rows.length === 0; $(main, '#cd-acts1').hidden = st.rows.length === 0; $(main, '#cd-acts2').hidden = st.rows.length === 0;
     if (on.length) {
       mb.innerHTML = `<div class="cap" style="color:inherit;opacity:0.8">Master mix · ${on.length} sample${on.length === 1 ? '' : 's'}</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:14px">reactions × <input id="cd-rx" value="${esc(st.rx)}" placeholder="${rtMaster(on.length, n(st.extra), mix, rt).rx}" inputmode="numeric" style="width:52px;min-height:36px;text-align:right;font-family:var(--mono)" /> <span class="muted">(${on.length} + <input id="cd-extra" value="${esc(st.extra)}" inputmode="decimal" style="width:40px;min-height:32px;text-align:right;font-family:var(--mono)" /> %, rounded up)</span></div>
@@ -93,10 +95,62 @@ export function renderCdna(main: HTMLElement) {
   $(main, '#cd-paste').addEventListener('click', () => { const b = $(main, '#cd-pastebox'); b.hidden = !b.hidden; });
   $(main, '#cd-paste-go').addEventListener('click', () => { const t = $<HTMLTextAreaElement>(main, '#cd-pastetxt'); addRows(parseNanodropCsv(t.value)); t.value = ''; $(main, '#cd-pastebox').hidden = true; });
   $(main, '#cd-add').addEventListener('click', () => { st.rows.push({ name: `S${st.rows.length + 1}`, conc: '', on: true }); persist(); paint(); });
+  $(main, '#cd-qpcr').addEventListener('click', () => toQpcr(st));
   $(main, '#cd-print').addEventListener('click', async () => { const q = main.querySelector('#cd-qr'); if (q) q.innerHTML = await qrSvg({ t: 'cdna', v: 1, cdna: st }); window.print(); });
   $(main, '#cd-send').addEventListener('click', () => showHandoff('Send cDNA sheet', { t: 'cdna', v: 1, cdna: st }));
   $(main, '#cd-copy').addEventListener('click', async () => { if (await copyText(summary)) toast('Copied'); });
   $(main, '#cd-log').addEventListener('click', () => addLogWithNote('cdna', 'cDNA synthesis', summary));
   $(main, '#cd-clear').addEventListener('click', () => { if (confirm('Clear all samples?')) { st.rows = []; st.rx = ''; persist(); paint(); } });
   paint();
+}
+
+// ---- hand-off to the next step: a qPCR plate in Plate Map ----
+type Plates = { plates: { id: string; name: string; fmt: number; kind?: string; note?: string; samples: string[]; genes: string[]; wells: Record<string, unknown> }[]; active: string; mode: string; curS: number; curG: number };
+function toQpcr(st: State) {
+  const num = (s: string) => parseNum(s) ?? 0;
+  const samples = st.rows.filter((r) => r.on && cdnaSample(num(r.conc), num(st.ng), num(st.vol))?.fits).map((r) => r.name);
+  if (!samples.length) { toast('No samples to carry over'); return; }
+  const pm = load<Plates>('platemap2', { plates: [], active: '', mode: 'sample', curS: 0, curG: 0 });
+  const lastGenes = [...pm.plates].reverse().find((p) => p.kind !== 'culture' && p.genes.length)?.genes ?? ['GAPDH'];
+  const recipeName = load<{ cdna?: { name?: string } }>('qpcrmix', {}).cdna?.name ?? '';
+  const target0 = parseNum(recipeName.match(/([\d.]+)\s*ng\s*\/\s*[µu]l/i)?.[1] ?? '') ?? 10;
+  const tube = num(st.vol) + num(st.mix) + num(st.rt);
+  const sheet = document.createElement('div'); sheet.className = 'sheet';
+  sheet.innerHTML = `<div class="card" style="max-height:92vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">qPCR plate from ${samples.length} cDNA</b><button class="iconbtn" id="q-close" aria-label="close" style="font-size:20px">✕</button></div>
+    <div class="muted" style="font-size:13px;margin-top:4px">${samples.map(esc).join(', ')}</div>
+    <div class="fields" style="padding-top:10px">
+      <div class="field"><label for="q-genes">Genes</label><input id="q-genes" type="text" value="${esc(lastGenes.join(', '))}" style="flex:1 1 auto;min-width:0" /></div>
+      <div class="field"><label>Replicates</label><div class="seg-ctl" id="q-reps" style="margin:0;flex:0 0 auto"><button data-r="1">1</button><button data-r="2" class="on">2</button><button data-r="3">3</button></div></div>
+      <div class="field"><label for="q-ntc">No-template control per gene</label><input id="q-ntc" type="checkbox" checked style="width:24px;height:24px" /></div>
+      <div class="field"><label for="q-target">cDNA for qPCR</label><input id="q-target" type="text" inputmode="decimal" value="${target0}" /><span class="unit" style="border:0;background:transparent;box-shadow:none">ng/µL</span></div>
+    </div>
+    <div class="result" id="q-out" style="margin-top:12px"></div>
+    <div class="actions"><button class="btn primary" id="q-go">Create plate</button><button class="btn quiet" id="q-cancel">Cancel</button></div>
+  </div>`;
+  document.body.append(sheet);
+  let reps = 2;
+  const read = () => { const genes = $<HTMLInputElement>(sheet, '#q-genes').value.split(/[,;\n]/).map((g) => g.trim()).filter(Boolean); const ntc = $<HTMLInputElement>(sheet, '#q-ntc').checked; const names = ntc ? [...samples, 'NTC'] : samples; return { genes, names, fmt: pickFormat(names.length, genes.length || 1, reps), target: num($<HTMLInputElement>(sheet, '#q-target').value) }; };
+  const paintQ = () => {
+    const { genes, names, fmt, target } = read(); const d = cdnaDilution(num(st.ng), tube, target);
+    const wells = names.length * Math.max(1, genes.length) * reps;
+    $(sheet, '#q-out').innerHTML = `<div style="font-size:15px"><b>${wells} wells</b> · ${names.length} × ${Math.max(1, genes.length)} gene${genes.length === 1 ? '' : 's'} × ${reps} → ${fmt ? `<b>${fmt}-well plate</b>, ${qpcrRows(names.length, Math.max(1, genes.length), reps, fmt)} rows` : '<span style="color:var(--danger)">more than a 384-well plate holds</span>'}</div>
+      ${d ? `<div style="font-size:15px;margin-top:8px">cDNA is ${f2(d.conc)} ng/µL (${fmt2(num(st.ng))} ng in ${f2(tube)} µL). ${d.factor > 1 ? `Dilute <b>1 : ${fmt2(d.factor)}</b>: add <b>${f2(d.water)} µL</b> water to each tube for ${fmt2(target)} ng/µL.` : 'Already at or below that; use it undiluted.'}</div>` : ''}`;
+    ($(sheet, '#q-go') as HTMLButtonElement).disabled = !fmt || !genes.length;
+  };
+  const fmt2 = (x: number) => fmt(x, 4);
+  const close = () => sheet.remove();
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+  $(sheet, '#q-close').addEventListener('click', close); $(sheet, '#q-cancel').addEventListener('click', close);
+  $$<HTMLInputElement>(sheet, 'input').forEach((i) => i.addEventListener('input', paintQ));
+  $(sheet, '#q-reps').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; reps = Number(b.dataset.r); $$(sheet, '#q-reps button').forEach((x) => x.classList.toggle('on', x === b)); paintQ(); });
+  $(sheet, '#q-go').addEventListener('click', () => {
+    const { genes, names, fmt: f, target } = read(); if (!f || !genes.length) return; const d = cdnaDilution(num(st.ng), tube, target);
+    const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const plate = { id: Math.random().toString(36).slice(2, 8), name: `qPCR ${date}`, fmt: f as QFmt, kind: 'qpcr', samples: names, genes,
+      note: `cDNA ${fmt2(num(st.ng))} ng / ${f2(tube)} µL${d && d.factor > 1 ? `, diluted 1:${fmt2(d.factor)} to ${fmt2(target)} ng/µL` : ''} · ${reps}× replicates`,
+      wells: qpcrLayout(names.length, genes.length, reps, f as QFmt) };
+    pm.plates.push(plate); pm.active = plate.id; pm.mode = 'done'; save('platemap2', pm); close(); location.hash = '#/platemap';
+  });
+  paintQ();
 }

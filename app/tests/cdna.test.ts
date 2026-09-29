@@ -35,3 +35,24 @@ describe('cDNA volumes', () => {
     expect(rtMaster(12, 10, 4, 1, 13)).toMatchObject({ rx: 13, mix: 52 });
   });
 });
+
+import { cdnaDilution, pickFormat, qpcrLayout, qpcrRows } from '../src/lib/qpcrLayout';
+describe('qPCR plate from cDNA samples', () => {
+  it('12 samples + NTC, 2 genes, duplicates: fits a 96 plate in 8 rows, 13 split 7 + 6', () => {
+    expect(qpcrRows(13, 2, 2, 96)).toBe(8);
+    expect(pickFormat(13, 2, 2)).toBe(96);
+    const w = qpcrLayout(13, 2, 2, 96);
+    expect(Object.keys(w).length).toBe(13 * 2 * 2);
+    expect(w.A1).toEqual({ s: 0, g: 0 }); expect(w.B1).toEqual({ s: 0, g: 0 }); // replicate below
+    expect(w.A7).toEqual({ s: 6, g: 0 }); expect(w.A8).toBeUndefined();         // 7 in the first group
+    expect(w.C1).toEqual({ s: 7, g: 0 }); expect(w.C6).toEqual({ s: 12, g: 0 }); // 6 in the second
+    expect(w.E1).toEqual({ s: 0, g: 1 }); expect(w.H6).toEqual({ s: 12, g: 1 }); // second gene fills E–H
+  });
+  it('3 genes do not fit 96, so 384', () => {
+    expect(pickFormat(13, 3, 2)).toBe(384);
+    expect(Object.keys(qpcrLayout(13, 3, 2, 384)).length).toBe(78);
+  });
+  it('1000 ng in 20 µL to 10 ng/µL is 1:5, 80 µL water', () => {
+    expect(cdnaDilution(1000, 20, 10)).toEqual({ conc: 50, factor: 5, water: 80 });
+  });
+});
