@@ -28,7 +28,7 @@ const HDR = 24;
 const fitCell = (f: Fmt, width: number) => { const { cols } = dims(f); return Math.max(10, Math.min(100, Math.floor((width - HDR - cols * GAP[f]) / cols))); };
 const rn = (r: number) => String.fromCharCode(65 + r);
 const wid = (r: number, c: number) => `${rn(r)}${c + 1}`;
-const newPlate = (fmt: Fmt = 96, kind: Kind = 'qpcr'): Plate => ({ id: Math.random().toString(36).slice(2, 8), name: `${kind === 'culture' ? 'Culture' : 'Plate'} ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`, fmt, kind, note: '', samples: kind === 'culture' ? ['Caco-2', 'HEK293'] : ['Ctrl', 'Sample 1', 'NTC'], genes: kind === 'culture' ? ['Untreated', 'Treated'] : ['GAPDH', 'Gene 1'], wells: {} });
+const newPlate = (fmt: Fmt = 384, kind: Kind = 'qpcr'): Plate => ({ id: Math.random().toString(36).slice(2, 8), name: `${kind === 'culture' ? 'Culture' : 'Plate'} ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`, fmt, kind, note: '', samples: kind === 'culture' ? ['Caco-2', 'HEK293'] : ['Ctrl', 'Sample 1', 'NTC'], genes: kind === 'culture' ? ['Untreated', 'Treated'] : ['GAPDH', 'Gene 1'], wells: {} });
 const kindOf = (p: Plate): Kind => p.kind ?? 'qpcr';
 
 export function renderPlateMap(main: HTMLElement) {

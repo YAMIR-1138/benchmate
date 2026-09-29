@@ -121,6 +121,7 @@ function toQpcr(st: State) {
     <div class="muted" style="font-size:13px;margin-top:4px">${samples.map(esc).join(', ')}</div>
     <div class="fields" style="padding-top:10px">
       <div class="field"><label for="q-genes">Genes</label><input id="q-genes" type="text" value="${esc(lastGenes.join(', '))}" style="flex:1 1 auto;min-width:0" /></div>
+      <div class="field"><label>Plate</label><div class="seg-ctl" id="q-fmt" style="margin:0;flex:0 0 auto"><button data-f="384" class="on">384</button><button data-f="96">96</button></div></div>
       <div class="field"><label>Replicates</label><div class="seg-ctl" id="q-reps" style="margin:0;flex:0 0 auto"><button data-r="1">1</button><button data-r="2" class="on">2</button><button data-r="3">3</button></div></div>
       <div class="field"><label for="q-ntc">No-template control per gene</label><input id="q-ntc" type="checkbox" checked style="width:24px;height:24px" /></div>
       <div class="field"><label for="q-target">cDNA for qPCR</label><input id="q-target" type="text" inputmode="decimal" value="${target0}" /><span class="unit" style="border:0;background:transparent;box-shadow:none">ng/µL</span></div>
@@ -129,12 +130,12 @@ function toQpcr(st: State) {
     <div class="actions"><button class="btn primary" id="q-go">Create plate</button><button class="btn quiet" id="q-cancel">Cancel</button></div>
   </div>`;
   document.body.append(sheet);
-  let reps = 2;
-  const read = () => { const genes = $<HTMLInputElement>(sheet, '#q-genes').value.split(/[,;\n]/).map((g) => g.trim()).filter(Boolean); const ntc = $<HTMLInputElement>(sheet, '#q-ntc').checked; const names = ntc ? [...samples, 'NTC'] : samples; return { genes, names, fmt: pickFormat(names.length, genes.length || 1, reps), target: num($<HTMLInputElement>(sheet, '#q-target').value) }; };
+  let reps = 2, plateFmt: QFmt = 384;
+  const read = () => { const genes = $<HTMLInputElement>(sheet, '#q-genes').value.split(/[,;\n]/).map((g) => g.trim()).filter(Boolean); const ntc = $<HTMLInputElement>(sheet, '#q-ntc').checked; const names = ntc ? [...samples, 'NTC'] : samples; const g = Math.max(1, genes.length); const fits = qpcrRows(names.length, g, reps, plateFmt) <= (plateFmt === 96 ? 8 : 16); return { genes, names, fmt: fits ? plateFmt : undefined, alt: fits ? undefined : pickFormat(names.length, g, reps), target: num($<HTMLInputElement>(sheet, '#q-target').value) }; };
   const paintQ = () => {
     const { genes, names, fmt, target } = read(); const d = cdnaDilution(num(st.ng), tube, target);
     const wells = names.length * Math.max(1, genes.length) * reps;
-    $(sheet, '#q-out').innerHTML = `<div style="font-size:15px"><b>${wells} wells</b> · ${names.length} × ${Math.max(1, genes.length)} gene${genes.length === 1 ? '' : 's'} × ${reps} → ${fmt ? `<b>${fmt}-well plate</b>, ${qpcrRows(names.length, Math.max(1, genes.length), reps, fmt)} rows` : '<span style="color:var(--danger)">more than a 384-well plate holds</span>'}</div>
+    $(sheet, '#q-out').innerHTML = `<div style="font-size:15px"><b>${wells} wells</b> · ${names.length} × ${Math.max(1, genes.length)} gene${genes.length === 1 ? '' : 's'} × ${reps} → ${fmt ? `<b>${fmt}-well plate</b>, ${qpcrRows(names.length, Math.max(1, genes.length), reps, fmt)} rows` : `<span style="color:var(--danger)">does not fit a ${plateFmt}-well plate${read().alt ? `; ${read().alt} would` : ''}</span>`}</div>
       ${d ? `<div style="font-size:15px;margin-top:8px">cDNA is ${f2(d.conc)} ng/µL (${fmt2(num(st.ng))} ng in ${f2(tube)} µL). ${d.factor > 1 ? `Dilute <b>1 : ${fmt2(d.factor)}</b>: add <b>${f2(d.water)} µL</b> water to each tube for ${fmt2(target)} ng/µL.` : 'Already at or below that; use it undiluted.'}</div>` : ''}`;
     ($(sheet, '#q-go') as HTMLButtonElement).disabled = !fmt || !genes.length;
   };
@@ -143,6 +144,7 @@ function toQpcr(st: State) {
   sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
   $(sheet, '#q-close').addEventListener('click', close); $(sheet, '#q-cancel').addEventListener('click', close);
   $$<HTMLInputElement>(sheet, 'input').forEach((i) => i.addEventListener('input', paintQ));
+  $(sheet, '#q-fmt').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; plateFmt = Number(b.dataset.f) as QFmt; $$(sheet, '#q-fmt button').forEach((x) => x.classList.toggle('on', x === b)); paintQ(); });
   $(sheet, '#q-reps').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return; reps = Number(b.dataset.r); $$(sheet, '#q-reps button').forEach((x) => x.classList.toggle('on', x === b)); paintQ(); });
   $(sheet, '#q-go').addEventListener('click', () => {
     const { genes, names, fmt: f, target } = read(); if (!f || !genes.length) return; const d = cdnaDilution(num(st.ng), tube, target);
