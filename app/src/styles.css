@@ -316,7 +316,8 @@ table.data td.num { font-family: var(--mono); font-weight: 700; text-align: righ
   .calc a { display: none; }
   .paper .pfoot { grid-area: foot; font-family: var(--mono); font-size: 8.5pt; color: #777; border-top: 1px solid #ddd; padding-top: 4px; }
   .paper .pqrbox { grid-area: qr; align-self: end; justify-self: end; display: flex !important; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
-  .pqr { display: inline-block; width: 26mm; height: 26mm; flex: 0 0 auto; }
+  .pqr { display: inline-block; width: 40mm; height: 40mm; padding: 3mm; background: #fff; box-sizing: content-box; flex: 0 0 auto; }
+  .paper .pqr { width: 34mm; height: 34mm; padding: 2.5mm; } /* protocol runs are the smallest payload; keeps the one-page sheet */
   .pqr:empty { display: none; }
   .paper .num { color: #111; }
   .paper .corner { border-color: #bbb; }
