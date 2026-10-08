@@ -443,3 +443,6 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
   #mix .rxn::placeholder { color: #111; opacity: 1; }
   #mix .muted { color: #444 !important; }
 }
+
+.lmove button:disabled { opacity: 0.3; cursor: default; }
+.cdtop .lmove { margin-left: 2px; }

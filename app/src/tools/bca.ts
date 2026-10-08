@@ -1,7 +1,7 @@
 import { fitCurve, curveInvert, mean, type Fit } from '../lib/calc';
 import { fmt, parseNum } from '../lib/fmt';
 import { load, save } from '../lib/store';
-import { $, $$, copyText, esc, html, toast } from '../lib/dom';
+import { $, $$, copyText, esc, html, moveButtons, moveItem, toast } from '../lib/dom';
 import { addLog } from '../lib/log';
 import { sevenSeg } from '../lib/sevenseg';
 
@@ -25,7 +25,7 @@ export function renderBca(main: HTMLElement) {
     </div>
     <div class="section"><div class="cap">Samples</div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:14px"><span>Sample dilution 1 :</span>${cell(st.dilution, 'id="dil"', 48)}<span style="flex:1 1 auto"></span><span>µL for</span>${cell(st.loadUg, 'id="loadug"', 48)}<span>µg</span></div>
-      <table class="data" id="smp"><tr><th>Sample</th><th style="text-align:right">undil A1</th><th style="text-align:right">A2</th><th style="text-align:right">1:<span id="dilh">5</span> A1</th><th style="text-align:right">A2</th></tr></table>
+      <table class="data" id="smp"><tr><th></th><th>Sample</th><th style="text-align:right">undil A1</th><th style="text-align:right">A2</th><th style="text-align:right">1:<span id="dilh">5</span> A1</th><th style="text-align:right">A2</th></tr></table>
       <div class="actions"><button class="btn" id="add">+ Sample</button><button class="btn quiet" id="clear">Clear all</button></div>
     </div>
     <div class="section"><div class="cap">Plate guide · 96-well</div>
@@ -53,9 +53,10 @@ export function renderBca(main: HTMLElement) {
     $$(smpT, 'tr.r').forEach((r) => r.remove());
     st.samples.forEach((s, i) => {
       const tr = document.createElement('tr'); tr.className = 'r';
-      tr.innerHTML = `<td><input data-i="${i}" data-f="name" value="${esc(s.name)}" style="width:54px;min-height:38px;padding:0 6px;font-weight:700" /></td>${[0, 1].map((k) => `<td class="num">${cell(s.und[k], `data-i="${i}" data-u="${k}"`, 54)}</td>`).join('')}${[0, 1].map((k) => `<td class="num">${cell(s.dil[k], `data-i="${i}" data-d="${k}"`, 54)}</td>`).join('')}`;
+      tr.innerHTML = `<td style="padding-right:2px">${moveButtons(i, st.samples.length)}</td><td><input data-i="${i}" data-f="name" value="${esc(s.name)}" style="width:54px;min-height:38px;padding:0 6px;font-weight:700" /></td>${[0, 1].map((k) => `<td class="num">${cell(s.und[k], `data-i="${i}" data-u="${k}"`, 54)}</td>`).join('')}${[0, 1].map((k) => `<td class="num">${cell(s.dil[k], `data-i="${i}" data-d="${k}"`, 54)}</td>`).join('')}`;
       smpT.append(tr);
     });
+    $$<HTMLButtonElement>(smpT, '[data-mv]').forEach((b) => b.addEventListener('click', () => { if (moveItem(st.samples, Number(b.dataset.mi), Number(b.dataset.mv) as -1 | 1)) { persist(); paintSamples(); compute(); } }));
     $$<HTMLInputElement>(smpT, 'input').forEach((inp) => inp.addEventListener('input', () => { const s = st.samples[Number(inp.dataset.i)]; if (inp.dataset.f === 'name') s.name = inp.value; else if (inp.dataset.u !== undefined) s.und[Number(inp.dataset.u)] = inp.value; else s.dil[Number(inp.dataset.d)] = inp.value; persist(); compute(); }));
   }
   function chart(pts: { x: number; y: number }[], f: Fit, samples: { x: number; y: number; ok: boolean }[]) {

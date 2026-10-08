@@ -5,7 +5,7 @@ import { load, save } from '../lib/store';
 import { addLogWithNote } from '../lib/log';
 import { qrSvg, showHandoff } from '../lib/handoff';
 import { cdnaDilution, pickFormat, qpcrLayout, qpcrRows, type QFmt } from '../lib/qpcrLayout';
-import { $, $$, copyText, esc, html, toast, vibrate } from '../lib/dom';
+import { $, $$, copyText, esc, html, moveButtons, moveItem, toast, vibrate } from '../lib/dom';
 
 interface Row { name: string; conc: string; r280?: number; r230?: number; on: boolean; w?: boolean; r?: boolean }
 interface State { ng: string; vol: string; mix: string; rt: string; extra: string; rx: string; rows: Row[] }
@@ -50,11 +50,12 @@ export function renderCdna(main: HTMLElement) {
     const plans = st.rows.map((r) => cdnaSample(n(r.conc), ng, vol));
     const tb = $(main, '#cd-table');
     tb.innerHTML = st.rows.length ? `<div class="cdlist">${st.rows.map((r, i) => { const p = plans[i], q = qc(r); return `<div class="cdrow" style="${r.on ? '' : 'opacity:0.4'}">
-        <div class="cdtop"><input type="checkbox" data-on="${i}" ${r.on ? 'checked' : ''} aria-label="include" /><input data-i="${i}" data-f="name" value="${esc(r.name)}" aria-label="sample" class="cdname" /><input data-i="${i}" data-f="conc" value="${esc(r.conc)}" inputmode="decimal" aria-label="ng/µL" class="cdconc" /><span class="mono muted" style="font-size:11px;white-space:nowrap">ng/µL</span><span title="${esc(q.t)}" class="cddot" style="background:${q.c}"></span></div>
+        <div class="cdtop"><input type="checkbox" data-on="${i}" ${r.on ? 'checked' : ''} aria-label="include" /><input data-i="${i}" data-f="name" value="${esc(r.name)}" aria-label="sample" class="cdname" /><input data-i="${i}" data-f="conc" value="${esc(r.conc)}" inputmode="decimal" aria-label="ng/µL" class="cdconc" /><span class="mono muted" style="font-size:11px;white-space:nowrap">ng/µL</span><span title="${esc(q.t)}" class="cddot" style="background:${q.c}"></span>${moveButtons(i, st.rows.length)}</div>
         ${p ? (p.fits ? `<div class="cdbot">${tick(i, 'w', f2(p.water), !!r.w, 'var(--text)', 'water')}${tick(i, 'r', f2(p.rna), !!r.r, 'var(--orange)', 'RNA')}</div>` : `<div class="cdbot" style="color:var(--danger);font-size:14px">too dilute for ${fmt(ng)} ng (max ${Math.floor(p.maxNg)} ng)</div>`) : ''}</div>`; }).join('')}</div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:6px"><span class="mono muted grow" id="cd-prog" style="font-size:13px"></span><button class="chip" id="cd-untick" style="min-height:34px;font-size:12px">clear ticks</button></div>` : `<div class="note">Import the NanoDrop export (.csv) or paste it. Blanks are skipped; names, concentrations and ratios come in.</div>`;
     $$<HTMLInputElement>(tb, 'input[data-i]').forEach((inp) => inp.addEventListener('change', () => { (st.rows[Number(inp.dataset.i)] as any)[inp.dataset.f!] = inp.value.trim(); persist(); paint(); }));
     $$<HTMLElement>(tb, '[data-tk]').forEach((b) => b.addEventListener('click', () => { const row = st.rows[Number(b.dataset.tk)]; const k = b.dataset.k as 'w' | 'r'; row[k] = !row[k]; vibrate(10); persist(); paint(); }));
+    $$<HTMLButtonElement>(tb, '[data-mv]').forEach((b) => b.addEventListener('click', () => { if (moveItem(st.rows, Number(b.dataset.mi), Number(b.dataset.mv) as -1 | 1)) { vibrate(8); persist(); paint(); } }));
     tb.querySelector('#cd-untick')?.addEventListener('click', () => { st.rows.forEach((r) => { r.w = false; r.r = false; }); persist(); paint(); });
     $$<HTMLInputElement>(tb, 'input[data-on]').forEach((inp) => inp.addEventListener('change', () => { st.rows[Number(inp.dataset.on)].on = inp.checked; persist(); paint(); }));
     const on = st.rows.map((r, i) => ({ r, p: plans[i] })).filter((x) => x.r.on && x.p);

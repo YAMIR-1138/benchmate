@@ -28,6 +28,9 @@ export function unitSelect(name: string, units: string[], selected: string, extr
   return `<select class="unit ${extraClass}" name="${name}" aria-label="unit">${units.map((u) => `<option value="${esc(u)}" ${u === selected ? 'selected' : ''}>${esc(u)}</option>`).join('')}</select>`;
 }
 
+/** Move item i one place up (-1) or down (+1); returns false at the ends. */
+export function moveItem<T>(list: T[], i: number, dir: -1 | 1): boolean { const j = i + dir; if (i < 0 || j < 0 || j >= list.length) return false; [list[i], list[j]] = [list[j], list[i]]; return true; }
+export const moveButtons = (i: number, n: number) => `<span class="lmove"><button data-mv="-1" data-mi="${i}" aria-label="move up" ${i === 0 ? 'disabled' : ''}>▲</button><button data-mv="1" data-mi="${i}" aria-label="move down" ${i === n - 1 ? 'disabled' : ''}>▼</button></span>`;
 export function vibrate(ms: number | number[]): void { try { navigator.vibrate?.(ms); } catch { /* ignore */ } }
 
 export async function copyText(s: string): Promise<boolean> {
