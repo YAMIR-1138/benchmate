@@ -32,6 +32,6 @@ export function renderHome(app: HTMLElement, main: HTMLElement) {
   foot.innerHTML = `<span>model BM-1 · v${__APP_VERSION__} · build ${__BUILD__.slice(5, 16)}</span><span>no ads · no accounts</span>`;
   app.append(foot);
   const credit = el('div', { class: 'credit' });
-  credit.innerHTML = `made by <a href="https://github.com/YAMIR-1138" target="_blank" rel="noopener">Yamir</a> at TGGR Lab · built with <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> · <a href="https://github.com/YAMIR-1138/benchmate" target="_blank" rel="noopener">source</a>`;
+  credit.innerHTML = `made by <a href="https://yamir-1138.github.io/YAMIR-1138/" target="_blank" rel="noopener">Yamir</a> at TGGR Lab · <a href="https://yamir-1138.github.io/YAMIR-1138/" target="_blank" rel="noopener">more tools and projects</a> · built with <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> · <a href="https://github.com/YAMIR-1138/benchmate" target="_blank" rel="noopener">source</a>`;
   app.append(credit);
 }

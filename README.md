@@ -36,4 +36,6 @@ Pushes build and deploy to GitHub Pages through `.github/workflows/pages.yml`.
 
 Add a Markdown file to `core/protocols/` and it appears in the app. Per-well amounts, plate formats, timers and fill-in blanks are plain text lines; see the format README.
 
+More tools and projects: [yamir-1138.github.io/YAMIR-1138](https://yamir-1138.github.io/YAMIR-1138/)
+
 Made at TGGR Lab with Claude Code.
