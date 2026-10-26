@@ -447,3 +447,21 @@ body.has-strip .update-banner { bottom: calc(76px + env(safe-area-inset-bottom))
 
 .lmove button:disabled { opacity: 0.3; cursor: default; }
 .cdtop .lmove { margin-left: 2px; }
+
+/* ---- cDNA needed per sample (Plate Map) ---- */
+.cdneed .need { color: var(--orange); font-weight: 700; }
+.cdwarn { margin-top: 6px; font-size: 13px; color: var(--danger); }
+@media print { .cdneed .need, .cdneed td { color: #111 !important; } .cdwarn { color: #111; font-weight: 700; } }
+
+.cdsum { margin-top: 6px; font-size: 15px; line-height: 1.4; }
+.cdgrid { display: none; }
+@media print {
+  .cdneed .cdtable { display: none !important; }
+  .cdgrid.print-only { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6mm 4mm; margin-top: 1.5mm; font-size: 9.5pt; white-space: nowrap; }
+  .cdgrid .cdgh { grid-column: 1 / -1; color: #444; font-size: 9pt; }
+  .cdgrid span { overflow: hidden; text-overflow: ellipsis; }
+  .cdsum { font-size: 11pt; color: #111; }
+  #mix .data td, #mix .data th { padding-top: 1.2mm !important; padding-bottom: 1.2mm !important; }
+  #mix .rxn { min-height: 0 !important; height: auto; }
+  #mix .wcode { line-height: 1.2; }
+}

@@ -138,7 +138,8 @@ function toQpcr(st: State) {
     const { genes, names, fmt, target } = read(); const d = cdnaDilution(num(st.ng), tube, target);
     const wells = names.length * Math.max(1, genes.length) * reps;
     $(sheet, '#q-out').innerHTML = `<div style="font-size:15px"><b>${wells} wells</b> · ${names.length} × ${Math.max(1, genes.length)} gene${genes.length === 1 ? '' : 's'} × ${reps} → ${fmt ? `<b>${fmt}-well plate</b>, ${qpcrRows(names.length, Math.max(1, genes.length), reps, fmt)} rows` : `<span style="color:var(--danger)">does not fit a ${plateFmt}-well plate${read().alt ? `; ${read().alt} would` : ''}</span>`}</div>
-      ${d ? `<div style="font-size:15px;margin-top:8px">cDNA is ${f2(d.conc)} ng/µL (${fmt2(num(st.ng))} ng in ${f2(tube)} µL). ${d.factor > 1 ? `Dilute <b>1 : ${fmt2(d.factor)}</b>: add <b>${f2(d.water)} µL</b> water to each tube for ${fmt2(target)} ng/µL.` : 'Already at or below that; use it undiluted.'}</div>` : ''}`;
+      ${(() => { const R = load<{ cdna?: { ul?: string }; extra?: string }>('qpcrmix', {}); const per = num(R.cdna?.ul ?? '2'), ex = num(R.extra ?? '10'); const w = Math.max(1, genes.length) * reps; const ul = Math.ceil(w * per * (1 + ex / 100) * 100 - 1e-6) / 100; return per ? `<div style="font-size:15px;margin-top:8px">Each sample: ${w} wells → <b>${f2(ul)} µL</b> of ${fmt2(target)} ng/µL cDNA${d && d.factor > 1 ? ` = ${f2(Math.ceil(ul / d.factor * 100 - 1e-6) / 100)} µL from its tube + water` : ''}.</div>` : ''; })()}
+      ${d ? `<div style="font-size:15px;margin-top:8px">cDNA is ${f2(d.conc)} ng/µL (${fmt2(num(st.ng))} ng in ${f2(tube)} µL). ${d.factor > 1 ? `To dilute whole tubes instead (1 : ${fmt2(d.factor)}): add ${f2(d.water)} µL water to each.` : 'Already at or below that; use it undiluted.'}</div>` : ''}`;
     ($(sheet, '#q-go') as HTMLButtonElement).disabled = !fmt || !genes.length;
   };
   const fmt2 = (x: number) => fmt(x, 4);
@@ -153,7 +154,7 @@ function toQpcr(st: State) {
     const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
     const plate = { id: Math.random().toString(36).slice(2, 8), name: `qPCR ${date}`, fmt: f as QFmt, kind: 'qpcr', samples: names, genes,
       note: `cDNA ${fmt2(num(st.ng))} ng / ${f2(tube)} µL${d && d.factor > 1 ? `, diluted 1:${fmt2(d.factor)} to ${fmt2(target)} ng/µL` : ''} · ${reps}× replicates`,
-      wells: qpcrLayout(names.length, genes.length, reps, f as QFmt) };
+      wells: qpcrLayout(names.length, genes.length, reps, f as QFmt), cdna: d && d.factor > 1 ? { factor: d.factor, target, tube } : undefined };
     save('qpcr.reps', reps); pm.plates.push(plate); pm.active = plate.id; pm.mode = 'done'; save('platemap2', pm); close(); location.hash = '#/platemap';
   });
   paintQ();

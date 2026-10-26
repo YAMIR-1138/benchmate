@@ -80,3 +80,18 @@ describe('QuantStudio plate setup export', () => {
     expect(byPos.A1[3]).toMatch(/^"RGB\(\d+,\d+,\d+\)"$/);
   });
 });
+
+import { cdnaNeeds } from '../src/lib/qpcrLayout';
+describe('cDNA needed per sample on a qPCR plate', () => {
+  const samples = ['Ev 1', 'Ev 2', 'NTC'];
+  const wells = qpcrLayout(3, 3, 3, 384); // 3 genes × triplicate = 9 wells each
+  it('9 wells × 2 µL + 10 % = 19.80 µL at 10 ng/µL; from a 1:5 tube that is 3.96 µL cDNA + 15.84 µL water', () => {
+    const n = cdnaNeeds(samples, wells, 2, 10, 5);
+    expect(n[0]).toEqual({ s: 0, name: 'Ev 1', wells: 9, ul: 19.8, stock: 3.96, water: 15.84, ntc: false });
+    expect(n[2]).toMatchObject({ name: 'NTC', wells: 9, ul: 19.8, ntc: true });
+    expect(n[2].stock).toBeUndefined();
+  });
+  it('without a dilution it gives the working volume only', () => {
+    expect(cdnaNeeds(samples, wells, 2, 10)[1]).toEqual({ s: 1, name: 'Ev 2', wells: 9, ul: 19.8, ntc: false });
+  });
+});

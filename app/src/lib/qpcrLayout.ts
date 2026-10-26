@@ -27,3 +27,19 @@ export function cdnaDilution(ng: number, tubeUl: number, target: number) {
   const factor = conc / target;
   return { conc, factor, water: factor > 1 ? Math.round(tubeUl * (factor - 1) * 100) / 100 : 0 };
 }
+
+/** How much cDNA each sample on a qPCR plate needs: wells × µL per reaction plus the pipetting margin, rounded up
+ *  to 0.01 µL. With a dilution (e.g. 1:5 from the cDNA tube) it also says how much undiluted cDNA and water make
+ *  exactly that much, instead of diluting the whole tube. NTC wells get water, not cDNA. */
+export interface CdnaNeed { s: number; name: string; wells: number; ul: number; stock?: number; water?: number; ntc: boolean }
+const up2 = (x: number) => Math.ceil(x * 100 - 1e-6) / 100;
+export function cdnaNeeds(samples: string[], wells: Record<string, { s?: number; g?: number }>, perRxn: number, extraPct: number, factor?: number, isNtc: (n: string) => boolean = (n) => /^\s*(ntc|water|h2o|nfw)\s*$/i.test(n)): CdnaNeed[] {
+  const count = new Map<number, number>();
+  for (const w of Object.values(wells)) if (w.s !== undefined && w.g !== undefined) count.set(w.s, (count.get(w.s) ?? 0) + 1);
+  return [...count.entries()].sort((a, b) => a[0] - b[0]).map(([s, n]) => {
+    const name = samples[s] ?? '?', ntc = isNtc(name), ul = up2(n * perRxn * (1 + (extraPct || 0) / 100));
+    if (ntc || !factor || factor <= 1) return { s, name, wells: n, ul, ntc };
+    const stock = up2(ul / factor);
+    return { s, name, wells: n, ul, stock, water: Math.max(0, Math.round((ul - stock) * 100) / 100), ntc };
+  });
+}
