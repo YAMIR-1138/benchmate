@@ -1,3 +1,4 @@
+import { party } from '../lib/party';
 import { cdnaSample, rtMaster, verdict260230, verdict260280, type CdnaSample } from '../lib/calc';
 import { parseNanodropCsv } from '../lib/nanodropCsv';
 import { fmt, parseNum } from '../lib/fmt';
@@ -54,7 +55,7 @@ export function renderCdna(main: HTMLElement) {
         ${p ? (p.fits ? `<div class="cdbot">${tick(i, 'w', f2(p.water), !!r.w, 'var(--text)', 'water')}${tick(i, 'r', f2(p.rna), !!r.r, 'var(--orange)', 'RNA')}</div>` : `<div class="cdbot" style="color:var(--danger);font-size:14px">too dilute for ${fmt(ng)} ng (max ${Math.floor(p.maxNg)} ng)</div>`) : ''}</div>`; }).join('')}</div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:6px"><span class="mono muted grow" id="cd-prog" style="font-size:13px"></span><button class="chip" id="cd-untick" style="min-height:34px;font-size:12px">clear ticks</button></div>` : `<div class="note">Import the NanoDrop export (.csv) or paste it. Blanks are skipped; names, concentrations and ratios come in.</div>`;
     $$<HTMLInputElement>(tb, 'input[data-i]').forEach((inp) => inp.addEventListener('change', () => { (st.rows[Number(inp.dataset.i)] as any)[inp.dataset.f!] = inp.value.trim(); persist(); paint(); }));
-    $$<HTMLElement>(tb, '[data-tk]').forEach((b) => b.addEventListener('click', () => { const row = st.rows[Number(b.dataset.tk)]; const k = b.dataset.k as 'w' | 'r'; row[k] = !row[k]; vibrate(10); persist(); paint(); }));
+    $$<HTMLElement>(tb, '[data-tk]').forEach((b) => b.addEventListener('click', () => { const row = st.rows[Number(b.dataset.tk)]; const k = b.dataset.k as 'w' | 'r'; row[k] = !row[k]; vibrate(10); persist(); paint(); const d = st.rows.filter((r) => tb.querySelector(`[data-tk="${st.rows.indexOf(r)}"]`)); if (row[k] && d.length && d.every((r) => r.w && r.r)) { party(); toast('All tubes loaded'); } }));
     $$<HTMLButtonElement>(tb, '[data-mv]').forEach((b) => b.addEventListener('click', () => { if (moveItem(st.rows, Number(b.dataset.mi), Number(b.dataset.mv) as -1 | 1)) { vibrate(8); persist(); paint(); } }));
     tb.querySelector('#cd-untick')?.addEventListener('click', () => { st.rows.forEach((r) => { r.w = false; r.r = false; }); persist(); paint(); });
     $$<HTMLInputElement>(tb, 'input[data-on]').forEach((inp) => inp.addEventListener('change', () => { st.rows[Number(inp.dataset.on)].on = inp.checked; persist(); paint(); }));

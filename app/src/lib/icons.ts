@@ -17,5 +17,8 @@ export const icons = {
   sun: w('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
   rt: w('<path d="M8 3h8"/><path d="M9 3v13a3 3 0 0 0 6 0V3"/><path d="M9 10h6"/><path d="M4 20c2-2 4 2 6 0s4 2 6 0 4 2 4 0"/>'),
   book: w('<path d="M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/>'),
+  bars: w('<path d="M4 20 H20"/><rect x="6" y="11" width="3" height="9"/><rect x="11" y="5" width="3" height="15"/><rect x="16" y="14" width="3" height="6"/>'),
+  star: w('<path d="M12 3.5 l2.6 5.4 5.9 .8 -4.3 4.1 1 5.9 -5.2 -2.8 -5.2 2.8 1 -5.9 -4.3 -4.1 5.9 -.8 Z"/>'),
+  search: w('<circle cx="11" cy="11" r="6.5"/><path d="M16 16 l4.5 4.5"/>'),
   moon: w('<path d="M20 14.5 A8 8 0 1 1 9.5 4 a6.5 6.5 0 0 0 10.5 10.5 Z"/>'),
 };

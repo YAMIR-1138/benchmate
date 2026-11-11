@@ -59,7 +59,7 @@ export function renderPlateMap(main: HTMLElement) {
     </div>
     <div class="actions"><button class="btn primary" id="fullscreen">Full screen</button><button class="btn" id="share">Send to device</button><button class="btn" id="print">Print A4</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="printzoom">Print used wells, large</button><button class="btn" id="swaprc">Swap rows ↔ cols</button></div>
-    <div class="actions" style="margin-top:8px" id="qsrow"><button class="btn orange" id="qs">Export for QuantStudio</button></div>
+    <div class="actions" style="margin-top:8px" id="qsrow"><button class="btn orange" id="qs">Export for QuantStudio</button><a class="btn" href="#/results" style="flex:0 1 auto">Results →</a></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="copy">Copy map</button><button class="btn" id="log">Add to log</button><button class="btn" id="resetdone">Clear ticks</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn quiet" id="clear">Clear plate</button></div>
     <div class="actions" style="margin-top:8px"><button class="btn" id="newplate">+ New plate</button><button class="btn quiet" id="delplate">Delete plate</button></div>

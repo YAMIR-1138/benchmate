@@ -1,3 +1,4 @@
+import { party } from '../lib/party';
 import { load, save } from '../lib/store';
 import { fmt, parseDuration, mmss, parseNum, sci } from '../lib/fmt';
 import { timerEngine } from './timerEngine';
@@ -288,9 +289,10 @@ function renderStep(main: HTMLElement, P: Protocol, n: number) {
     </div>
     <div class="actions" style="margin-top:28px">
       <a class="btn tall" href="#/protocols/${P.id}/${n - 1 || ''}" style="flex:1">Back</a>
-      ${n < P.steps.length ? `<a class="btn primary tall" href="#/protocols/${P.id}/${n + 1}" style="flex:2">Next: ${esc(P.steps[n].title)}</a>` : `<a class="btn orange tall" href="#/protocols/${P.id}" style="flex:2">Done</a>`}
+      ${n < P.steps.length ? `<a class="btn primary tall" href="#/protocols/${P.id}/${n + 1}" style="flex:2">Next: ${esc(P.steps[n].title)}</a>` : `<a class="btn orange tall" id="p-done" href="#/protocols/${P.id}" style="flex:2">Done</a>`}
     </div>
   `);
   $$<HTMLInputElement>(main, 'input[data-inp]').forEach((i) => i.addEventListener('input', () => { run.inputs[i.dataset.inp!] = i.value; save(`protocol.${P.id}`, run); }));
+  main.querySelector('#p-done')?.addEventListener('click', () => { party(); toast(`${P.short} · done`); });
   if (tr) $(main, '#t-start').addEventListener('click', () => { timerEngine.add(tr.ms, `${P.short} · ${s.title}`); timerEngine.requestNotifications(); toast(`Timer started · ${tr.label}`); });
 }
